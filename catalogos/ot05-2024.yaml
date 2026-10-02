@@ -1,0 +1,172 @@
+# Orientação Técnica nº 05 — Rede de Controle da Gestão Pública no Estado da Bahia (atualização de outubro/2024).
+# `descricao` reproduz o texto oficial; os subitens avaliáveis desdobram cada condição para autoavaliação.
+#
+# aplicavel_a: "todos" | "executivo" (todos exceto Câmara) | "legislativo" (só Câmara) | lista de TipoCliente.
+
+norma:
+  codigo: OT05
+  versao: "2024"
+  titulo: Orientação Técnica nº 05 — Sistemas de Controle Interno Municipais
+  orgao_emissor: Rede de Controle da Gestão Pública no Estado da Bahia
+  data_publicacao: 2024-10-01
+  fonte_url: https://www.tce.ba.gov.br/images/legislacao/orientacoes_tecnicas/orientacoes_tecnicas_05_rede_de_controle_ba_2024.pdf
+  descricao: >-
+    Orienta os Chefes dos Poderes Executivo e Legislativo municipais quanto à obrigação constitucional de
+    implantarem e manterem, de forma integrada, Sistemas de Controle Interno Municipais devidamente
+    estruturados para desempenhar as atribuições previstas no art. 74, I a IV, da Constituição Federal.
+
+aplicavel_a: todos
+
+requisitos:
+  - codigo: "I"
+    titulo: Criação por lei, estrutura, autonomia e subordinação
+    avaliavel: false
+    descricao: >-
+      As Controladorias Internas Municipais, criadas por lei municipal, devem possuir estruturas adequadas ao
+      porte e à complexidade do respectivo órgão, garantindo autonomia administrativa e financeira. Essas
+      unidades devem ser estruturadas e/ou reestruturadas de modo a executar de forma integrada e eficiente as
+      funções de auditoria interna, controle interno, corregedoria e ouvidoria, assegurando que todos os
+      mecanismos de controle e governança sejam aplicados de maneira coordenada. A subordinação das
+      controladorias deve ser direta à Chefia dos respectivos Poderes ou ainda ao represente legal de entidade
+      descentralizada, vedando-se a vinculação a qualquer outro órgão, de modo a preservar a sua independência.
+    filhos:
+      - codigo: "I.1"
+        titulo: Controladoria criada por lei municipal
+        orientacao: "Evidência: lei de criação da unidade de controle interno, com número e data de publicação."
+      - codigo: "I.2"
+        titulo: Estrutura adequada ao porte e à complexidade do órgão
+        orientacao: "Evidência: organograma, quadro de cargos e lotação da controladoria."
+      - codigo: "I.3"
+        titulo: Autonomia administrativa e financeira
+        orientacao: "Evidência: dotação orçamentária própria na LOA, unidade orçamentária ou gestora específica."
+      - codigo: "I.4"
+        titulo: Execução integrada de auditoria interna, controle interno, corregedoria e ouvidoria
+        orientacao: "Evidência: lei ou regimento atribuindo as quatro macrofunções à controladoria."
+      - codigo: "I.5"
+        titulo: Subordinação direta à chefia do Poder ou ao representante legal da entidade
+        orientacao: "Evidência: lei de estrutura administrativa; verificar ausência de vinculação a secretaria ou outro órgão."
+
+  - codigo: "II"
+    titulo: Quadro de pessoal efetivo, recrutado por concurso público
+    avaliavel: false
+    descricao: >-
+      O quadro de pessoal das Controladorias Internas Municipais deve ser composto por servidores recrutados
+      mediante concurso público, conforme preconiza o art. 37, inciso II, da Constituição Federal. O processo de
+      seleção deve garantir que os candidatos possuam qualificação técnica compatível com as atividades de
+      controle, auditoria e fiscalização. Recomenda-se que os entes municipais promovam a criação de carreiras
+      específicas de controle interno, como as de auditor e analista de controle interno, assegurando a
+      qualificação e a imparcialidade dos profissionais, além de proporcionar estabilidade e continuidade à
+      função de controle.
+    filhos:
+      - codigo: "II.1"
+        titulo: Servidores da controladoria recrutados por concurso público
+        orientacao: "Evidência: relação nominal dos servidores lotados, com forma de ingresso e ato de nomeação."
+      - codigo: "II.2"
+        titulo: Concurso com exigência de qualificação técnica compatível com controle, auditoria e fiscalização
+        orientacao: "Evidência: edital do concurso com requisitos de formação e conteúdo programático."
+      - codigo: "II.3"
+        titulo: Carreira específica de controle interno (auditor, analista)
+        orientacao: "Recomendação da OT. Evidência: lei de criação da carreira."
+
+  - codigo: "III"
+    titulo: Requisitos para chefia, direção e assessoramento
+    avaliavel: false
+    descricao: >-
+      Os cargos de chefia, direção e assessoramento das Controladorias Internas Municipais, unidades centrais do
+      sistema de controle interno, devem ser criados por lei municipal e ocupados por servidores que, além de
+      possuírem idoneidade moral e reputação ilibada, tenham formação de nível superior em áreas relacionadas à
+      gestão pública, bem como experiência comprovada na administração pública ou na área de controle interno e
+      não ter contra ele condenação em ação penal por crime correlato ao exercício de função pública ou em ação
+      de improbidade administrativa. A nomeação para esses cargos em comissão ou funções gratificadas deve
+      recair, preferencialmente, sobre servidores efetivos das carreiras de controle interno ou do quadro
+      permanente da administração pública. Quando da impossibilidade da nomeação de servidores já pertencentes
+      aos quadros do órgão, devidamente justificada, é possível a nomeação de pessoas sem vínculo com a
+      administração, desde que comprovados requisitos acima mencionados.
+    filhos:
+      - codigo: "III.1"
+        titulo: Cargos de chefia, direção e assessoramento criados por lei municipal
+      - codigo: "III.2"
+        titulo: Titular com formação superior em área relacionada à gestão pública
+        orientacao: "Evidência: diploma do titular."
+      - codigo: "III.3"
+        titulo: Titular com experiência comprovada na administração pública ou em controle interno
+      - codigo: "III.4"
+        titulo: Titular sem condenação penal por crime funcional ou por improbidade administrativa
+        orientacao: "Evidência: certidões criminais e cíveis (Justiça Estadual e Federal) e declaração de idoneidade."
+      - codigo: "III.5"
+        titulo: Nomeação preferencial de servidor efetivo, ou justificativa formal quando sem vínculo
+        orientacao: "Evidência: ato de nomeação; se sem vínculo, justificativa documentada."
+
+  - codigo: "IV"
+    titulo: Recursos materiais, tecnológicos e humanos suficientes
+    descricao: >-
+      As Controladorias Internas Municipais devem dispor de recursos materiais, tecnológicos e humanos suficientes
+      para o cumprimento, com a maior efetividade possível, de suas atribuições. É fundamental que as
+      Controladorias Internas contem com ferramentas de tecnologia avançada e outros sistemas de controle digital,
+      para o acompanhamento e monitoramento em tempo real dos processos orçamentários, financeiros e
+      operacionais. A utilização dessas tecnologias permitirá maior transparência, controle e eficiência no uso
+      dos recursos públicos.
+    avaliavel: false
+    filhos:
+      - codigo: "IV.1"
+        titulo: Recursos humanos suficientes para as atribuições
+      - codigo: "IV.2"
+        titulo: Recursos materiais adequados (espaço, equipamentos, mobiliário)
+      - codigo: "IV.3"
+        titulo: Ferramentas tecnológicas de acompanhamento em tempo real (orçamentário, financeiro e operacional)
+        orientacao: "Evidência: acesso de consulta aos sistemas contábil, folha, patrimônio, compras; sistemas de controle próprios."
+
+  - codigo: "V"
+    titulo: Execução ou coordenação das quatro macrofunções
+    descricao: >-
+      As Controladorias Internas Municipais devem ser estruturadas e/ou reestruturadas para que possam executar e
+      ou coordenar de maneira eficaz as quatro macrofunções de controle: auditoria interna, controle interno,
+      corregedoria e ouvidoria. A estruturação e/ou reestruturação deve considerar a alocação adequada de
+      servidores para cada uma das funções, garantindo a integridade e a especialização em cada área, e
+      permitindo uma abordagem mais coordenada e eficaz para a fiscalização da gestão pública.
+    avaliavel: false
+    filhos:
+      - codigo: "V.1"
+        titulo: Auditoria interna estruturada, com servidores alocados
+      - codigo: "V.2"
+        titulo: Controle interno (conformidade) estruturado, com servidores alocados
+      - codigo: "V.3"
+        titulo: Corregedoria estruturada, com servidores alocados
+      - codigo: "V.4"
+        titulo: Ouvidoria estruturada, com servidores alocados
+
+  - codigo: "VI"
+    titulo: Segregação de funções
+    descricao: >-
+      As Controladorias Internas Municipais, no âmbito de atuação de seus servidores, deve observar o princípio da
+      segregação de funções, que coíbe o conflito de interesses entre a atividade controlada e a controladora,
+      impedindo que o agente de controle interno execute, ao mesmo tempo, atividades de contadoria, finanças,
+      administração patrimonial e outras que possam também fragilizar a fidedignidade do controle.
+    fundamento: Lei nº 14.133/2021, art. 7º, § 2º
+    orientacao: "Verificar se algum servidor da controladoria acumula atividades de contabilidade, tesouraria, patrimônio, compras ou similares."
+
+  - codigo: "VII"
+    titulo: Capacitação contínua dos servidores
+    descricao: >-
+      Os órgãos superiores devem promover a capacitação contínua dos servidores das Controladorias Internas
+      Municipais, por ser essencial para garantir que os agentes responsáveis pelo controle estejam preparados
+      para lidar com as novas exigências legais e tecnológicas, bem como estabelecer parcerias com entidades de
+      ensino, Tribunais de Contas, e órgãos de controle, para o desenvolvimento de programas regulares de
+      treinamento em áreas como controle interno, auditoria, integridade, gestão de riscos, licitações e
+      contratos. Essa capacitação contínua é vital para assegurar a atualização técnica e a efetividade dos
+      servidores.
+    avaliavel: false
+    filhos:
+      - codigo: "VII.1"
+        titulo: Programa regular de capacitação dos servidores da controladoria
+        orientacao: "Evidência: plano anual de capacitação e certificados do período."
+      - codigo: "VII.2"
+        titulo: Parcerias com entidades de ensino, Tribunais de Contas ou órgãos de controle
+        orientacao: "Evidência: termos de cooperação, adesão a programas de escolas de contas."
+
+  - codigo: "VIII"
+    titulo: Vedação de delegação das atividades de controle interno a terceiros
+    descricao: >-
+      É vedada a delegação das atividades de controle interno, a terceiros, uma vez que essas atividades são
+      exclusivas do ente público municipal e devem garantir a independência e a transparência dos processos.
+    orientacao: "Verificar contratos de consultoria/assessoria: não podem executar atividades próprias do controle interno."

@@ -1,0 +1,476 @@
+// Sistema de Controladoria Municipal — HorizonAJ
+//
+// Tabelas globais (sem RLS): clientes, usuarios, sessoes, vinculos_cliente, normas, requisitos.
+// Demais tabelas carregam cliente_id e são isoladas por Row Level Security
+// (ver prisma/migrations/*_rls). A aplicação conecta com um papel sem BYPASSRLS.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────── Organização e acesso ─────────────────────────
+
+enum TipoCliente {
+  PREFEITURA
+  CAMARA
+  AUTARQUIA
+  FUNDACAO
+  CONSORCIO
+  EMPRESA_PUBLICA
+  OUTRO
+}
+
+enum Perfil {
+  CONTROLADOR
+  EQUIPE
+  SATELITE
+}
+
+enum TipoUnidade {
+  ORGAO
+  SECRETARIA
+  DEPARTAMENTO
+  DIVISAO
+  SETOR
+  OUTRO
+}
+
+model Cliente {
+  id           String      @id @default(uuid(7)) @db.Uuid
+  nome         String
+  tipo         TipoCliente
+  cnpj         String      @unique @db.VarChar(14)
+  municipio    String
+  uf           String      @db.Char(2)
+  codigoIbge   String?     @map("codigo_ibge") @db.VarChar(7)
+  populacao    Int?
+  brasaoKey    String?     @map("brasao_key")
+  ativo        Boolean     @default(true)
+  criadoEm     DateTime    @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm DateTime    @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  vinculos  VinculoCliente[]
+  unidades  Unidade[]
+  sessoes   Sessao[]
+  ciclos    CicloAvaliacao[]
+  respostas RespostaRequisito[]
+  planos    PlanoAcao[]
+  acoes     Acao[]
+  demandas  Demanda[]
+  tramites  TramitacaoDemanda[]
+  documentos Documento[]
+  escopos   EscopoSatelite[]
+  logs      LogAuditoria[]
+
+  @@map("clientes")
+}
+
+model Usuario {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  nome          String
+  email         String    @unique
+  cpf           String?   @unique @db.VarChar(11)
+  senhaHash     String    @map("senha_hash")
+  adminHorizon  Boolean   @default(false) @map("admin_horizon")
+  ativo         Boolean   @default(true)
+  ultimoAcessoEm DateTime? @map("ultimo_acesso_em") @db.Timestamptz(3)
+  criadoEm      DateTime  @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm  DateTime  @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  vinculos VinculoCliente[]
+  sessoes  Sessao[]
+
+  @@map("usuarios")
+}
+
+model Sessao {
+  id             String   @id @db.VarChar(64)
+  usuarioId      String   @map("usuario_id") @db.Uuid
+  clienteAtivoId String?  @map("cliente_ativo_id") @db.Uuid
+  expiraEm       DateTime @map("expira_em") @db.Timestamptz(3)
+  ip             String?
+  userAgent      String?  @map("user_agent")
+  criadoEm       DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  usuario      Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  clienteAtivo Cliente? @relation(fields: [clienteAtivoId], references: [id], onDelete: SetNull)
+
+  @@index([usuarioId])
+  @@map("sessoes")
+}
+
+model VinculoCliente {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  usuarioId String   @map("usuario_id") @db.Uuid
+  clienteId String   @map("cliente_id") @db.Uuid
+  perfil    Perfil
+  cargo     String?
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  usuario Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cliente Cliente          @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  escopos EscopoSatelite[]
+
+  @@unique([usuarioId, clienteId])
+  @@index([clienteId])
+  @@map("vinculos_cliente")
+}
+
+model Unidade {
+  id              String      @id @default(uuid(7)) @db.Uuid
+  clienteId       String      @map("cliente_id") @db.Uuid
+  paiId           String?     @map("pai_id") @db.Uuid
+  nome            String
+  sigla           String?
+  tipo            TipoUnidade @default(SECRETARIA)
+  responsavelNome String?     @map("responsavel_nome")
+  responsavelEmail String?    @map("responsavel_email")
+  ativo           Boolean     @default(true)
+  criadoEm        DateTime    @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  cliente  Cliente          @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  pai      Unidade?         @relation("Hierarquia", fields: [paiId], references: [id], onDelete: Restrict)
+  filhas   Unidade[]        @relation("Hierarquia")
+  escopos  EscopoSatelite[]
+  demandas Demanda[]
+  acoes    Acao[]
+  ciclos   CicloAvaliacao[]
+
+  @@index([clienteId])
+  @@map("unidades")
+}
+
+// Unidades que um usuário satélite pode ver dentro do cliente.
+model EscopoSatelite {
+  id        String @id @default(uuid(7)) @db.Uuid
+  clienteId String @map("cliente_id") @db.Uuid
+  vinculoId String @map("vinculo_id") @db.Uuid
+  unidadeId String @map("unidade_id") @db.Uuid
+
+  cliente Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  vinculo VinculoCliente @relation(fields: [vinculoId], references: [id], onDelete: Cascade)
+  unidade Unidade        @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+
+  @@unique([vinculoId, unidadeId])
+  @@index([clienteId])
+  @@map("escopos_satelite")
+}
+
+// ───────────────────────── Normas (catálogo global) ─────────────────────────
+
+model Norma {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  codigo         String
+  versao         String
+  titulo         String
+  orgaoEmissor   String    @map("orgao_emissor")
+  dataPublicacao DateTime? @map("data_publicacao") @db.Date
+  fonteUrl       String?   @map("fonte_url")
+  descricao      String?
+  ativo          Boolean   @default(true)
+  importadoEm    DateTime  @default(now()) @map("importado_em") @db.Timestamptz(3)
+
+  requisitos Requisito[]
+  ciclos     CicloAvaliacao[]
+
+  @@unique([codigo, versao])
+  @@map("normas")
+}
+
+model Requisito {
+  id            String        @id @default(uuid(7)) @db.Uuid
+  normaId       String        @map("norma_id") @db.Uuid
+  paiId         String?       @map("pai_id") @db.Uuid
+  codigo        String
+  ordem         Int
+  titulo        String
+  descricao     String?
+  orientacao    String?
+  fundamento    String?
+  avaliavel     Boolean       @default(true)
+  tiposEntidade TipoCliente[] @map("tipos_entidade")
+
+  norma     Norma               @relation(fields: [normaId], references: [id], onDelete: Cascade)
+  pai       Requisito?          @relation("Arvore", fields: [paiId], references: [id], onDelete: Cascade)
+  filhos    Requisito[]         @relation("Arvore")
+  respostas RespostaRequisito[]
+
+  @@unique([normaId, codigo])
+  @@index([paiId])
+  @@map("requisitos")
+}
+
+// ───────────────────────── Autoavaliação ─────────────────────────
+
+enum StatusCiclo {
+  EM_ANDAMENTO
+  CONCLUIDO
+  ARQUIVADO
+}
+
+enum SituacaoRequisito {
+  NAO_AVALIADO
+  ATENDIDO
+  PARCIALMENTE_ATENDIDO
+  NAO_ATENDIDO
+  NAO_APLICAVEL
+}
+
+model CicloAvaliacao {
+  id          String      @id @default(uuid(7)) @db.Uuid
+  clienteId   String      @map("cliente_id") @db.Uuid
+  normaId     String      @map("norma_id") @db.Uuid
+  unidadeId   String?     @map("unidade_id") @db.Uuid
+  nome        String
+  dataInicio  DateTime    @map("data_inicio") @db.Date
+  dataFim     DateTime?   @map("data_fim") @db.Date
+  status      StatusCiclo @default(EM_ANDAMENTO)
+  criadoPorId String      @map("criado_por_id") @db.Uuid
+  criadoEm    DateTime    @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  cliente   Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  norma     Norma               @relation(fields: [normaId], references: [id], onDelete: Restrict)
+  unidade   Unidade?            @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
+  respostas RespostaRequisito[]
+  planos    PlanoAcao[]
+
+  @@index([clienteId])
+  @@map("ciclos_avaliacao")
+}
+
+model RespostaRequisito {
+  id              String            @id @default(uuid(7)) @db.Uuid
+  clienteId       String            @map("cliente_id") @db.Uuid
+  cicloId         String            @map("ciclo_id") @db.Uuid
+  requisitoId     String            @map("requisito_id") @db.Uuid
+  situacao        SituacaoRequisito @default(NAO_AVALIADO)
+  observacao      String?
+  evidencia       String?
+  respondidoPorId String?           @map("respondido_por_id") @db.Uuid
+  respondidoEm    DateTime?         @map("respondido_em") @db.Timestamptz(3)
+
+  cliente    Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  ciclo      CicloAvaliacao @relation(fields: [cicloId], references: [id], onDelete: Cascade)
+  requisito  Requisito      @relation(fields: [requisitoId], references: [id], onDelete: Restrict)
+  acoes      Acao[]
+  documentos Documento[]
+
+  @@unique([cicloId, requisitoId])
+  @@index([clienteId])
+  @@map("respostas_requisito")
+}
+
+// ───────────────────────── Plano de ação (5W2H) ─────────────────────────
+
+enum OrigemPlano {
+  REQUISITO
+  AUDITORIA
+  MEDIDA
+  DETERMINACAO_TC
+  OUTRA
+}
+
+enum StatusPlano {
+  RASCUNHO
+  EM_EXECUCAO
+  CONCLUIDO
+  CANCELADO
+}
+
+enum StatusAcao {
+  PENDENTE
+  EM_ANDAMENTO
+  AGUARDANDO_VALIDACAO
+  CONCLUIDA
+  CANCELADA
+}
+
+model PlanoAcao {
+  id          String      @id @default(uuid(7)) @db.Uuid
+  clienteId   String      @map("cliente_id") @db.Uuid
+  cicloId     String?     @map("ciclo_id") @db.Uuid
+  titulo      String
+  descricao   String?
+  origem      OrigemPlano
+  status      StatusPlano @default(RASCUNHO)
+  criadoPorId String      @map("criado_por_id") @db.Uuid
+  criadoEm    DateTime    @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  cliente Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  ciclo   CicloAvaliacao? @relation(fields: [cicloId], references: [id], onDelete: SetNull)
+  acoes   Acao[]
+
+  @@index([clienteId])
+  @@map("planos_acao")
+}
+
+model Acao {
+  id                   String     @id @default(uuid(7)) @db.Uuid
+  clienteId            String     @map("cliente_id") @db.Uuid
+  planoId              String     @map("plano_id") @db.Uuid
+  respostaRequisitoId  String?    @map("resposta_requisito_id") @db.Uuid
+  unidadeResponsavelId String?    @map("unidade_responsavel_id") @db.Uuid
+  oQue                 String     @map("o_que")
+  porQue               String?    @map("por_que")
+  onde                 String?
+  prazo                DateTime?  @db.Date
+  responsavel          String?
+  como                 String?
+  custoEstimado        Decimal?   @map("custo_estimado") @db.Decimal(14, 2)
+  status               StatusAcao @default(PENDENTE)
+  percentual           Int        @default(0)
+  validadoPorId        String?    @map("validado_por_id") @db.Uuid
+  validadoEm           DateTime?  @map("validado_em") @db.Timestamptz(3)
+  parecerValidacao     String?    @map("parecer_validacao")
+  criadoEm             DateTime   @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm         DateTime   @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  cliente            Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  plano              PlanoAcao          @relation(fields: [planoId], references: [id], onDelete: Cascade)
+  respostaRequisito  RespostaRequisito? @relation(fields: [respostaRequisitoId], references: [id], onDelete: SetNull)
+  unidadeResponsavel Unidade?           @relation(fields: [unidadeResponsavelId], references: [id], onDelete: SetNull)
+  demandas           Demanda[]
+  documentos         Documento[]
+
+  @@index([clienteId])
+  @@index([planoId])
+  @@map("acoes")
+}
+
+// ───────────────────────── Demandas e tramitação ─────────────────────────
+
+enum StatusDemanda {
+  ENVIADA
+  VISUALIZADA
+  RESPONDIDA
+  EM_ANALISE
+  DEVOLVIDA
+  CONCLUIDA
+  CANCELADA
+}
+
+enum Prioridade {
+  BAIXA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum TipoTramite {
+  ENVIO
+  VISUALIZACAO
+  RESPOSTA
+  ANALISE
+  DEVOLUCAO
+  CONCLUSAO
+  CANCELAMENTO
+  PRORROGACAO_SOLICITADA
+  PRORROGACAO_DEFERIDA
+  PRORROGACAO_INDEFERIDA
+  COMENTARIO
+}
+
+model Demanda {
+  id               String        @id @default(uuid(7)) @db.Uuid
+  clienteId        String        @map("cliente_id") @db.Uuid
+  numero           Int
+  ano              Int
+  assunto          String
+  descricao        String
+  unidadeDestinoId String        @map("unidade_destino_id") @db.Uuid
+  acaoId           String?       @map("acao_id") @db.Uuid
+  prazo            DateTime      @db.Date
+  prioridade       Prioridade    @default(MEDIA)
+  status           StatusDemanda @default(ENVIADA)
+  criadoPorId      String        @map("criado_por_id") @db.Uuid
+  criadoEm         DateTime      @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm     DateTime      @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  cliente        Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  unidadeDestino Unidade             @relation(fields: [unidadeDestinoId], references: [id], onDelete: Restrict)
+  acao           Acao?               @relation(fields: [acaoId], references: [id], onDelete: SetNull)
+  tramites       TramitacaoDemanda[]
+  documentos     Documento[]
+
+  @@unique([clienteId, ano, numero])
+  @@index([clienteId, status])
+  @@index([unidadeDestinoId])
+  @@map("demandas")
+}
+
+// Histórico imutável: UPDATE e DELETE bloqueados por trigger.
+model TramitacaoDemanda {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  clienteId      String         @map("cliente_id") @db.Uuid
+  demandaId      String         @map("demanda_id") @db.Uuid
+  tipo           TipoTramite
+  statusAnterior StatusDemanda? @map("status_anterior")
+  statusNovo     StatusDemanda? @map("status_novo")
+  texto          String?
+  novoPrazo      DateTime?      @map("novo_prazo") @db.Date
+  usuarioId      String         @map("usuario_id") @db.Uuid
+  usuarioNome    String         @map("usuario_nome")
+  criadoEm       DateTime       @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  cliente    Cliente     @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  demanda    Demanda     @relation(fields: [demandaId], references: [id], onDelete: Cascade)
+  documentos Documento[]
+
+  @@index([demandaId])
+  @@index([clienteId])
+  @@map("tramitacoes_demanda")
+}
+
+// ───────────────────────── Documentos ─────────────────────────
+
+model Documento {
+  id                  String   @id @default(uuid(7)) @db.Uuid
+  clienteId           String   @map("cliente_id") @db.Uuid
+  nome                String
+  mimeType            String   @map("mime_type")
+  tamanho             Int
+  sha256              String   @db.Char(64)
+  storageKey          String   @unique @map("storage_key")
+  enviadoPorId        String   @map("enviado_por_id") @db.Uuid
+  demandaId           String?  @map("demanda_id") @db.Uuid
+  tramiteId           String?  @map("tramite_id") @db.Uuid
+  respostaRequisitoId String?  @map("resposta_requisito_id") @db.Uuid
+  acaoId              String?  @map("acao_id") @db.Uuid
+  criadoEm            DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  cliente           Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  demanda           Demanda?           @relation(fields: [demandaId], references: [id], onDelete: SetNull)
+  tramite           TramitacaoDemanda? @relation(fields: [tramiteId], references: [id], onDelete: SetNull)
+  respostaRequisito RespostaRequisito? @relation(fields: [respostaRequisitoId], references: [id], onDelete: SetNull)
+  acao              Acao?              @relation(fields: [acaoId], references: [id], onDelete: SetNull)
+
+  @@index([clienteId])
+  @@index([demandaId])
+  @@map("documentos")
+}
+
+// ───────────────────────── Trilha de auditoria ─────────────────────────
+
+// Somente inserção: UPDATE e DELETE bloqueados por trigger.
+model LogAuditoria {
+  id         BigInt   @id @default(autoincrement())
+  clienteId  String?  @map("cliente_id") @db.Uuid
+  usuarioId  String?  @map("usuario_id") @db.Uuid
+  acao       String
+  entidade   String?
+  entidadeId String?  @map("entidade_id")
+  dados      Json?
+  ip         String?
+  criadoEm   DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  cliente Cliente? @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+
+  @@index([clienteId, criadoEm])
+  @@map("log_auditoria")
+}
