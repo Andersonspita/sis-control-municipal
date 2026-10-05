@@ -30,6 +30,13 @@ async function main() {
     );
     await client.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${user}`);
     await client.query(`GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ${user}`);
+    // As migrações só concedem estes privilégios se o papel já existir quando rodam.
+    const { rowCount: temFuncao } = await client.query(
+      "SELECT 1 FROM pg_proc WHERE proname = 'app_unidades_satelite'",
+    );
+    if (temFuncao) {
+      await client.query(`GRANT EXECUTE ON FUNCTION app_unidades_satelite() TO ${user}`);
+    }
     console.log(`Papel ${user} pronto no banco ${db}.`);
   } finally {
     await client.end();
