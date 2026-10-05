@@ -27,7 +27,10 @@ export async function criarSessao(usuarioId: string, clienteAtivoId: string | nu
   const token = await assinarToken(sid, expiraEm);
   (await cookies()).set(COOKIE_SESSAO, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // COOKIE_SEGURO=false permite acesso por HTTP (ex.: só pelo IP, sem certificado).
+    secure: process.env.COOKIE_SEGURO
+      ? process.env.COOKIE_SEGURO === "true"
+      : process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     expires: expiraEm,
