@@ -2,6 +2,11 @@
 # `descricao` reproduz o texto oficial (aprovada em 21/12/2005).
 #
 # aplicavel_a: "todos" | "executivo" (todos exceto Câmara) | "legislativo" (só Câmara) | lista de TipoCliente.
+# Classificação (herdada pelos filhos quando omitida; palavras_chave se acumulam):
+#   tipo: estrutural | procedimental | documental · peso: 1 (acessório) a 3 (essencial/sancionado), padrão 1
+#   macrofuncoes: auditoria_interna, controladoria, corregedoria, ouvidoria (OT 05/2024) e áreas controladas
+#   (planejamento_orcamento, contabilidade_financas, gestao_fiscal, receita, pessoal, patrimonio,
+#   licitacoes_contratos, obras, transferencias, transparencia) · periodicidade: texto livre.
 # Itens próprios da gestão do Executivo (receita, dívida ativa, precatórios, operações de crédito etc.)
 # estão marcados como "executivo"; o controlador pode ajustar a aplicabilidade em cada ciclo.
 
@@ -22,6 +27,11 @@ requisitos:
   # ─────────── Capítulo I, Seção I — Obrigatoriedade ───────────
   - codigo: "Art. 1º"
     titulo: Implantação e manutenção integrada do Sistema de Controle Interno
+    tipo: estrutural
+    peso: 3
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [sistema de controle interno]
     descricao: >-
       Os Poderes Executivo e Legislativo municipais implantarão e manterão, de forma integrada, Sistemas de
       Controle Interno Municipais, de conformidade com o mandamento contido no art. 74, I a IV, da Constituição da
@@ -32,6 +42,9 @@ requisitos:
   - codigo: "Art. 2º"
     titulo: Conceito de Sistema de Controle Interno Municipal
     avaliavel: false
+    tipo: estrutural
+    macrofuncoes: [controladoria]
+    palavras_chave: [conceito]
     descricao: >-
       Entende-se por Sistema de Controle Interno Municipal o conjunto de normas, regras, princípios, planos,
       métodos e procedimentos que, coordenados entre si, têm por objetivo efetivar a avaliação da gestão pública e
@@ -42,6 +55,9 @@ requisitos:
   - codigo: "Art. 3º"
     titulo: Garantias conferidas aos gestores pela manutenção do sistema
     avaliavel: false
+    tipo: estrutural
+    macrofuncoes: [controladoria]
+    palavras_chave: [garantias]
     descricao: >-
       A manutenção de Sistemas de Controle Interno Municipais confere aos Gestores a garantia de que se vejam
       cumpridas: I - a promoção de operações metódicas, regulares e repetidas que visem aferir, no processo de
@@ -55,6 +71,11 @@ requisitos:
 
   - codigo: "Art. 4º"
     titulo: Atividades exercidas por servidores do quadro permanente, sem delegação
+    tipo: estrutural
+    peso: 3
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [quadro permanente, indelegabilidade]
     descricao: >-
       As atividades inerentes ao controle interno serão exercidas em todos os níveis hierárquicos dos Poderes
       Executivo e Legislativo municipais, bem como das entidades da administração indireta do município, por
@@ -64,6 +85,11 @@ requisitos:
   # ─────────── Seção III — Suporte institucional ───────────
   - codigo: "Art. 5º"
     titulo: Órgão Central criado por lei e diretamente subordinado ao chefe do Poder
+    tipo: estrutural
+    peso: 3
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [órgão central, lei de criação, subordinação]
     descricao: >-
       As atividades dos Sistemas de Controle Interno Municipais serão atribuídas a unidades específicas – os Órgãos
       Centrais do Sistema - que, criadas por lei municipal, possuam estruturas condizentes com o porte e a
@@ -74,6 +100,8 @@ requisitos:
       - codigo: "Art. 5º, parágrafo único"
         titulo: Órgãos setoriais do Executivo reportando-se ao Órgão Central
         aplicavel_a: executivo
+        peso: 2
+        palavras_chave: [órgãos setoriais]
         descricao: >-
           O Sistema de Controle Interno do Poder Executivo terá como órgãos setoriais a Contabilidade, as
           Supervisões e Diretorias das Secretarias Municipais e os órgãos das entidades da administração indireta,
@@ -82,6 +110,11 @@ requisitos:
 
   - codigo: "Art. 6º"
     titulo: Unidade de controle interno sem outras atribuições
+    tipo: estrutural
+    peso: 2
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [exclusividade]
     descricao: >-
       O Sistema de Controle Interno Municipal não poderá ser alocado a unidade a criar ou já existente na estrutura
       do órgão municipal que seja, ou venha a ser, responsável por outro qualquer tipo de atividade que não a de
@@ -89,12 +122,22 @@ requisitos:
 
   - codigo: "Art. 7º"
     titulo: Vedação de terceirização
+    tipo: estrutural
+    peso: 3
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [terceirização]
     descricao: >-
       É vedada, sob qualquer pretexto ou hipótese, a terceirização da implantação e manutenção do Sistema de
       Controle Interno Municipal, cujo exercício é de exclusiva competência do órgão que o instituiu.
 
   - codigo: "Art. 8º"
     titulo: Acesso irrestrito às informações
+    tipo: procedimental
+    peso: 2
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [acesso à informação]
     descricao: >-
       À unidade responsável pela manutenção do Sistema de Controle Interno Municipal não será negado o acesso a
       informações pertinentes ao objeto de sua ação por quaisquer unidades da estrutura do órgão ou entidade
@@ -104,6 +147,9 @@ requisitos:
   - codigo: "Art. 9º"
     titulo: Finalidades do Sistema de Controle Interno
     avaliavel: false
+    tipo: estrutural
+    macrofuncoes: [controladoria]
+    palavras_chave: [finalidades]
     descricao: >-
       Constituem finalidades do Sistema de Controle Interno Municipal: I - avaliar o cumprimento das metas
       previstas no plano plurianual, a execução dos programas de governo e do orçamento do município; II -
@@ -117,18 +163,29 @@ requisitos:
   - codigo: "Art. 10"
     titulo: Competências do Sistema de Controle Interno
     avaliavel: false
+    tipo: procedimental
+    peso: 2
+    palavras_chave: [competências]
     descricao: >-
       Compete ao Sistema de Controle Interno Municipal, além de outras atividades que forem fixadas por lei
       municipal no ato de criação da unidade administrativa pertinente:
     filhos:
       - codigo: "Art. 10, I"
         titulo: Normatizar, sistematizar e padronizar procedimentos operacionais
+        macrofuncoes: [controladoria]
+        periodicidade: permanente
+        palavras_chave: [normas internas, padronização]
         descricao: >-
           normatizar, sistematizar e padronizar os procedimentos operacionais dos órgãos municipais, observadas as
           disposições da Lei Complementar nº 6, de 06.12.91, a Lei Orgânica do Tribunal de Contas dos Municípios, e
           demais normas editadas pela Corte;
       - codigo: "Art. 10, II"
         titulo: Verificar a consistência do Relatório de Gestão Fiscal e assiná-lo
+        tipo: documental
+        peso: 3
+        macrofuncoes: [gestao_fiscal, transparencia]
+        periodicidade: quadrimestral
+        palavras_chave: [RGF, LRF]
         descricao: >-
           verificar a consistência dos dados contidos no Relatório de Gestão Fiscal, conforme estabelecido pelo
           art. 54 da Lei Complementar nº 101, de 04.05.00, o qual será assinado, também, pelo chefe da unidade
@@ -136,55 +193,94 @@ requisitos:
       - codigo: "Art. 10, III"
         titulo: Controlar operações de crédito, garantias, direitos e haveres
         aplicavel_a: executivo
+        macrofuncoes: [gestao_fiscal]
+        periodicidade: permanente
+        palavras_chave: [operações de crédito, garantias]
         descricao: exercer o controle das operações de crédito, garantias, direitos e haveres do município;
       - codigo: "Art. 10, IV"
         titulo: Verificar recondução da dívida aos limites da LRF
         aplicavel_a: executivo
+        macrofuncoes: [gestao_fiscal]
+        periodicidade: quadrimestral
+        palavras_chave: [dívida consolidada, LRF]
         descricao: >-
           verificar a adoção de providências para recondução dos montantes das dívidas consolidada e mobiliária aos
           limites de que trata a Lei Complementar nº 101/00;
       - codigo: "Art. 10, V"
         titulo: Verificar retorno da despesa com pessoal ao limite
+        peso: 3
+        macrofuncoes: [gestao_fiscal, pessoal]
+        periodicidade: quadrimestral
+        palavras_chave: [despesa com pessoal, LRF]
         descricao: >-
           verificar e avaliar a adoção de medidas para o retorno da despesa total com pessoal ao limite de que
           tratam os arts. 22 e 23 da Lei Complementar nº 101/00;
       - codigo: "Art. 10, VI"
         titulo: Verificar limites de operações de crédito e de Restos a Pagar
+        macrofuncoes: [gestao_fiscal]
+        periodicidade: anual
+        palavras_chave: [operações de crédito, restos a pagar]
         descricao: >-
           verificar a observância dos limites e das condições para realização de operações de crédito e inscrição
           em Restos a Pagar;
       - codigo: "Art. 10, VII"
         titulo: Verificar destinação de recursos de alienação de ativos
         aplicavel_a: executivo
+        peso: 1
+        macrofuncoes: [gestao_fiscal, patrimonio]
+        periodicidade: anual
+        palavras_chave: [alienação de ativos]
         descricao: >-
           verificar a destinação de recursos obtidos com a alienação de ativos, tendo em vista as restrições
           constitucionais e as da Lei Complementar nº 101/00;
       - codigo: "Art. 10, VIII"
         titulo: Avaliar metas do PPA, LDO e Anexo de Metas Fiscais
+        peso: 3
+        macrofuncoes: [planejamento_orcamento]
+        periodicidade: anual
+        palavras_chave: [PPA, LDO, metas fiscais]
         descricao: >-
           avaliar o cumprimento das metas estabelecidas no Plano Plurianual, na Lei de Diretrizes Orçamentárias e
           no Anexo de Metas Fiscais;
       - codigo: "Art. 10, IX"
         titulo: Avaliar eficácia e eficiência da gestão orçamentária, financeira e patrimonial
+        macrofuncoes: [planejamento_orcamento, contabilidade_financas]
+        periodicidade: anual
+        palavras_chave: [eficácia, eficiência]
         descricao: >-
           avaliar os resultados, quanto à eficácia e eficiência, da gestão orçamentária, financeira e patrimonial
           dos órgãos e entidades municipais;
       - codigo: "Art. 10, X"
         titulo: Fiscalizar e avaliar a execução dos programas de governo
+        macrofuncoes: [planejamento_orcamento]
+        periodicidade: anual
+        palavras_chave: [programas de governo]
         descricao: fiscalizar e avaliar a execução dos programas de governo;
       - codigo: "Art. 10, XI"
         titulo: Realizar auditorias sobre a gestão de recursos, subvenções e renúncia de receitas
+        peso: 3
+        macrofuncoes: [auditoria_interna, transferencias]
+        periodicidade: anual
+        palavras_chave: [auditoria, subvenções, renúncia de receita]
         descricao: >-
           realizar auditorias sobre a gestão dos recursos públicos municipais sob a responsabilidade de órgãos e
           entidades públicos e privados, bem como sobre a aplicação de subvenções e renúncia de receitas;
       - codigo: "Art. 10, XII"
         titulo: Apurar atos ilegais ou irregulares e dar ciência ao controle externo
+        peso: 3
+        macrofuncoes: [corregedoria]
+        periodicidade: por evento
+        palavras_chave: [irregularidades, controle externo]
         descricao: >-
           apurar os atos ou fatos inquinados de ilegais ou irregulares, praticados por agentes públicos ou
           privados, na utilização de recursos públicos municipais, dar ciência ao controle externo e, quando for o
           caso, comunicar à unidade responsável pela contabilidade, para as providências cabíveis;
       - codigo: "Art. 10, XIII"
         titulo: Verificar legalidade de licitações e contratos
+        peso: 3
+        macrofuncoes: [licitacoes_contratos]
+        periodicidade: por evento
+        palavras_chave: [licitações, contratos]
         descricao: >-
           verificar a legalidade e a adequação aos princípios e regras estabelecidos pela Lei Federal nº 8.666/93
           dos procedimentos licitatórios e respectivos contratos efetivados e celebrados pelos órgãos e entidades
@@ -195,6 +291,9 @@ requisitos:
   - codigo: "Art. 11"
     titulo: Operações objeto de acompanhamento e controle específicos
     avaliavel: false
+    tipo: procedimental
+    macrofuncoes: [controladoria]
+    palavras_chave: [acompanhamento]
     descricao: >-
       Serão objeto de acompanhamentos e controles específicos por parte do órgão responsável pelo Sistema de
       Controle Interno Municipal: I - a execução orçamentária e financeira; II - o sistema de pessoal (ativo e
@@ -209,6 +308,9 @@ requisitos:
   - codigo: "Art. 12"
     titulo: Atividades de controle
     avaliavel: false
+    tipo: procedimental
+    peso: 2
+    palavras_chave: [atividades de controle]
     descricao: >-
       Para o pleno exercício de sua competência, os Sistemas de Controle Interno Municipais deverão desempenhar,
       dentre outras, as seguintes atividades de controle:
@@ -216,30 +318,51 @@ requisitos:
       - codigo: "Art. 12, I"
         titulo: Execução Orçamentária e Financeira
         avaliavel: false
+        macrofuncoes: [contabilidade_financas]
+        periodicidade: mensal
+        palavras_chave: [execução orçamentária]
         filhos:
           - codigo: "Art. 12, I, a"
             titulo: Registros contábeis e livros conforme a Lei nº 4.320/64
+            tipo: documental
+            palavras_chave: [registros contábeis, Lei 4.320/64]
             descricao: >-
               verificar a existência, atualização e adequação dos registros dos Livros ou Fichas de Controle
               Orçamentário, do Diário, do Razão, do Caixa, dos Boletins de Tesouraria e dos Livros da Dívida Ativa
               com as normas constantes da Lei nº 4.320/64 e legislação pertinente;
           - codigo: "Art. 12, I, b"
             titulo: Guarda dos livros nos arquivos do órgão
+            tipo: documental
+            peso: 1
+            periodicidade: permanente
+            palavras_chave: [arquivo]
             descricao: >-
               verificar se a guarda dos Livros está sendo feita nos arquivos do órgão ou entidade, já que é vedada
               sua permanência em escritórios de contabilidade;
           - codigo: "Art. 12, I, c"
             titulo: Livros informatizados impressos, encadernados e assinados
+            tipo: documental
+            peso: 1
+            periodicidade: anual
+            palavras_chave: [livros contábeis]
             descricao: >-
               verificar se os Livros informatizados estão devidamente impressos, encadernados e assinados pela
               autoridade competente;
           - codigo: "Art. 12, I, d"
             titulo: Autorização legislativa para créditos adicionais e remanejamentos
+            peso: 3
+            macrofuncoes: [planejamento_orcamento]
+            periodicidade: por evento
+            palavras_chave: [créditos adicionais, remanejamento]
             descricao: >-
               verificar a existência de autorização legislativa para abertura de créditos adicionais,
               transposição, transferência e remanejamento de recursos de uma categoria de programação para outra;
           - codigo: "Art. 12, I, e"
             titulo: Prazos de publicação do RREO e do RGF
+            peso: 3
+            macrofuncoes: [transparencia, gestao_fiscal]
+            periodicidade: bimestral
+            palavras_chave: [RREO, RGF, publicação]
             descricao: >-
               verificar o cumprimento dos prazos para publicação dos relatórios da Lei Complementar nº 101/00, a
               exemplo dos Relatórios Resumidos de Execução Orçamentária e Relatório de Gestão Fiscal.
@@ -247,9 +370,15 @@ requisitos:
       - codigo: "Art. 12, II"
         titulo: Sistema de Pessoal
         avaliavel: false
+        macrofuncoes: [pessoal]
+        periodicidade: mensal
+        palavras_chave: [pessoal]
         filhos:
           - codigo: "Art. 12, II, a"
             titulo: Fichas funcionais e financeiras individualizadas
+            tipo: documental
+            periodicidade: permanente
+            palavras_chave: [fichas funcionais]
             descricao: >-
               verificar a existência de registros/fichas funcionais e financeiras individualizados dos servidores do
               órgão ou entidade, aí se incluindo os ocupantes de cargos de provimento permanente ou efetivos, ativos
@@ -257,35 +386,55 @@ requisitos:
               regime celetário;
           - codigo: "Art. 12, II, b"
             titulo: Registros de dados pessoais e da vida funcional
+            tipo: documental
+            peso: 1
+            periodicidade: permanente
+            palavras_chave: [assentamentos funcionais]
             descricao: >-
               verificar a existência de registros contendo dados pessoais dos servidores e empregados, atos e datas
               de admissões, cargos ocupados ou funções exercidas, lotações, remunerações e alterações ocorridas em
               suas vidas profissionais;
           - codigo: "Art. 12, II, c"
             titulo: Registros atualizados de pensões e aposentadorias
+            tipo: documental
+            periodicidade: permanente
+            palavras_chave: [aposentadorias, pensões]
             descricao: >-
               verificar a existência de registros atualizados das pensões e aposentadorias concedidas, identificando
               os nomes dos beneficiados e as respectivas fundamentações legais;
           - codigo: "Art. 12, II, d"
             titulo: Controle de frequência e prontuários organizados
+            palavras_chave: [frequência, prontuários]
             descricao: >-
               verificar a existência de controles de freqüências, arquivos e prontuários atualizados e organizados;
           - codigo: "Art. 12, II, e"
             titulo: Programas de capacitação continuada
+            peso: 1
+            periodicidade: anual
+            palavras_chave: [capacitação]
             descricao: verificar a existência de programas de capacitação continuada de servidores e empregados;
           - codigo: "Art. 12, II, f"
             titulo: Segregação entre cadastro e folha de pagamento
+            peso: 3
+            periodicidade: permanente
+            palavras_chave: [segregação de funções, folha de pagamento]
             descricao: verificar a existência de segregação das funções de cadastro e de folha de pagamento;
           - codigo: "Art. 12, II, g"
             titulo: Recadastramento periódico de inativos e pensionistas
+            periodicidade: anual
+            palavras_chave: [recadastramento, inativos]
             descricao: verificar a realização de recadastramento periódico de servidores inativos e pensionistas;
           - codigo: "Art. 12, II, h"
             titulo: Acompanhamento de contratos por tempo determinado
+            palavras_chave: [contratação temporária]
             descricao: >-
               efetivar o acompanhamento de contratos de servidores por tempo determinado, analisando sua legalidade
               e visando a observância das obrigações contratuais neles contidas;
           - codigo: "Art. 12, II, i"
             titulo: Envio trimestral de informações de pessoal à Inspetoria Regional
+            tipo: documental
+            periodicidade: trimestral
+            palavras_chave: [Inspetoria Regional, TCM]
             descricao: >-
               verificar se estão sendo encaminhados, trimestralmente, à Inspetoria Regional do TCM à qual esteja
               jurisdicionado o órgão ou entidade, informações sobre o número total de servidores públicos e
@@ -293,16 +442,25 @@ requisitos:
               Resolução TCM nº 395/99;
           - codigo: "Art. 12, II, j"
             titulo: Legalidade e legitimidade dos gastos com folha
+            peso: 3
+            palavras_chave: [folha de pagamento]
             descricao: >-
               efetivar análise da legalidade e legitimidade dos gastos com folhas de pagamento dos órgãos e
               entidades da administração direta e indireta municipal;
           - codigo: "Art. 12, II, k"
             titulo: Relatórios gerenciais de recursos humanos
+            tipo: documental
+            peso: 1
+            palavras_chave: [relatórios gerenciais]
             descricao: >-
               verificar a existência e geração constante e freqüente de relatórios gerenciais relativos aos recursos
               humanos dos órgãos e entidades da administração direta e indireta municipal;
           - codigo: "Art. 12, II, l"
             titulo: Limites de despesa com pessoal
+            peso: 3
+            macrofuncoes: [pessoal, gestao_fiscal]
+            periodicidade: quadrimestral
+            palavras_chave: [despesa com pessoal, LRF]
             descricao: >-
               verificar se estão sendo cumpridos os limites relativos a despesa de pessoal estabelecidos por
               legislação federal.
@@ -310,73 +468,114 @@ requisitos:
       - codigo: "Art. 12, III"
         titulo: Bens Patrimoniais
         avaliavel: false
+        macrofuncoes: [patrimonio]
+        periodicidade: permanente
+        palavras_chave: [bens patrimoniais]
         filhos:
           - codigo: "Art. 12, III, a"
             titulo: Inventário físico anual
+            peso: 3
+            periodicidade: anual
+            palavras_chave: [inventário]
             descricao: >-
               verificar a realização de inventários físicos periódicos dos bens patrimoniais em períodos não
               superiores a (01) um ano;
           - codigo: "Art. 12, III, b"
             titulo: Numeração sequencial de registro patrimonial
+            tipo: documental
+            peso: 1
+            palavras_chave: [tombamento]
             descricao: >-
               verificar se os bens de natureza permanente receberam números seqüenciais de registro patrimonial para
               identificação e inventário, por ocasião da aquisição ou da incorporação ao patrimônio;
           - codigo: "Art. 12, III, c"
             titulo: Identificação física (plaqueta, etiqueta ou carimbo)
+            peso: 1
+            palavras_chave: [plaqueta]
             descricao: >-
               verificar se a numeração foi efetuada mediante gravação, fixação de plaqueta ou etiqueta apropriada e
               carimbo, no caso de material bibliográfico;
           - codigo: "Art. 12, III, d"
             titulo: Fichas ou livros de inventário completos
+            tipo: documental
+            palavras_chave: [inventário]
             descricao: >-
               verificar se os bens estão registrados em fichas ou livros de inventário, dos quais constem data de
               aquisição, incorporação ou baixa, descrição do bem, quantidade, valor, número do processo e
               identificação do responsável por sua guarda e conservação;
           - codigo: "Art. 12, III, e"
             titulo: Arquivo de notas fiscais de bens móveis
+            tipo: documental
+            peso: 1
+            palavras_chave: [notas fiscais]
             descricao: verificar a existência de arquivos de notas fiscais para bens móveis;
           - codigo: "Art. 12, III, f"
             titulo: Termos de responsabilidade
+            tipo: documental
+            palavras_chave: [termo de responsabilidade]
             descricao: verificar a existência de termos de responsabilidades sobre um bem ou sobre um lote de bens.
 
       - codigo: "Art. 12, IV"
         titulo: Bens em Almoxarifado
         avaliavel: false
+        macrofuncoes: [patrimonio]
+        periodicidade: permanente
+        palavras_chave: [almoxarifado, estoque]
         filhos:
           - codigo: "Art. 12, IV, a"
             titulo: Registro de entradas, saídas, custos e destinação
+            tipo: documental
+            palavras_chave: [entradas e saídas]
             descricao: >-
               verificar a existência de arquivos de registro de materiais e bens que, processados em fichas ou
               magneticamente, contenham a data de entrada e saída do material, sua especificação, sua quantidade e
               custo e sua destinação, com base nas requisições de materiais;
           - codigo: "Art. 12, IV, b"
             titulo: Documento padrão de requisição de material
+            tipo: documental
+            peso: 1
+            palavras_chave: [requisição de material]
             descricao: verificar a existência e utilização de documento padrão para a requisição de material;
           - codigo: "Art. 12, IV, c"
             titulo: Normas sobre responsáveis pelas requisições
+            peso: 1
+            palavras_chave: [requisição de material]
             descricao: >-
               verificar a existência de normas que definam quais os responsáveis pelas assinaturas das requisições
               de material;
           - codigo: "Art. 12, IV, d"
             titulo: Controle sistemático dos níveis de estoque
+            palavras_chave: [nível de estoque]
             descricao: verificar se os níveis de estoque estão sendo controlados e atualizados sistematicamente;
           - codigo: "Art. 12, IV, e"
             titulo: Estoque de encerramento registrado no sistema patrimonial
+            tipo: documental
+            macrofuncoes: [patrimonio, contabilidade_financas]
+            periodicidade: anual
+            palavras_chave: [estoque de encerramento]
             descricao: >-
               verificar se o valor total do estoque apurado no encerramento do exercício ou da gestão financeira vem
               sendo registrado no sistema patrimonial;
           - codigo: "Art. 12, IV, f"
             titulo: Condições de acondicionamento
+            peso: 1
+            palavras_chave: [acondicionamento]
             descricao: >-
               verificar as condições de acondicionamento de bens e materiais, no que concerne à segurança,
               iluminação, ventilação, etc.;
           - codigo: "Art. 12, IV, g"
             titulo: Registro diário e balancetes mensais
+            tipo: documental
+            periodicidade: mensal
+            palavras_chave: [balancetes]
             descricao: >-
               verificar a existência de registro diário das entradas e saídas do almoxarifado bem como da confecção
               de balancetes mensais;
           - codigo: "Art. 12, IV, h"
             titulo: Controle do recebimento de bens e serviços
+            peso: 3
+            periodicidade: por evento
+            palavras_chave: [recebimento, liquidação]
             descricao: >-
               verificar a existência de controle das compras e aquisições de bens e serviços, seja através de
               boletins de medição de serviços, seja mediante a aferição da quantidade e qualidade do bem entregue.
@@ -384,50 +583,80 @@ requisitos:
       - codigo: "Art. 12, V"
         titulo: Veículos e Combustíveis
         avaliavel: false
+        macrofuncoes: [patrimonio]
+        periodicidade: permanente
+        palavras_chave: [frota, veículos]
         filhos:
           - codigo: "Art. 12, V, a"
             titulo: Fichas de registro de veículos
+            tipo: documental
+            peso: 1
+            palavras_chave: [fichas de veículos]
             descricao: >-
               verificar a existência de fichas de registros de veículos contendo informações sobre marca, cor, ano de
               fabricação, tipo, número da nota fiscal, modelo, número do motor e do chassi, placa e número de
               registro no Detran;
           - codigo: "Art. 12, V, b"
             titulo: Autorizações de abastecimento
+            tipo: documental
+            periodicidade: por evento
+            palavras_chave: [combustível, abastecimento]
             descricao: >-
               verificar a existência de autorizações para abastecimento de veículos e equipamentos devidamente
               implantadas;
           - codigo: "Art. 12, V, c"
             titulo: Mapas de quilometragem e abastecimento
+            tipo: documental
+            periodicidade: mensal
+            palavras_chave: [quilometragem, combustível]
             descricao: verificar a existência de mapas de controle de quilometragem e abastecimento;
           - codigo: "Art. 12, V, d"
             titulo: Controle de desempenho para revisões e manutenções
+            peso: 1
+            palavras_chave: [manutenção]
             descricao: >-
               verificar a existência de mapas de controle do desempenho dos veículos para a promoção de revisões
               e/ou manutenções;
           - codigo: "Art. 12, V, e"
             titulo: Controle de reposição de peças e pneus
+            peso: 1
+            palavras_chave: [peças, pneus]
             descricao: >-
               verificar a existência de controle sobre reposições de peças em veículos, incluindo-se pneus.
 
       - codigo: "Art. 12, VI"
         titulo: Licitações, Contratos, Convênios, Acordos e Ajustes
         avaliavel: false
+        macrofuncoes: [licitacoes_contratos]
+        periodicidade: por evento
+        palavras_chave: [licitações, contratos]
         filhos:
           - codigo: "Art. 12, VI, a"
             titulo: Cadastro atualizado de fornecedores
+            tipo: documental
+            periodicidade: permanente
+            palavras_chave: [cadastro de fornecedores]
             descricao: >-
               verificar a existência de cadastro atualizado de empresas que forneçam materiais ou equipamentos;
           - codigo: "Art. 12, VI, b"
             titulo: Registros e atas da comissão de licitação
+            tipo: documental
+            palavras_chave: [comissão de licitação, atas]
             descricao: verificar a existência de registros e atas das ações da comissão de licitação;
           - codigo: "Art. 12, VI, c"
             titulo: Acompanhamento de vigência e pagamentos dos contratos
+            peso: 3
+            periodicidade: mensal
+            palavras_chave: [vigência, fiscalização de contratos]
             descricao: >-
               verificar a existência de acompanhamento dos contratos celebrados pela administração no que tange à
               vigência, pagamento de parcelas, etc.;
           - codigo: "Art. 12, VI, d"
             titulo: Tabela municipal de registro de preços
             aplicavel_a: executivo
+            tipo: documental
+            periodicidade: permanente
+            palavras_chave: [registro de preços]
             descricao: >-
               verificar a existência de tabelas de registro de preços municipais elaborada pelo Poder Executivo
               municipal e se os órgãos e entidades municipais fazem uso dela, compatibilizando os preços constantes
@@ -436,67 +665,108 @@ requisitos:
       - codigo: "Art. 12, VII"
         titulo: Obras Públicas, inclusive Reformas
         avaliavel: false
+        macrofuncoes: [obras]
+        periodicidade: por evento
+        palavras_chave: [obras públicas, engenharia]
         filhos:
           - codigo: "Art. 12, VII, a"
             titulo: Registro das obras conforme o SICOB
+            tipo: documental
+            palavras_chave: [SICOB]
             descricao: >-
               verificar os registros das obras/serviços de engenharia executado e/ou em execução no município, de
               acordo com as regras constantes de Resolução do TCM que trata do Sistema SICOB;
           - codigo: "Art. 12, VII, b"
             titulo: Cadastro de fornecedores de obras à disposição do TCM
+            tipo: documental
+            peso: 1
+            palavras_chave: [cadastro de fornecedores]
             descricao: >-
               verificar a manutenção de cadastros atualizados de fornecedores de materiais, equipamentos e serviços
               destinados às obras, os quais deverão permanecer sempre à disposição do TCM;
           - codigo: "Art. 12, VII, c"
             titulo: Identificação das obras e arquivo da documentação
+            tipo: documental
+            peso: 1
+            palavras_chave: [arquivo]
             descricao: >-
               verificar se as obras/serviços de engenharia executadas ou em execução estão devidamente identificadas
               e a sua documentação arquivada em pastas especiais;
           - codigo: "Art. 12, VII, d"
             titulo: Projetos básico e executivo
+            tipo: documental
+            peso: 3
+            palavras_chave: [projeto básico, projeto executivo]
             descricao: verificar se existem projetos básico e executivo;
           - codigo: "Art. 12, VII, e"
             titulo: Procedimento licitatório prévio
+            peso: 3
+            macrofuncoes: [obras, licitacoes_contratos]
+            palavras_chave: [licitação]
             descricao: verificar se as obras/serviços de engenharia foram precedidos de procedimento licitatório;
           - codigo: "Art. 12, VII, f"
             titulo: Orçamento detalhado em planilhas
+            tipo: documental
+            palavras_chave: [orçamento, planilhas]
             descricao: >-
               verificar se foram elaborados orçamentos detalhados em planilhas que expressem a composição de todos os
               itens e preços unitários;
           - codigo: "Art. 12, VII, g"
             titulo: Indicação da dotação orçamentária
+            tipo: documental
+            macrofuncoes: [obras, planejamento_orcamento]
+            palavras_chave: [dotação orçamentária]
             descricao: verificar se foi indicada a dotação por onde deveria ocorrer a despesa;
           - codigo: "Art. 12, VII, h"
             titulo: Fotografias da situação pré-existente (reformas)
+            tipo: documental
+            peso: 1
+            palavras_chave: [fotografias]
             descricao: >-
               verificar se foram providenciadas fotografias da situação pré-existente, no caso de reformas;
           - codigo: "Art. 12, VII, i"
             titulo: Contrato com a executora e termos aditivos
+            tipo: documental
+            macrofuncoes: [obras, licitacoes_contratos]
+            palavras_chave: [contrato, termos aditivos]
             descricao: >-
               verificar se foi firmado contrato com a empresa executora, bem como se o mesmo foi complementado por
               termos aditivos;
           - codigo: "Art. 12, VII, j"
             titulo: Ordem de início dos serviços
+            tipo: documental
+            peso: 1
+            palavras_chave: [ordem de serviço]
             descricao: verificar se foi expedida ordem de início dos serviços;
           - codigo: "Art. 12, VII, k"
             titulo: Pagamentos com base em boletins de medição
+            peso: 3
+            palavras_chave: [medição]
             descricao: >-
               verificar se os pagamentos das obras/serviços de engenharia foram efetuados com base nos boletins de
               medições;
           - codigo: "Art. 12, VII, l"
             titulo: Documentos fiscais vinculados às obras contratadas
+            tipo: documental
+            palavras_chave: [notas fiscais]
             descricao: >-
               verificar se as faturas, empenhos, notas fiscais e recibos se referem às obras contratadas;
           - codigo: "Art. 12, VII, m"
             titulo: Requisições e remanejamentos de materiais entre obras
+            peso: 1
+            palavras_chave: [materiais]
             descricao: >-
               verificar se ocorreram requisições de materiais, bem como se houve remanejamentos daqueles excedentes de
               ou para outras obras;
           - codigo: "Art. 12, VII, n"
             titulo: Recebimento provisório ou definitivo
+            tipo: documental
+            palavras_chave: [recebimento]
             descricao: verificar se as obras foram recebidas mediante termos provisórios ou definitivos;
           - codigo: "Art. 12, VII, o"
             titulo: Demais informações necessárias
+            tipo: documental
+            peso: 1
             descricao: >-
               solicitar e analisar demais informações consideradas necessárias para a perfeita caracterização dos
               serviços a serem executados.
@@ -505,9 +775,13 @@ requisitos:
         titulo: Operações de Crédito
         avaliavel: false
         aplicavel_a: executivo
+        macrofuncoes: [gestao_fiscal]
+        periodicidade: permanente
+        palavras_chave: [operações de crédito]
         filhos:
           - codigo: "Art. 12, VIII, a"
             titulo: Controle específico dos empréstimos tomados
+            palavras_chave: [empréstimos]
             descricao: >-
               verificar a existência de arquivos com controles específicos de todos os empréstimos tomados pelo
               município, contendo as autorizações legais para contraí-los, os contratos, valores, prazos,
@@ -518,9 +792,14 @@ requisitos:
         titulo: Limites de Endividamento
         avaliavel: false
         aplicavel_a: executivo
+        macrofuncoes: [gestao_fiscal]
+        periodicidade: quadrimestral
+        palavras_chave: [endividamento]
         filhos:
           - codigo: "Art. 12, IX, a"
             titulo: Alertas de proximidade do limite da dívida consolidada
+            peso: 3
+            palavras_chave: [dívida consolidada, alerta]
             descricao: >-
               verificar a emissão de alertas na hipóteses de a dívida consolidada do município encontrar-se próxima
               dos limites fixados na Resolução nº 40, do Senado Federal.
@@ -528,6 +807,9 @@ requisitos:
       - codigo: "Art. 12, X"
         titulo: Adiantamentos
         avaliavel: false
+        macrofuncoes: [contabilidade_financas]
+        periodicidade: por evento
+        palavras_chave: [adiantamentos, suprimento de fundos]
         filhos:
           - codigo: "Art. 12, X, a"
             titulo: Normas sobre concessão e prestação de contas de adiantamentos
@@ -536,6 +818,7 @@ requisitos:
               adiantamento e as regras para a sua concessão e prestação de contas;
           - codigo: "Art. 12, X, b"
             titulo: Ato definindo supridores e forma de prestação de contas
+            tipo: documental
             descricao: >-
               verificar a existência de ato administrativo definindo quem poderá ser supridor e a forma de prestação
               das contas relativa ao adiantamento, conforme estabelecido em Resolução do TCM.
@@ -544,24 +827,35 @@ requisitos:
         titulo: Doações, Subvenções, Auxílios e Contribuições
         avaliavel: false
         aplicavel_a: executivo
+        macrofuncoes: [transferencias]
+        periodicidade: por evento
+        palavras_chave: [subvenções, auxílios, terceiro setor]
         filhos:
           - codigo: "Art. 12, XI, a"
             titulo: Entidade beneficiada reconhecida por lei municipal
+            tipo: documental
+            palavras_chave: [lei municipal]
             descricao: >-
               verificar se a entidade para a qual o recurso foi repassado é reconhecida, por lei municipal, como
               entidade civil sem fins lucrativos, como ensina Resolução deste TCM;
           - codigo: "Art. 12, XI, b"
             titulo: Prestação de contas no prazo
+            peso: 3
+            palavras_chave: [prestação de contas]
             descricao: >-
               verificar se as entidades que receberam recursos deles prestaram contas no prazo assinalado em
               Resolução deste Tribunal;
           - codigo: "Art. 12, XI, c"
             titulo: Documentação da prestação de contas
+            tipo: documental
+            palavras_chave: [prestação de contas]
             descricao: >-
               verificar se da prestação de contas a que alude a alínea anterior consta a documentação estabelecida
               por Resolução deste TCM;
           - codigo: "Art. 12, XI, d"
             titulo: Parecer sobre a regularidade da prestação de contas
+            tipo: documental
+            palavras_chave: [parecer]
             descricao: >-
               emitir parecer sobre a regularidade ou não da prestação de contas da entidade civil beneficiada.
 
@@ -569,35 +863,53 @@ requisitos:
         titulo: Dívida Ativa
         avaliavel: false
         aplicavel_a: executivo
+        macrofuncoes: [receita]
+        periodicidade: por evento
+        palavras_chave: [dívida ativa]
         filhos:
           - codigo: "Art. 12, XII, a"
             titulo: Inscrição tempestiva em dívida ativa
+            peso: 3
+            periodicidade: anual
+            palavras_chave: [inscrição]
             descricao: >-
               verificar se, depois de esgotado o prazo estabelecido para pagamento, da decisão administrativa
               irreformável ou da decisão judicial passada em julgado, o crédito tributário foi devidamente inscrito
               em dívida ativa;
           - codigo: "Art. 12, XII, b"
             titulo: Identificação e domicílio dos devedores
+            tipo: documental
+            peso: 1
+            palavras_chave: [devedores]
             descricao: >-
               verificar se constam da inscrição em dívida ativa o(s) nome(s) do(s) devedor(es) ou
               co-responsável(eis), bem como seu(s) domicílio(s) ou residência(s);
           - codigo: "Art. 12, XII, c"
             titulo: Elementos obrigatórios da inscrição
+            tipo: documental
+            palavras_chave: [inscrição]
             descricao: >-
               verificar se constam da inscrição a quantia devida, o modo de cálculo dos juros de mora, a origem do
               crédito, a data de inscrição, o número do processo administrativo que originou o crédito, a indicação
               do livro e da folha de inscrição;
           - codigo: "Art. 12, XII, d"
             titulo: Comunicação ao contribuinte
+            peso: 1
+            palavras_chave: [notificação]
             descricao: >-
               verificar se contribuinte foi devidamente comunicado da inscrição do débito em dívida ativa;
           - codigo: "Art. 12, XII, e"
             titulo: Emissão da certidão de dívida ativa
+            tipo: documental
+            palavras_chave: [CDA]
             descricao: >-
               verificar se, não sendo regularizado o débito pelo contribuinte no prazo estabelecido, foi emitida a
               certidão de dívida ativa;
           - codigo: "Art. 12, XII, f"
             titulo: Elementos obrigatórios da CDA
+            tipo: documental
+            peso: 1
+            palavras_chave: [CDA]
             descricao: >-
               verificar se da certidão de que trata a alínea anterior constam o nome do devedor, co-responsável, se
               houver, bem como domicílios ou endereços residenciais, valor original da dívida, juros e outros
@@ -605,6 +917,7 @@ requisitos:
               da dívida ativa e número do processo administrativo ou do auto de infração;
           - codigo: "Art. 12, XII, g"
             titulo: Encaminhamento da CDA à Procuradoria
+            palavras_chave: [execução fiscal, Procuradoria]
             descricao: >-
               verificar se a Certidão de Dívida Ativa foi encaminhada à Procuradoria do Município para que se dê
               início ao processo de execução fiscal.
@@ -612,30 +925,43 @@ requisitos:
       - codigo: "Art. 12, XIII"
         titulo: Despesa Pública
         avaliavel: false
+        macrofuncoes: [contabilidade_financas]
+        periodicidade: por evento
+        palavras_chave: [despesa, empenho]
         filhos:
           - codigo: "Art. 12, XIII, a"
             titulo: Descrições claras em empenhos, notas e cotações
+            tipo: documental
+            palavras_chave: [cotações]
             descricao: >-
               verificar a existência de descrições e especificações lançadas, de forma clara e detalhada, nas Notas
               de Empenho, Notas Fiscais, Recibos, cotações de preços, nos casos de aquisições por dispensa de
               licitação, e outros documentos similares;
           - codigo: "Art. 12, XIII, b"
             titulo: Elementos obrigatórios dos processos de pagamento
+            tipo: documental
+            peso: 3
+            palavras_chave: [processo de pagamento, liquidação]
             descricao: >-
               verificar se nos processos de pagamento de despesas constam o nome do credor, o valor exato a pagar, a
               unidade gestora responsável pelo pagamento, o número da conta bancária e cheque, da nota de empenho e
               da nota fiscal respectiva;
           - codigo: "Art. 12, XIII, c"
             titulo: Formas de pagamento admitidas e quitação
+            palavras_chave: [pagamento, quitação]
             descricao: >-
               verificar se o pagamento foi efetuado pelas únicas formas previstas em Resolução do Tribunal: cheque
               nominativo, ordem bancária ou transferência eletrônica, e se as quitações das importâncias recebidas
               pelos credores foram efetuadas mediante assinaturas firmadas em recibo;
           - codigo: "Art. 12, XIII, d"
             titulo: Caracterização do interesse público
+            tipo: documental
+            palavras_chave: [interesse público]
             descricao: analisar a caracterização do interesse público na aquisição do bem ou serviço;
           - codigo: "Art. 12, XIII, e"
             titulo: Regularidade cadastral dos fornecedores
+            tipo: documental
+            palavras_chave: [certidões, regularidade fiscal]
             descricao: >-
               consultar as bases de dados dos órgãos fazendários quanto à regularidade cadastral dos fornecedores e
               prestadores de serviços.
@@ -644,17 +970,28 @@ requisitos:
         titulo: Receita
         avaliavel: false
         aplicavel_a: executivo
+        macrofuncoes: [receita]
+        periodicidade: permanente
+        palavras_chave: [receita, arrecadação]
         filhos:
           - codigo: "Art. 12, XIV, a"
             titulo: Documentos de arrecadação municipal
+            tipo: documental
+            palavras_chave: [DAM]
             descricao: verificar a existência de documentos de arrecadação municipal;
           - codigo: "Art. 12, XIV, b"
             titulo: Registros bancários e de tesouraria
+            tipo: documental
+            macrofuncoes: [receita, contabilidade_financas]
+            periodicidade: diária
+            palavras_chave: [tesouraria, conciliação bancária]
             descricao: >-
               verificar a existência de registros bancários e de Tesouraria, tais como boletins de Tesouraria,
               contas bancárias, etc.;
           - codigo: "Art. 12, XIV, c"
             titulo: Cadastro de contribuintes atualizado
+            tipo: documental
+            palavras_chave: [cadastro de contribuintes]
             descricao: >-
               verificar a existência de cadastro de contribuintes atualizado (imóveis, prestadores de serviços,
               etc.).
@@ -662,17 +999,27 @@ requisitos:
       - codigo: "Art. 12, XV"
         titulo: Limites Constitucionais
         avaliavel: false
+        peso: 3
+        macrofuncoes: [gestao_fiscal]
+        periodicidade: anual
+        palavras_chave: [limites constitucionais]
         filhos:
           - codigo: "Art. 12, XV, a, 1"
             titulo: Limite de endividamento
             aplicavel_a: executivo
+            periodicidade: quadrimestral
+            palavras_chave: [endividamento]
             descricao: verificar a observância dos limites constitucionais atinentes ao endividamento do órgão/entidade;
           - codigo: "Art. 12, XV, a, 2"
             titulo: Limite de gastos com pessoal
+            macrofuncoes: [gestao_fiscal, pessoal]
+            periodicidade: quadrimestral
+            palavras_chave: [despesa com pessoal]
             descricao: verificar a observância dos limites constitucionais atinentes aos gastos com pessoal;
           - codigo: "Art. 12, XV, a, 3"
             titulo: Aplicação mínima em educação
             aplicavel_a: [PREFEITURA]
+            palavras_chave: [educação, MDE, Fundeb]
             descricao: >-
               verificar a observância dos limites constitucionais atinentes às aplicações em educação (FUNDEF
               inclusive);
@@ -680,25 +1027,35 @@ requisitos:
           - codigo: "Art. 12, XV, a, 4"
             titulo: Aplicação mínima em saúde
             aplicavel_a: [PREFEITURA]
+            palavras_chave: [saúde, ASPS]
             descricao: verificar a observância dos limites constitucionais atinentes aos gastos com a saúde.
 
       - codigo: "Art. 12, XVI"
         titulo: Gestão Governamental
         avaliavel: false
+        macrofuncoes: [planejamento_orcamento]
+        periodicidade: anual
+        palavras_chave: [gestão governamental]
         filhos:
           - codigo: "Art. 12, XVI, a"
             titulo: Cumprimento das metas do PPA
+            peso: 3
+            palavras_chave: [PPA, metas]
             descricao: verificar o cumprimento das metas previstas no plano plurianual;
           - codigo: "Art. 12, XVI, b"
             titulo: Compatibilidade PPA, LDO e LOA
+            peso: 3
+            palavras_chave: [PPA, LDO, LOA]
             descricao: verificar se os programas/projetos previstos no PPA constam da LOA e da LDO;
           - codigo: "Art. 12, XVI, c"
             titulo: Economicidade na execução das metas
+            palavras_chave: [economicidade]
             descricao: >-
               analisar, sob o aspecto da economicidade, o nível de execução das metas, o alcance dos objetivos e a
               adequação do seu gerenciamento;
           - codigo: "Art. 12, XVI, d"
             titulo: Avaliação da gestão do administrador
+            palavras_chave: [avaliação da gestão]
             descricao: >-
               avaliar a gestão do administrador, visando comprovar sua legalidade e legitimidade e seus resultados
               quanto à eficiência e eficácia dos programas/projetos executados ou em execução.
@@ -707,27 +1064,44 @@ requisitos:
         titulo: Precatórios
         avaliavel: false
         aplicavel_a: executivo
+        macrofuncoes: [contabilidade_financas]
+        periodicidade: anual
+        palavras_chave: [precatórios]
         filhos:
           - codigo: "Art. 12, XVII, a"
             titulo: Inclusão no orçamento
+            macrofuncoes: [planejamento_orcamento]
+            palavras_chave: [orçamento]
             descricao: verificar a sua inclusão no orçamento;
           - codigo: "Art. 12, XVII, b"
             titulo: Contabilização
+            tipo: documental
+            palavras_chave: [contabilização]
             descricao: verificar a sua contabilização;
           - codigo: "Art. 12, XVII, c"
             titulo: Ordem cronológica dos pagamentos
+            peso: 3
+            periodicidade: por evento
+            palavras_chave: [ordem cronológica]
             descricao: verificar o acompanhamento da ordem cronológica dos pagamentos.
 
   # ─────────── Seção VIII — Apoio ao controle externo ───────────
   - codigo: "Art. 13"
     titulo: Apoio ao controle externo
     avaliavel: false
+    tipo: procedimental
+    peso: 3
+    macrofuncoes: [auditoria_interna]
+    periodicidade: permanente
+    palavras_chave: [controle externo, TCM]
     descricao: >-
       No apoio ao controle externo exercido por este Tribunal, o Sistema de Controle Interno Municipal deverá
       desempenhar, dentre outras que lhe forem solicitadas pela Corte, as seguintes funções:
     filhos:
       - codigo: "Art. 13, I"
         titulo: Programação semestral de auditoria com envio de relatórios ao TCM
+        periodicidade: semestral
+        palavras_chave: [plano de auditoria]
         descricao: >-
           organizar e executar, por iniciativa própria ou por determinação do Tribunal de Contas dos Municípios,
           programação semestral de auditoria contábil, financeira, orçamentária, operacional e patrimonial nas
@@ -735,11 +1109,16 @@ requisitos:
           estabelecida em Resolução da Corte;
       - codigo: "Art. 13, II"
         titulo: Auditoria nas contas dos responsáveis, com relatório, certificado e parecer
+        periodicidade: anual
+        palavras_chave: [certificado de auditoria, parecer]
         descricao: >-
           realizar auditorias nas contas dos responsáveis sob seu controle, emitindo relatório, certificado de
           auditoria e parecer;
       - codigo: "Art. 13, III"
         titulo: Alerta formal para instauração de Tomada de Contas Especial
+        macrofuncoes: [corregedoria]
+        periodicidade: por evento
+        palavras_chave: [tomada de contas especial]
         descricao: >-
           alertar formalmente a autoridade administrativa competente para que instaure Tomada de Contas Especial
           sempre que tiver conhecimento de qualquer das ocorrências que ensejem tal providência.
@@ -747,6 +1126,11 @@ requisitos:
   # ─────────── Da Responsabilidade ───────────
   - codigo: "Art. 14"
     titulo: Comunicação de irregularidades ao TCM
+    tipo: procedimental
+    peso: 3
+    macrofuncoes: [corregedoria]
+    periodicidade: por evento
+    palavras_chave: [irregularidades, TCM]
     descricao: >-
       O dirigente da unidade competente para a manutenção do Sistema de Controle Interno Municipal, ao tomar
       conhecimento de qualquer irregularidade ou ilegalidade, dela dará ciência ao Tribunal de Contas dos
@@ -758,6 +1142,11 @@ requisitos:
   - codigo: "Art. 15"
     titulo: Responsabilidade solidária por omissão
     avaliavel: false
+    tipo: procedimental
+    peso: 2
+    macrofuncoes: [controladoria]
+    periodicidade: por evento
+    palavras_chave: [responsabilidade solidária]
     descricao: >-
       Verificada em inspeção ou auditoria, ou na apreciação e julgamento das contas, irregularidade ou ilegalidade
       que não tenha sido comunicada tempestivamente ao Tribunal, notadamente as que possam vir a causar dano ao
@@ -768,12 +1157,22 @@ requisitos:
   # ─────────── Capítulo III — Obrigações e sanções ───────────
   - codigo: "Art. 16"
     titulo: Avaliação da observância de procedimentos, normas e regras
+    tipo: procedimental
+    peso: 2
+    macrofuncoes: [auditoria_interna]
+    periodicidade: permanente
+    palavras_chave: [avaliação de controles]
     descricao: >-
       O Sistema de Controle Interno Municipal avaliará a observância, pelas diversas instâncias e unidades dos
       órgãos e entidades, dos procedimentos, normas e regras estabelecidos pela legislação pertinente.
 
   - codigo: "Art. 17"
     titulo: Relatório circunstanciado nas prestações de contas mensais e anuais
+    tipo: documental
+    peso: 3
+    macrofuncoes: [controladoria, transparencia]
+    periodicidade: mensal
+    palavras_chave: [relatório de controle interno, prestação de contas]
     descricao: >-
       O dirigente da unidade responsável pela manutenção do Sistema de Controle Interno Municipal deverá, por
       ocasião dos preparativos das prestações de contas mensais e anuais, firmar e anexar aos demonstrativos
@@ -785,6 +1184,11 @@ requisitos:
   - codigo: "Art. 18"
     titulo: Prestação de contas sem relatório é incompleta
     avaliavel: false
+    tipo: documental
+    peso: 3
+    macrofuncoes: [transparencia]
+    periodicidade: mensal
+    palavras_chave: [prestação de contas]
     descricao: >-
       As prestações de contas encaminhadas ao Tribunal de Contas dos Municípios destituídas do relatório de que
       trata o caput do artigo anterior serão consideradas incompletas, o que poderá ensejar sua rejeição.
@@ -792,6 +1196,11 @@ requisitos:
   - codigo: "Art. 19"
     titulo: Criação da unidade por lei e comunicação ao TCM
     avaliavel: false
+    tipo: estrutural
+    peso: 3
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [lei de criação, TCM]
     descricao: >-
       Fica conferido o prazo de 270 dias, a contar da publicação desta Resolução, para que, através de lei
       municipal, se efetive a criação de unidades nos órgãos/entidades municipais, às quais será atribuída a
@@ -800,6 +1209,10 @@ requisitos:
     filhos:
       - codigo: "Art. 19, § 1º"
         titulo: Envio ao TCM da lei de criação e do ato de designação do dirigente
+        tipo: documental
+        peso: 2
+        periodicidade: por evento
+        palavras_chave: [ato de designação]
         descricao: >-
           Será encaminhada a este Tribunal de Contas dos Municípios, tão logo seja editada e publicada, cópia da
           lei municipal que instituiu a unidade de que trata este artigo, bem como do ato que designou o servidor
@@ -809,6 +1222,11 @@ requisitos:
   - codigo: "Art. 20"
     titulo: Possível rejeição de contas pelo descumprimento do art. 19
     avaliavel: false
+    tipo: estrutural
+    peso: 2
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [rejeição de contas]
     descricao: >-
       A inobservância do disposto no caput do artigo anterior, aí se incluindo aquelas de que tratam seus §§ 1º e
       2º, pelo órgão municipal, poderá ensejar a rejeição da respectiva conta anual, conforme prescreve o art. 1º,
@@ -816,6 +1234,11 @@ requisitos:
 
   - codigo: "Art. 21"
     titulo: Pronunciamento expresso do chefe do Poder sobre o parecer do controle interno
+    tipo: documental
+    peso: 3
+    macrofuncoes: [controladoria]
+    periodicidade: anual
+    palavras_chave: [pronunciamento, parecer]
     descricao: >-
       O Prefeito Municipal ou o Presidente da Câmara ou o dirigente da entidade descentralizada emitirá expresso e
       indelegável pronunciamento sobre o parecer contido no relatório do Sistema de Controle Interno relativo a
@@ -824,6 +1247,11 @@ requisitos:
   - codigo: "Art. 22"
     titulo: Responsabilidade solidária da Contabilidade
     avaliavel: false
+    tipo: procedimental
+    peso: 2
+    macrofuncoes: [contabilidade_financas]
+    periodicidade: permanente
+    palavras_chave: [contabilidade, responsabilidade solidária]
     descricao: >-
       A omissão ou a falsidade da informação na escrituração ou nas demonstrações a qualquer título sujeitará o
       titular, ou aquele que responder pela Contabilidade, à responsabilidade solidária por qualquer fato que
@@ -832,6 +1260,11 @@ requisitos:
 
   - codigo: "Art. 23"
     titulo: Impedimento de servidores com contas rejeitadas
+    tipo: estrutural
+    peso: 2
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [impedimento, contas rejeitadas]
     descricao: >-
       Ficam impedidos de atuar em qualquer função no âmbito do controle interno municipal aqueles servidores cujas
       prestações de contas, na qualidade de gestor ou responsável por bens ou dinheiros públicos, tenham sido

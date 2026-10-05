@@ -176,6 +176,44 @@ async function main() {
     conferir("demanda concluída", await aparece(ctl.getByText("Concluída", { exact: true })));
     await captura(ctl, "demanda-detalhe");
 
+    // Demanda nascida de um requisito da autoavaliação: a resposta aceita vira evidência do requisito.
+    await ctl.goto(`${BASE}/autoavaliacao`);
+    await ctl.getByRole("link", { name: `Autoavaliação ${new Date().getFullYear()}`, exact: true }).click();
+    await ctl.waitForURL(/\/autoavaliacao\/[0-9a-f-]{36}/);
+    const urlCiclo = ctl.url().split("#")[0];
+    const solicitar = ctl.getByRole("link", { name: "Solicitar documento a uma unidade" });
+    conferir("cartão do requisito oferece solicitar documento a uma unidade", await aparece(solicitar));
+    await solicitar.first().click();
+    await ctl.waitForURL(/\/demandas\/nova\?requisito=/);
+    conferir("nova demanda mostra o requisito de origem", await aparece(ctl.getByText("Origem:")));
+    conferir("assunto pré-preenchido a partir do requisito", (await ctl.getByLabel(/Assunto/).inputValue()).startsWith("Evidência: "));
+    await ctl.getByLabel(/Unidade destinatária/).selectOption({ label: "SESAU — Secretaria Municipal de Saúde (João Secretário de Saúde)" });
+    await ctl.getByRole("button", { name: "Enviar demanda" }).click();
+    await ctl.waitForURL(/\/demandas\/[0-9a-f-]{36}$/, { timeout: 60_000 });
+    const urlReq = ctl.url();
+    conferir("detalhe da demanda mostra o requisito de origem com link", await ctl.getByRole("link", { name: /^Requisito / }).isVisible());
+
+    await ctl.goto(`${BASE}/demandas/nova?requisito=00000000-0000-4000-8000-000000000000`);
+    conferir("origem inexistente é ignorada com aviso", await aparece(ctl.getByText("A origem indicada foi ignorada")));
+
+    await sat.goto(urlReq.replace("/demandas/", "/satelite/demandas/"));
+    await sat.getByText("Demanda visualizada pela unidade").waitFor({ timeout: 30_000 });
+    conferir("satélite vê a ligação com a autoavaliação", await aparece(sat.getByText(/ligada à autoavaliação/)));
+    conferir("satélite não recebe link para a autoavaliação", (await sat.getByRole("link", { name: /^Requisito / }).count()) === 0);
+    const nomeEvidencia = `evidencia-${Date.now().toString().slice(-6)}.pdf`;
+    await sat.getByLabel(/Sua resposta/).fill("Segue o documento comprobatório do requisito.");
+    await sat.locator('input[type="file"]').setInputFiles({ name: nomeEvidencia, mimeType: "application/pdf", buffer: pdfMinimo("evidencia") });
+    await sat.getByRole("button", { name: "Enviar resposta" }).click();
+    await toast(sat, "Resposta enviada à controladoria.");
+
+    await ctl.goto(urlReq);
+    await ctl.getByRole("button", { name: "Aceitar e concluir" }).click();
+    await ctl.getByRole("dialog").getByRole("button", { name: "Aceitar e concluir" }).click();
+    await toast(ctl, "1 documento virou evidência do requisito.");
+    conferir("conclusão informa o documento que virou evidência", true);
+    await ctl.goto(urlCiclo);
+    conferir("documento da resposta aparece nas evidências do requisito", await aparece(ctl.getByText(nomeEvidencia)));
+
     await ctl.goto(`${BASE}/trilha`);
     const trilha = await ctl.locator("main").innerText();
     conferir("trilha registra download de documento", trilha.includes("documento.baixado") || trilha.includes("Baixou documento"));

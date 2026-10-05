@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SeloPrioridade, SeloStatusAcao, SeloVencida } from "@/components/selos-status";
 import { formatarMoeda } from "@/lib/dados/acoes";
+import type { StatusPlano } from "@/generated/prisma/browser";
 import type { AcaoView, UnidadeOpcao } from "@/lib/dados/planos";
 import { diasAte, formatarDataSimples } from "@/lib/datas";
 import { cn } from "@/lib/utils";
@@ -38,12 +39,14 @@ function quem(a: AcaoView) {
 
 export function TabelaAcoes({
   planoId,
+  situacaoPlano,
   acoes,
   unidades,
   podeAdicionar,
   podeValidar,
 }: {
   planoId: string;
+  situacaoPlano: StatusPlano;
   acoes: AcaoView[];
   unidades: UnidadeOpcao[];
   podeAdicionar: boolean;
@@ -248,6 +251,7 @@ export function TabelaAcoes({
               <FormAcao
                 key={`${editando}-${aberturas}`}
                 planoId={planoId}
+                situacaoPlano={situacaoPlano}
                 acao={acaoEditada}
                 unidades={unidades}
                 onConcluido={fecharEdicao}

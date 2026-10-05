@@ -2,22 +2,24 @@
 
 import { useMemo, useState } from "react";
 import { Keyboard, Minus, TrendingDown, TrendingUp } from "lucide-react";
-import type { SituacaoRequisito } from "@/generated/prisma/browser";
+import type { Macrofuncao, SituacaoRequisito } from "@/generated/prisma/browser";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Selo, VISUAL_SITUACAO } from "@/components/selos-status";
 import {
   calcularConformidade,
+  chavesMacrofuncao,
   compararGrupos,
   conformidadePorGrupo,
   formatarPercentual,
   mapaCapitulos,
   SITUACOES,
+  TRANSVERSAL,
   type ResultadoConformidade,
 } from "@/lib/dados/conformidade";
 import type { NoRequisito, RespostaView } from "@/lib/dados/autoavaliacao";
-import { SITUACAO_REQUISITO } from "@/lib/rotulos";
+import { MACROFUNCAO, SITUACAO_REQUISITO } from "@/lib/rotulos";
 import { cn } from "@/lib/utils";
 import { CartaoRequisito } from "./cartao-requisito";
 import { AcoesCiclo } from "./acoes-ciclo";
@@ -74,19 +76,46 @@ export function AvaliacaoCiclo({
   }, [nos]);
 
   const lista = useMemo(() => [...respostas.values()], [respostas]);
-  const geral = useMemo(() => calcularConformidade(lista), [lista]);
+  // O peso vem do catálogo atual, inclusive para o ciclo anterior (mesma norma), para a comparação ser justa.
+  const ponderar = useMemo(
+    () =>
+      <T extends { requisitoId: string; situacao: SituacaoRequisito }>(itens: readonly T[]) =>
+        itens.map((r) => ({ ...r, peso: estrutura.porId.get(r.requisitoId)?.peso })),
+    [estrutura],
+  );
+  const ponderada = useMemo(() => ponderar(lista), [ponderar, lista]);
+  const geral = useMemo(() => calcularConformidade(ponderada), [ponderada]);
   const porCapitulo = useMemo(
-    () => conformidadePorGrupo(lista, (r) => estrutura.capituloDe.get(r.requisitoId)),
-    [lista, estrutura],
+    () => conformidadePorGrupo(ponderada, (r) => estrutura.capituloDe.get(r.requisitoId)),
+    [ponderada, estrutura],
+  );
+  const porMacrofuncao = useMemo(
+    () => conformidadePorGrupo(ponderada, (r) => chavesMacrofuncao(estrutura.porId.get(r.requisitoId)?.macrofuncoes)),
+    [ponderada, estrutura],
   );
   const evolucao = useMemo(() => {
     if (!anterior) return null;
-    const ant = conformidadePorGrupo(anterior.respostas, (r) => estrutura.capituloDe.get(r.requisitoId));
+    const antPonderada = ponderar(anterior.respostas);
+    const ant = conformidadePorGrupo(antPonderada, (r) => estrutura.capituloDe.get(r.requisitoId));
     return {
-      geral: compararGrupos(new Map([["geral", geral]]), new Map([["geral", calcularConformidade(anterior.respostas)]]))[0],
+      geral: compararGrupos(new Map([["geral", geral]]), new Map([["geral", calcularConformidade(antPonderada)]]))[0],
       capitulos: compararGrupos(porCapitulo, ant),
     };
-  }, [anterior, geral, porCapitulo, estrutura]);
+  }, [anterior, geral, porCapitulo, estrutura, ponderar]);
+
+  const linhasCapitulos = estrutura.capitulos.map((c) => ({
+    chave: c.id,
+    rotulo: (
+      <>
+        <span className="mr-2 font-mono text-xs text-muted-foreground">{c.codigo}</span>
+        {c.titulo}
+      </>
+    ),
+  }));
+  const linhasMacrofuncoes = [...(Object.keys(MACROFUNCAO) as Macrofuncao[]), TRANSVERSAL].map((m) => ({
+    chave: m,
+    rotulo: m === TRANSVERSAL ? "Transversal (sem macrofunção)" : MACROFUNCAO[m as Macrofuncao],
+  }));
 
   const lacunas = geral.contagem.NAO_ATENDIDO + geral.contagem.PARCIALMENTE_ATENDIDO;
 
@@ -177,7 +206,9 @@ export function AvaliacaoCiclo({
             <p className="text-sm text-muted-foreground">Conformidade</p>
             <p className="font-heading text-3xl font-semibold tabular-nums">{formatarPercentual(geral.indice)}</p>
             <Progress value={geral.indice === null ? 0 : geral.indice * 100} aria-label="Conformidade geral do ciclo" />
-            <p className="text-xs text-muted-foreground">Atende = 1, parcial = 0,5; “não se aplica” e não avaliados ficam fora.</p>
+            <p className="text-xs text-muted-foreground">
+              Atende = 1, parcial = 0,5, ponderados pelo peso do requisito; “não se aplica” e não avaliados ficam fora.
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -218,6 +249,7 @@ export function AvaliacaoCiclo({
         <TabsList aria-label="Seções do ciclo">
           <TabsTrigger value="requisitos" className="px-3">Requisitos</TabsTrigger>
           <TabsTrigger value="capitulos" className="px-3">Resultado por capítulo</TabsTrigger>
+          <TabsTrigger value="macrofuncoes" className="px-3">Por macrofunção</TabsTrigger>
           <TabsTrigger value="evolucao" className="px-3">Evolução</TabsTrigger>
         </TabsList>
 
@@ -325,7 +357,26 @@ export function AvaliacaoCiclo({
         </TabsContent>
 
         <TabsContent value="capitulos" className="pt-4">
-          <TabelaCapitulos capitulos={estrutura.capitulos} porCapitulo={porCapitulo} geral={geral} />
+          <TabelaGrupos
+            titulo="Conformidade por capítulo"
+            descricao="Capítulos são os itens de nível superior da norma. Calculado com as respostas salvas."
+            coluna="Capítulo"
+            linhas={linhasCapitulos}
+            grupos={porCapitulo}
+            geral={geral}
+          />
+        </TabsContent>
+
+        <TabsContent value="macrofuncoes" className="pt-4">
+          <TabelaGrupos
+            titulo="Conformidade por macrofunção"
+            descricao="Índice ponderado pelo peso de cada requisito. Um requisito ligado a mais de uma macrofunção conta em cada uma delas, por isso as linhas não somam o total."
+            coluna="Macrofunção"
+            linhas={linhasMacrofuncoes}
+            grupos={porMacrofuncao}
+            geral={geral}
+            comPeso
+          />
         </TabsContent>
 
         <TabsContent value="evolucao" className="pt-4">
@@ -411,18 +462,28 @@ function Variacao({ valor }: { valor: number | null }) {
   );
 }
 
-function TabelaCapitulos({
-  capitulos,
-  porCapitulo,
+function TabelaGrupos({
+  titulo,
+  descricao,
+  coluna,
+  linhas,
+  grupos,
   geral,
+  comPeso = false,
 }: {
-  capitulos: NoRequisito[];
-  porCapitulo: Map<string, ResultadoConformidade>;
+  titulo: string;
+  descricao: string;
+  coluna: string;
+  linhas: { chave: string; rotulo: React.ReactNode }[];
+  grupos: Map<string, ResultadoConformidade>;
   geral: ResultadoConformidade;
+  /** Mostra a soma dos pesos que entraram no denominador. */
+  comPeso?: boolean;
 }) {
   const linha = (r: ResultadoConformidade) => (
     <>
       <td className="px-3 py-2.5 text-right tabular-nums">{r.total}</td>
+      {comPeso && <td className="hidden px-3 py-2.5 text-right tabular-nums lg:table-cell">{r.maximo}</td>}
       <td className="hidden px-3 py-2.5 text-right tabular-nums sm:table-cell">{r.contagem.ATENDIDO}</td>
       <td className="hidden px-3 py-2.5 text-right tabular-nums sm:table-cell">{r.contagem.PARCIALMENTE_ATENDIDO}</td>
       <td className="hidden px-3 py-2.5 text-right tabular-nums sm:table-cell">{r.contagem.NAO_ATENDIDO}</td>
@@ -441,16 +502,21 @@ function TabelaCapitulos({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Conformidade por capítulo</CardTitle>
-        <CardDescription>Capítulos são os itens de nível superior da norma. Calculado com as respostas salvas.</CardDescription>
+        <CardTitle>{titulo}</CardTitle>
+        <CardDescription>{descricao}</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto p-0">
         <table className="w-full text-sm">
-          <caption className="sr-only">Conformidade por capítulo</caption>
+          <caption className="sr-only">{titulo}</caption>
           <thead>
             <tr className="border-y text-left text-muted-foreground">
-              <th scope="col" className="px-5 py-2.5 font-medium">Capítulo</th>
+              <th scope="col" className="px-5 py-2.5 font-medium">{coluna}</th>
               <th scope="col" className="px-3 py-2.5 text-right font-medium">Requisitos</th>
+              {comPeso && (
+                <th scope="col" className="hidden px-3 py-2.5 text-right font-medium lg:table-cell" title="Soma dos pesos dos requisitos avaliados (exceto “não se aplica”)">
+                  Peso avaliado
+                </th>
+              )}
               <th scope="col" className="hidden px-3 py-2.5 text-right font-medium sm:table-cell">Atende</th>
               <th scope="col" className="hidden px-3 py-2.5 text-right font-medium sm:table-cell">Parcial</th>
               <th scope="col" className="hidden px-3 py-2.5 text-right font-medium sm:table-cell">Não atende</th>
@@ -460,14 +526,13 @@ function TabelaCapitulos({
             </tr>
           </thead>
           <tbody>
-            {capitulos.map((c) => {
-              const r = porCapitulo.get(c.id);
+            {linhas.map((l) => {
+              const r = grupos.get(l.chave);
               if (!r) return null;
               return (
-                <tr key={c.id} className="border-b last:border-0">
+                <tr key={l.chave} className="border-b last:border-0">
                   <th scope="row" className="px-5 py-2.5 text-left font-normal">
-                    <span className="mr-2 font-mono text-xs text-muted-foreground">{c.codigo}</span>
-                    {c.titulo}
+                    {l.rotulo}
                   </th>
                   {linha(r)}
                 </tr>

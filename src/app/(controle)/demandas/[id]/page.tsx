@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarClock } from "lucide-react";
+import { ArrowLeft, CalendarClock, ClipboardCheck, ListTodo } from "lucide-react";
 import { z } from "zod";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { db } from "@/lib/db";
@@ -100,6 +100,40 @@ export default async function DetalheDemanda(props: PageProps<"/demandas/[id]">)
                     {criador && <span className="block text-xs text-muted-foreground">por {criador.nome}</span>}
                   </dd>
                 </div>
+                {(d.respostaRequisito || d.acao) && (
+                  <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                    <dt className="text-muted-foreground">Origem</dt>
+                    {d.respostaRequisito && (
+                      <dd className="flex items-start gap-1.5">
+                        <ClipboardCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                        <span>
+                          <Link
+                            href={`/autoavaliacao/${d.respostaRequisito.cicloId}#req-${d.respostaRequisito.requisito.id}`}
+                            className="font-medium text-primary underline-offset-4 hover:underline"
+                          >
+                            Requisito <span className="font-mono">{d.respostaRequisito.requisito.codigo}</span> — {d.respostaRequisito.requisito.titulo}
+                          </Link>
+                          <span className="block text-xs text-muted-foreground">
+                            Autoavaliação “{d.respostaRequisito.ciclo.nome}”. Ao concluir, os documentos da resposta viram evidência do requisito.
+                          </span>
+                        </span>
+                      </dd>
+                    )}
+                    {d.acao && (
+                      <dd className="flex items-start gap-1.5">
+                        <ListTodo aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                        <span>
+                          <Link href={`/planos/${d.acao.planoId}`} className="font-medium text-primary underline-offset-4 hover:underline">
+                            Ação: {d.acao.oQue}
+                          </Link>
+                          <span className="block text-xs text-muted-foreground">
+                            Plano de ação “{d.acao.plano.titulo}”. Ao concluir, os documentos da resposta viram evidência da ação.
+                          </span>
+                        </span>
+                      </dd>
+                    )}
+                  </div>
+                )}
               </dl>
               <div className="space-y-1.5">
                 <h3 className="text-sm text-muted-foreground">Descrição</h3>
@@ -132,6 +166,7 @@ export default async function DetalheDemanda(props: PageProps<"/demandas/[id]">)
             prazoAtual={paraCampoData(d.prazo)}
             prazoMinimo={amanha}
             pedido={pedido ? { texto: pedido.texto, novoPrazo: pedido.novoPrazo ? paraCampoData(pedido.novoPrazo) : null, usuarioNome: pedido.usuarioNome } : null}
+            evidenciaDe={[d.respostaRequisito && "do requisito", d.acao && "da ação"].filter(Boolean).join(" e ") || undefined}
           />
           <Card>
             <CardHeader>

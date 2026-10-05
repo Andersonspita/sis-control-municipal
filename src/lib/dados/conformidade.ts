@@ -82,22 +82,35 @@ export function calcularConformidade(itens: Iterable<ItemConformidade>): Resulta
 
 export type GrupoConformidade = ResultadoConformidade & { chave: string };
 
-/** Agrupa e calcula por chave (capítulo, macrofunção…). Itens com chave null/undefined são ignorados. */
+/**
+ * Agrupa e calcula por chave (capítulo, macrofunção…). Itens com chave null/undefined são ignorados; com várias
+ * chaves, o item entra (com o peso inteiro) em cada grupo.
+ */
 export function conformidadePorGrupo<T extends ItemConformidade>(
   itens: readonly T[],
-  chaveDe: (item: T) => string | null | undefined,
+  chaveDe: (item: T) => string | readonly string[] | null | undefined,
 ): Map<string, GrupoConformidade> {
   const grupos = new Map<string, T[]>();
   for (const item of itens) {
-    const chave = chaveDe(item);
-    if (chave == null) continue;
-    const lista = grupos.get(chave);
-    if (lista) lista.push(item);
-    else grupos.set(chave, [item]);
+    const chaves = chaveDe(item);
+    if (chaves == null) continue;
+    for (const chave of new Set(typeof chaves === "string" ? [chaves] : chaves)) {
+      const lista = grupos.get(chave);
+      if (lista) lista.push(item);
+      else grupos.set(chave, [item]);
+    }
   }
   const saida = new Map<string, GrupoConformidade>();
   for (const [chave, lista] of grupos) saida.set(chave, { chave, ...calcularConformidade(lista) });
   return saida;
+}
+
+/** Chave do grupo dos requisitos sem macrofunção. */
+export const TRANSVERSAL = "TRANSVERSAL";
+
+/** Chaves de macrofunção de um requisito (vazio = transversal). */
+export function chavesMacrofuncao(macrofuncoes: readonly string[] | null | undefined): readonly string[] {
+  return macrofuncoes?.length ? macrofuncoes : [TRANSVERSAL];
 }
 
 /** Ancestral de nível superior (capítulo) de cada nó, dado o mapa id → paiId. */

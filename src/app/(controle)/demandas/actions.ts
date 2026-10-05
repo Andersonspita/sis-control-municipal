@@ -7,7 +7,13 @@ import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { comCliente } from "@/lib/db";
 import { registrarLog } from "@/lib/auditoria";
 import { arquivosDoFormulario, comArquivos, registrarDocumentos } from "@/lib/documentos";
-import { buscarProrrogacaoPendente, travarDemanda } from "@/lib/dados/demandas";
+import {
+  buscarOrigemAcao,
+  buscarOrigemRequisito,
+  buscarProrrogacaoPendente,
+  travarDemanda,
+  vincularEvidenciasDaResposta,
+} from "@/lib/dados/demandas";
 import { hojeComoDataSimples } from "@/lib/datas";
 import { numeroDemanda, STATUS_ABERTOS } from "@/lib/demandas";
 import { ErroNegocio, mensagemDeErro } from "@/lib/erros";
@@ -23,6 +29,7 @@ const textoOpcional = z
   .optional()
   .transform((v) => v || undefined);
 const textoObrigatorio = (mensagem: string) => z.string().trim().min(3, { error: mensagem }).max(5000);
+const idOpcional = z.union([z.uuid({ error: "Origem da demanda inválida." }), z.literal("").transform(() => undefined)]).optional();
 
 const esquemaCriacao = z.object({
   assunto: z.string().trim().min(5, { error: "Informe o assunto (mínimo de 5 caracteres)." }).max(200),
@@ -30,6 +37,8 @@ const esquemaCriacao = z.object({
   unidadeDestinoId: z.uuid({ error: "Selecione a unidade destinatária." }),
   prazo: dataFutura,
   prioridade: z.enum(["BAIXA", "MEDIA", "ALTA", "URGENTE"]),
+  respostaRequisitoId: idOpcional,
+  acaoId: idOpcional,
 });
 
 export async function criarDemanda(_: EstadoAcao, formData: FormData): Promise<EstadoAcao> {
@@ -37,15 +46,21 @@ export async function criarDemanda(_: EstadoAcao, formData: FormData): Promise<E
   const dados = esquemaCriacao.safeParse(Object.fromEntries(formData));
   if (!dados.success) return { erro: dados.error.issues[0]?.message };
 
-  let id: string;
+  let criada: { id: string; caminhos: string[] };
   try {
-    id = await comArquivos(ctx.clienteId, arquivosDoFormulario(formData), (salvos) =>
+    criada = await comArquivos(ctx.clienteId, arquivosDoFormulario(formData), (salvos) =>
       comCliente(ctx, async (tx) => {
         const unidade = await tx.unidade.findFirst({
           where: { id: dados.data.unidadeDestinoId, ativo: true },
           select: { id: true, nome: true },
         });
         if (!unidade) throw new ErroNegocio("Unidade destinatária não encontrada.");
+
+        const { respostaRequisitoId, acaoId } = dados.data;
+        const origemRequisito = respostaRequisitoId ? await buscarOrigemRequisito(tx, respostaRequisitoId) : null;
+        if (origemRequisito && !origemRequisito.ok) throw new ErroNegocio(origemRequisito.motivo);
+        const origemAcao = acaoId ? await buscarOrigemAcao(tx, acaoId) : null;
+        if (origemAcao && !origemAcao.ok) throw new ErroNegocio(origemAcao.motivo);
 
         const ano = Number(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bahia", year: "numeric" }).format(new Date()));
         // Numeração sequencial por cliente e ano, serializada por trava transacional.
@@ -81,9 +96,15 @@ export async function criarDemanda(_: EstadoAcao, formData: FormData): Promise<E
             prazo: dados.data.prazo.toISOString().slice(0, 10),
             prioridade: dados.data.prioridade,
             anexos: salvos.length,
+            ...(origemRequisito?.ok && { respostaRequisitoId, requisito: origemRequisito.origem.requisito.codigo }),
+            ...(origemAcao?.ok && { acaoId }),
           },
         });
-        return demanda.id;
+        const caminhos = [
+          ...(origemRequisito?.ok ? [`/autoavaliacao/${origemRequisito.origem.cicloId}`] : []),
+          ...(origemAcao?.ok ? [`/planos/${origemAcao.origem.planoId}`] : []),
+        ];
+        return { id: demanda.id, caminhos };
       }),
     );
   } catch (err) {
@@ -91,7 +112,8 @@ export async function criarDemanda(_: EstadoAcao, formData: FormData): Promise<E
   }
 
   revalidatePath("/demandas");
-  redirect(`/demandas/${id}`);
+  criada.caminhos.forEach((c) => revalidatePath(c));
+  redirect(`/demandas/${criada.id}`);
 }
 
 const esquemaTramite = z.discriminatedUnion("acao", [
@@ -163,8 +185,9 @@ export async function tramitarDemanda(_: EstadoAcao, formData: FormData): Promis
   const regra = TRANSICOES[entrada.acao];
   const arquivos = ACEITA_ANEXOS.has(entrada.acao) ? arquivosDoFormulario(formData) : [];
 
+  let evidencias: Awaited<ReturnType<typeof vincularEvidenciasDaResposta>> | undefined;
   try {
-    await comArquivos(ctx.clienteId, arquivos, (salvos) =>
+    evidencias = await comArquivos(ctx.clienteId, arquivos, (salvos) =>
       comCliente(ctx, async (tx) => {
         const demanda = await travarDemanda(tx, entrada.demandaId);
         if (!demanda) throw new ErroNegocio("Demanda não encontrada.");
@@ -211,6 +234,7 @@ export async function tramitarDemanda(_: EstadoAcao, formData: FormData): Promis
           select: { id: true },
         });
         await registrarDocumentos(tx, ctx, salvos, { demandaId: demanda.id, tramiteId: tramite.id });
+        const vinculadas = entrada.acao === "concluir" ? await vincularEvidenciasDaResposta(tx, demanda) : undefined;
         await registrarLog(tx, ctx.clienteId, {
           acao: regra.log,
           usuarioId: ctx.usuarioId,
@@ -223,8 +247,10 @@ export async function tramitarDemanda(_: EstadoAcao, formData: FormData): Promis
             ...(pedidoId && { pedidoProrrogacaoId: pedidoId }),
             ...(entrada.acao === "comentar" && { interno }),
             anexos: salvos.length,
+            ...(vinculadas && !!(demanda.respostaRequisitoId || demanda.acaoId) && { evidencias: vinculadas.quantidade, ...vinculadas.vinculo }),
           },
         });
+        return vinculadas;
       }),
     );
   } catch (err) {
@@ -233,5 +259,17 @@ export async function tramitarDemanda(_: EstadoAcao, formData: FormData): Promis
 
   revalidatePath(`/demandas/${entrada.demandaId}`);
   revalidatePath("/demandas");
-  return { ok: true, mensagem: regra.mensagem };
+  evidencias?.caminhos.forEach((c) => revalidatePath(c));
+  if (evidencias?.quantidade) revalidatePath("/documentos");
+  return { ok: true, mensagem: [regra.mensagem, ...(evidencias ? mensagemEvidencias(evidencias) : [])].join(" ") };
+}
+
+function mensagemEvidencias({ quantidade, vinculo, recusas }: Awaited<ReturnType<typeof vincularEvidenciasDaResposta>>) {
+  const destinos = [vinculo.respostaRequisitoId && "do requisito", vinculo.acaoId && "da ação"].filter(Boolean).join(" e ");
+  const partes: string[] = [];
+  if (quantidade && destinos) {
+    partes.push(quantidade === 1 ? `1 documento virou evidência ${destinos}.` : `${quantidade} documentos viraram evidência ${destinos}.`);
+  }
+  if (recusas.length) partes.push(`Sem vínculo de evidência: ${recusas.join(" ")}`);
+  return partes;
 }

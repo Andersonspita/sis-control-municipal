@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarClock, CheckCircle2, Hourglass, Undo2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, CheckCircle2, Hourglass, Info, Undo2 } from "lucide-react";
 import { z } from "zod";
 import { exigirContexto } from "@/lib/auth/dal";
 import { obterDemanda, prorrogacaoPendente } from "@/lib/dados/demandas";
@@ -117,6 +117,17 @@ export default async function DemandaSatelite(props: PageProps<"/satelite/demand
               </div>
             </dl>
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{d.descricao}</p>
+            {(d.respostaRequisitoId || d.acao) && (
+              <p className="flex items-start gap-2 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+                <span>
+                  {d.acao
+                    ? `Solicitação ligada à ação “${d.acao.oQue}” do plano de ação “${d.acao.plano.titulo}”.`
+                    : "Solicitação ligada à autoavaliação do controle interno."}{" "}
+                  Os documentos da sua resposta, quando aceitos, servem de comprovação.
+                </span>
+              </p>
+            )}
             {anexosIniciais.length > 0 && (
               <div className="space-y-1.5">
                 <h3 className="text-sm text-muted-foreground">Documentos enviados pela controladoria</h3>

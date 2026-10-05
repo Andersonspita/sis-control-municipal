@@ -70,6 +70,10 @@ export async function carregarPlano(ctx: Contexto, id: string) {
               orderBy: [{ ordem: "asc" }, { criadoEm: "asc" }],
               select: { id: true, descricao: true, prazo: true, concluidoEm: true },
             },
+            documentos: {
+              orderBy: { criadoEm: "asc" },
+              select: { id: true, nome: true, tamanho: true, mimeType: true },
+            },
           },
         },
       },
@@ -121,6 +125,7 @@ export async function carregarPlano(ctx: Contexto, id: string) {
       prazo: m.prazo ? dataIso(m.prazo) : null,
       concluido: m.concluidoEm !== null,
     })),
+    documentos: a.documentos,
     vencida: acaoVencida(a, hoje),
   }));
 

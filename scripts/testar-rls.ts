@@ -133,6 +133,29 @@ async function main() {
     );
   });
 
+  // Trilha global: só o administrador HorizonAJ (conferido no banco) lê os registros sem cliente.
+  const { rows: adm } = await dono.query(
+    "SELECT (SELECT id FROM usuarios WHERE admin_horizon AND ativo LIMIT 1) AS id, (SELECT count(*) FROM log_auditoria WHERE cliente_id IS NULL)::int AS globais",
+  );
+  const globais = "SELECT * FROM log_auditoria WHERE cliente_id IS NULL";
+  if (adm[0].id) {
+    await comContexto(null, adm[0].id, "ADMIN_HORIZON", async () => {
+      conferir("admin HorizonAJ lê a trilha global", (await contar(globais)) === adm[0].globais);
+      conferir("admin HorizonAJ não lê trilha de cliente", (await contar("SELECT * FROM log_auditoria WHERE cliente_id IS NOT NULL")) === 0);
+    });
+    await comContexto(pm, adm[0].id, "ADMIN_HORIZON", async () => {
+      conferir("admin com cliente no contexto não lê a trilha global", (await contar(globais)) === 0);
+    });
+  } else {
+    console.log("AVISO nenhum admin HorizonAJ no seed; testes de leitura da trilha global pelo admin ignorados");
+  }
+  await comContexto(null, controlador, "ADMIN_HORIZON", async () => {
+    conferir("perfil ADMIN_HORIZON forjado por não admin não lê a trilha global", (await contar(globais)) === 0);
+  });
+  await comContexto(pm, controlador, "CONTROLADOR", async () => {
+    conferir("controlador não lê a trilha global", (await contar(globais)) === 0);
+  });
+
   // Tentativas de escrita proibidas ao satélite (cada uma num savepoint).
   async function bloqueado(sql: string, params: unknown[] = []) {
     await app.query("SAVEPOINT s");

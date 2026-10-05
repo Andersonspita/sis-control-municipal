@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { parse } from "yaml";
 import { z } from "zod";
-import type { PrismaClient, TipoCliente } from "@/generated/prisma/client";
+import type { Macrofuncao, PrismaClient, TipoCliente, TipoRequisito } from "@/generated/prisma/client";
 
 const TODOS: TipoCliente[] = [
   "PREFEITURA",
@@ -17,6 +17,27 @@ const aplicabilidade = z
   .union([z.enum(["todos", "executivo", "legislativo"]), z.array(z.enum(TODOS as [TipoCliente, ...TipoCliente[]]))])
   .optional();
 
+const TIPOS_REQUISITO = { estrutural: "ESTRUTURAL", procedimental: "PROCEDIMENTAL", documental: "DOCUMENTAL" } as const;
+const MACROFUNCOES = {
+  auditoria_interna: "AUDITORIA_INTERNA",
+  controladoria: "CONTROLADORIA",
+  corregedoria: "CORREGEDORIA",
+  ouvidoria: "OUVIDORIA",
+  planejamento_orcamento: "PLANEJAMENTO_ORCAMENTO",
+  contabilidade_financas: "CONTABILIDADE_FINANCAS",
+  gestao_fiscal: "GESTAO_FISCAL",
+  receita: "RECEITA",
+  pessoal: "PESSOAL",
+  patrimonio: "PATRIMONIO",
+  licitacoes_contratos: "LICITACOES_CONTRATOS",
+  obras: "OBRAS",
+  transferencias: "TRANSFERENCIAS",
+  transparencia: "TRANSPARENCIA",
+} as const satisfies Record<string, Macrofuncao>;
+
+const tipoRequisito = z.enum(Object.keys(TIPOS_REQUISITO) as [keyof typeof TIPOS_REQUISITO]);
+const macrofuncao = z.enum(Object.keys(MACROFUNCOES) as [keyof typeof MACROFUNCOES]);
+
 type RequisitoYaml = {
   codigo: string;
   titulo: string;
@@ -25,6 +46,11 @@ type RequisitoYaml = {
   fundamento?: string;
   avaliavel?: boolean;
   aplicavel_a?: z.infer<typeof aplicabilidade>;
+  tipo?: z.infer<typeof tipoRequisito>;
+  peso?: number;
+  macrofuncoes?: z.infer<typeof macrofuncao>[];
+  periodicidade?: string;
+  palavras_chave?: string[];
   filhos?: RequisitoYaml[];
 };
 
@@ -37,9 +63,24 @@ const requisito: z.ZodType<RequisitoYaml> = z.lazy(() =>
     fundamento: z.string().optional(),
     avaliavel: z.boolean().optional(),
     aplicavel_a: aplicabilidade,
+    tipo: tipoRequisito.optional(),
+    peso: z.int().min(1).max(10).optional(),
+    macrofuncoes: z.array(macrofuncao).optional(),
+    periodicidade: z.string().trim().min(1).optional(),
+    palavras_chave: z.array(z.string().trim().min(1)).optional(),
     filhos: z.array(requisito).optional(),
   }),
 );
+
+/** Atributos herdados pelos filhos quando não declarados neles (palavras-chave se acumulam). */
+type Heranca = {
+  tipos: TipoCliente[];
+  tipo: TipoRequisito | null;
+  peso: number;
+  macrofuncoes: Macrofuncao[];
+  periodicidade: string | null;
+  palavrasChave: string[];
+};
 
 const catalogo = z.object({
   norma: z.object({
@@ -96,13 +137,20 @@ export async function importarCatalogo(prisma: PrismaClient, arquivo: string): P
       let avaliaveis = 0;
       const codigos = new Set<string>();
 
-      async function gravar(itens: RequisitoYaml[], paiId: string | null, tiposPai: TipoCliente[]) {
+      async function gravar(itens: RequisitoYaml[], paiId: string | null, pai: Heranca) {
         for (const item of itens) {
           if (codigos.has(item.codigo)) throw new Error(`Código duplicado no catálogo: ${item.codigo}`);
           codigos.add(item.codigo);
-          const tipos = resolverTipos(item.aplicavel_a, tiposPai);
           const avaliavel = item.avaliavel ?? true;
           if (avaliavel) avaliaveis++;
+          const heranca: Heranca = {
+            tipos: resolverTipos(item.aplicavel_a, pai.tipos),
+            tipo: item.tipo ? TIPOS_REQUISITO[item.tipo] : pai.tipo,
+            peso: item.peso ?? pai.peso,
+            macrofuncoes: item.macrofuncoes ? [...new Set(item.macrofuncoes.map((m) => MACROFUNCOES[m]))] : pai.macrofuncoes,
+            periodicidade: item.periodicidade ?? pai.periodicidade,
+            palavrasChave: [...new Set([...pai.palavrasChave, ...(item.palavras_chave ?? []).map((p) => p.toLowerCase())])],
+          };
           const campos = {
             paiId,
             ordem: ordem++,
@@ -111,18 +159,30 @@ export async function importarCatalogo(prisma: PrismaClient, arquivo: string): P
             orientacao: item.orientacao ?? null,
             fundamento: item.fundamento ?? null,
             avaliavel,
-            tiposEntidade: tipos,
+            tiposEntidade: heranca.tipos,
+            tipo: heranca.tipo,
+            peso: heranca.peso,
+            macrofuncoes: heranca.macrofuncoes,
+            periodicidade: heranca.periodicidade,
+            palavrasChave: heranca.palavrasChave,
           };
           const salvo = await tx.requisito.upsert({
             where: { normaId_codigo: { normaId: norma.id, codigo: item.codigo } },
             create: { normaId: norma.id, codigo: item.codigo, ...campos },
             update: campos,
           });
-          if (item.filhos?.length) await gravar(item.filhos, salvo.id, tipos);
+          if (item.filhos?.length) await gravar(item.filhos, salvo.id, heranca);
         }
       }
 
-      await gravar(dados.requisitos, null, resolverTipos(dados.aplicavel_a, TODOS));
+      await gravar(dados.requisitos, null, {
+        tipos: resolverTipos(dados.aplicavel_a, TODOS),
+        tipo: null,
+        peso: 1,
+        macrofuncoes: [],
+        periodicidade: null,
+        palavrasChave: [],
+      });
 
       // Requisitos removidos do catálogo: apagar só se nunca foram respondidos.
       const orfaos = await tx.requisito.findMany({

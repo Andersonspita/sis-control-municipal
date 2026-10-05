@@ -24,11 +24,13 @@ export function CampoAnexos({
   rotulo = "Anexos",
   obrigatorio = false,
   disabled = false,
+  aoMudar,
 }: {
   name?: string;
   rotulo?: string;
   obrigatorio?: boolean;
   disabled?: boolean;
+  aoMudar?: (arquivos: File[]) => void;
 }) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -51,6 +53,7 @@ export function CampoAnexos({
     lista.forEach((f) => dt.items.add(f));
     if (inputRef.current) inputRef.current.files = dt.files;
     setArquivos(lista);
+    aoMudar?.(lista);
   }
 
   function aoSelecionar(e: React.ChangeEvent<HTMLInputElement>) {

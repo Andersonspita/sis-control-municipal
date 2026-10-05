@@ -1,14 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2, Plus, Save, Send, Trash2 } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SeloStatusAcao } from "@/components/selos-status";
+import { Evidencias } from "@/components/anexos/evidencias";
 import { STATUS_EDITAVEIS } from "@/lib/dados/acoes";
+import type { StatusPlano } from "@/generated/prisma/browser";
 import type { AcaoView, UnidadeOpcao } from "@/lib/dados/planos";
 import { formatarDataSimples } from "@/lib/datas";
 import { PRIORIDADE, STATUS_ACAO } from "@/lib/rotulos";
@@ -24,11 +27,13 @@ function custoParaCampo(valor: string | null) {
 
 export function FormAcao({
   planoId,
+  situacaoPlano,
   acao,
   unidades,
   onConcluido,
 }: {
   planoId: string;
+  situacaoPlano: StatusPlano;
   acao: AcaoView | null;
   unidades: UnidadeOpcao[];
   onConcluido: () => void;
@@ -164,8 +169,6 @@ export function FormAcao({
           </div>
         )}
 
-        {/* TODO(anexos): evidências em arquivo da ação (Documento.acaoId) quando o componente de anexos estiver disponível. */}
-
         <Button type="submit" disabled={pendente} className="h-9 w-full">
           {pendente ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Save aria-hidden="true" />}
           {acao ? "Salvar ação" : "Adicionar ação"}
@@ -173,6 +176,23 @@ export function FormAcao({
       </form>
 
       {acao && <Marcos acao={acao} />}
+
+      {acao && (
+        <section aria-labelledby="titulo-evidencias-acao" className="space-y-3 border-t pt-5">
+          <h3 id="titulo-evidencias-acao" className="text-sm font-semibold">
+            Evidências <span className="font-normal text-muted-foreground">({acao.documentos.length})</span>
+          </h3>
+          <Evidencias alvo="acao" id={acao.id} iniciais={acao.documentos} bloqueado={acao.status === "CANCELADA"} />
+          {situacaoPlano !== "CANCELADO" && acao.status !== "CANCELADA" && acao.status !== "CONCLUIDA" && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted px-3 py-2">
+              <p className="text-xs text-muted-foreground">Peça a execução ou a comprovação à unidade; a resposta aceita vira evidência.</p>
+              <Link href={`/demandas/nova?acao=${acao.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                <Send aria-hidden="true" /> Enviar como demanda
+              </Link>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

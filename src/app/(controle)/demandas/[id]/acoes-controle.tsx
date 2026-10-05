@@ -140,12 +140,15 @@ export function AcoesControle({
   prazoAtual,
   prazoMinimo,
   pedido,
+  evidenciaDe,
 }: {
   demandaId: string;
   status: StatusDemanda;
   prazoAtual: string;
   prazoMinimo: string;
   pedido: Pedido | null;
+  /** Ex.: "do requisito": destino dos documentos da resposta ao concluir. */
+  evidenciaDe?: string;
 }) {
   const aberta = STATUS_ABERTOS.includes(status);
   const aguardandoAnalise = status === "RESPONDIDA" || status === "EM_ANALISE";
@@ -222,7 +225,9 @@ export function AcoesControle({
                 config={{
                   acao: "concluir",
                   titulo: "Aceitar resposta e concluir",
-                  descricao: "A demanda será concluída. O parecer é opcional e ficará visível para a unidade.",
+                  descricao: `A demanda será concluída. O parecer é opcional e ficará visível para a unidade.${
+                    evidenciaDe ? ` Os documentos enviados pela unidade passam a ser evidência ${evidenciaDe}.` : ""
+                  }`,
                   rotulo: "Aceitar e concluir",
                   icone: CheckCircle2,
                   variante: "default",

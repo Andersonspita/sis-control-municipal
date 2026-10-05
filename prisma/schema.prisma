@@ -185,6 +185,31 @@ model Norma {
   @@map("normas")
 }
 
+enum TipoRequisito {
+  ESTRUTURAL
+  PROCEDIMENTAL
+  DOCUMENTAL
+}
+
+// As quatro macrofunções da OT 05/2024 (condição V; CONTROLADORIA = controle interno e estrutura do órgão)
+// e as áreas de atuação controladas (Res. TCM-BA 1.120/2005, art. 12).
+enum Macrofuncao {
+  AUDITORIA_INTERNA
+  CONTROLADORIA
+  CORREGEDORIA
+  OUVIDORIA
+  PLANEJAMENTO_ORCAMENTO
+  CONTABILIDADE_FINANCAS
+  GESTAO_FISCAL
+  RECEITA
+  PESSOAL
+  PATRIMONIO
+  LICITACOES_CONTRATOS
+  OBRAS
+  TRANSFERENCIAS
+  TRANSPARENCIA
+}
+
 model Requisito {
   id            String        @id @default(uuid(7)) @db.Uuid
   normaId       String        @map("norma_id") @db.Uuid
@@ -197,6 +222,13 @@ model Requisito {
   fundamento    String?
   avaliavel     Boolean       @default(true)
   tiposEntidade TipoCliente[] @map("tipos_entidade")
+  tipo          TipoRequisito?
+  /// Peso no cálculo de conformidade (1 a 10; CHECK no banco).
+  peso          Int           @default(1)
+  /// Vazio = transversal (não entra em nenhum grupo da conformidade por macrofunção).
+  macrofuncoes  Macrofuncao[] @default([])
+  periodicidade String?
+  palavrasChave String[]      @default([]) @map("palavras_chave")
 
   norma     Norma               @relation(fields: [normaId], references: [id], onDelete: Cascade)
   pai       Requisito?          @relation("Arvore", fields: [paiId], references: [id], onDelete: Cascade)
@@ -265,6 +297,7 @@ model RespostaRequisito {
   requisito  Requisito      @relation(fields: [requisitoId], references: [id], onDelete: Restrict)
   acoes      Acao[]
   documentos Documento[]
+  demandas   Demanda[]
 
   @@unique([cicloId, requisitoId])
   @@index([clienteId])
@@ -410,6 +443,8 @@ model Demanda {
   descricao        String
   unidadeDestinoId String        @map("unidade_destino_id") @db.Uuid
   acaoId           String?       @map("acao_id") @db.Uuid
+  /// Requisito da autoavaliação que originou a demanda; a resposta aceita vira evidência dele.
+  respostaRequisitoId String?    @map("resposta_requisito_id") @db.Uuid
   prazo            DateTime      @db.Date
   prioridade       Prioridade    @default(MEDIA)
   status           StatusDemanda @default(ENVIADA)
@@ -420,12 +455,15 @@ model Demanda {
   cliente        Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   unidadeDestino Unidade             @relation(fields: [unidadeDestinoId], references: [id], onDelete: Restrict)
   acao           Acao?               @relation(fields: [acaoId], references: [id], onDelete: SetNull)
+  respostaRequisito RespostaRequisito? @relation(fields: [respostaRequisitoId], references: [id], onDelete: SetNull)
   tramites       TramitacaoDemanda[]
   documentos     Documento[]
 
   @@unique([clienteId, ano, numero])
   @@index([clienteId, status])
   @@index([unidadeDestinoId])
+  @@index([respostaRequisitoId])
+  @@index([acaoId])
   @@map("demandas")
 }
 

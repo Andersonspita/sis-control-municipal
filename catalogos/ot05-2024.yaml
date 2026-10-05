@@ -2,6 +2,11 @@
 # `descricao` reproduz o texto oficial; os subitens avaliáveis desdobram cada condição para autoavaliação.
 #
 # aplicavel_a: "todos" | "executivo" (todos exceto Câmara) | "legislativo" (só Câmara) | lista de TipoCliente.
+# Classificação (herdada pelos filhos quando omitida; palavras_chave se acumulam):
+#   tipo: estrutural | procedimental | documental · peso: 1 (acessório) a 3 (essencial/sancionado), padrão 1
+#   macrofuncoes: auditoria_interna, controladoria, corregedoria, ouvidoria (OT 05/2024) e áreas controladas
+#   (planejamento_orcamento, contabilidade_financas, gestao_fiscal, receita, pessoal, patrimonio,
+#   licitacoes_contratos, obras, transferencias, transparencia) · periodicidade: texto livre.
 
 norma:
   codigo: OT05
@@ -21,6 +26,11 @@ requisitos:
   - codigo: "I"
     titulo: Criação por lei, estrutura, autonomia e subordinação
     avaliavel: false
+    tipo: estrutural
+    peso: 3
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [estrutura]
     descricao: >-
       As Controladorias Internas Municipais, criadas por lei municipal, devem possuir estruturas adequadas ao
       porte e à complexidade do respectivo órgão, garantindo autonomia administrativa e financeira. Essas
@@ -32,23 +42,36 @@ requisitos:
     filhos:
       - codigo: "I.1"
         titulo: Controladoria criada por lei municipal
+        palavras_chave: [lei de criação]
         orientacao: "Evidência: lei de criação da unidade de controle interno, com número e data de publicação."
       - codigo: "I.2"
         titulo: Estrutura adequada ao porte e à complexidade do órgão
+        peso: 2
+        palavras_chave: [porte]
         orientacao: "Evidência: organograma, quadro de cargos e lotação da controladoria."
       - codigo: "I.3"
         titulo: Autonomia administrativa e financeira
+        peso: 2
+        palavras_chave: [autonomia]
         orientacao: "Evidência: dotação orçamentária própria na LOA, unidade orçamentária ou gestora específica."
       - codigo: "I.4"
         titulo: Execução integrada de auditoria interna, controle interno, corregedoria e ouvidoria
+        macrofuncoes: [auditoria_interna, controladoria, corregedoria, ouvidoria]
+        palavras_chave: [macrofunções]
         orientacao: "Evidência: lei ou regimento atribuindo as quatro macrofunções à controladoria."
       - codigo: "I.5"
         titulo: Subordinação direta à chefia do Poder ou ao representante legal da entidade
+        palavras_chave: [subordinação]
         orientacao: "Evidência: lei de estrutura administrativa; verificar ausência de vinculação a secretaria ou outro órgão."
 
   - codigo: "II"
     titulo: Quadro de pessoal efetivo, recrutado por concurso público
     avaliavel: false
+    tipo: estrutural
+    peso: 2
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [quadro efetivo]
     descricao: >-
       O quadro de pessoal das Controladorias Internas Municipais deve ser composto por servidores recrutados
       mediante concurso público, conforme preconiza o art. 37, inciso II, da Constituição Federal. O processo de
@@ -60,17 +83,26 @@ requisitos:
     filhos:
       - codigo: "II.1"
         titulo: Servidores da controladoria recrutados por concurso público
+        peso: 3
+        palavras_chave: [concurso público]
         orientacao: "Evidência: relação nominal dos servidores lotados, com forma de ingresso e ato de nomeação."
       - codigo: "II.2"
         titulo: Concurso com exigência de qualificação técnica compatível com controle, auditoria e fiscalização
+        palavras_chave: [concurso público, qualificação técnica]
         orientacao: "Evidência: edital do concurso com requisitos de formação e conteúdo programático."
       - codigo: "II.3"
         titulo: Carreira específica de controle interno (auditor, analista)
+        palavras_chave: [carreira]
         orientacao: "Recomendação da OT. Evidência: lei de criação da carreira."
 
   - codigo: "III"
     titulo: Requisitos para chefia, direção e assessoramento
     avaliavel: false
+    tipo: documental
+    peso: 2
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [chefia, titular]
     descricao: >-
       Os cargos de chefia, direção e assessoramento das Controladorias Internas Municipais, unidades centrais do
       sistema de controle interno, devem ser criados por lei municipal e ocupados por servidores que, além de
@@ -85,20 +117,33 @@ requisitos:
     filhos:
       - codigo: "III.1"
         titulo: Cargos de chefia, direção e assessoramento criados por lei municipal
+        tipo: estrutural
+        peso: 3
+        palavras_chave: [lei de criação]
       - codigo: "III.2"
         titulo: Titular com formação superior em área relacionada à gestão pública
+        palavras_chave: [formação superior]
         orientacao: "Evidência: diploma do titular."
       - codigo: "III.3"
         titulo: Titular com experiência comprovada na administração pública ou em controle interno
+        palavras_chave: [experiência]
       - codigo: "III.4"
         titulo: Titular sem condenação penal por crime funcional ou por improbidade administrativa
+        palavras_chave: [ficha limpa, improbidade]
         orientacao: "Evidência: certidões criminais e cíveis (Justiça Estadual e Federal) e declaração de idoneidade."
       - codigo: "III.5"
         titulo: Nomeação preferencial de servidor efetivo, ou justificativa formal quando sem vínculo
+        peso: 1
+        palavras_chave: [servidor efetivo]
         orientacao: "Evidência: ato de nomeação; se sem vínculo, justificativa documentada."
 
   - codigo: "IV"
     titulo: Recursos materiais, tecnológicos e humanos suficientes
+    tipo: estrutural
+    peso: 2
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [recursos]
     descricao: >-
       As Controladorias Internas Municipais devem dispor de recursos materiais, tecnológicos e humanos suficientes
       para o cumprimento, com a maior efetividade possível, de suas atribuições. É fundamental que as
@@ -110,14 +155,22 @@ requisitos:
     filhos:
       - codigo: "IV.1"
         titulo: Recursos humanos suficientes para as atribuições
+        palavras_chave: [recursos humanos]
       - codigo: "IV.2"
         titulo: Recursos materiais adequados (espaço, equipamentos, mobiliário)
+        peso: 1
+        palavras_chave: [recursos materiais]
       - codigo: "IV.3"
         titulo: Ferramentas tecnológicas de acompanhamento em tempo real (orçamentário, financeiro e operacional)
+        palavras_chave: [sistemas informatizados, tempo real]
         orientacao: "Evidência: acesso de consulta aos sistemas contábil, folha, patrimônio, compras; sistemas de controle próprios."
 
   - codigo: "V"
     titulo: Execução ou coordenação das quatro macrofunções
+    tipo: estrutural
+    peso: 3
+    periodicidade: permanente
+    palavras_chave: [macrofunções]
     descricao: >-
       As Controladorias Internas Municipais devem ser estruturadas e/ou reestruturadas para que possam executar e
       ou coordenar de maneira eficaz as quatro macrofunções de controle: auditoria interna, controle interno,
@@ -128,15 +181,28 @@ requisitos:
     filhos:
       - codigo: "V.1"
         titulo: Auditoria interna estruturada, com servidores alocados
+        macrofuncoes: [auditoria_interna]
+        palavras_chave: [auditoria interna]
       - codigo: "V.2"
         titulo: Controle interno (conformidade) estruturado, com servidores alocados
+        macrofuncoes: [controladoria]
+        palavras_chave: [conformidade]
       - codigo: "V.3"
         titulo: Corregedoria estruturada, com servidores alocados
+        macrofuncoes: [corregedoria]
+        palavras_chave: [corregedoria]
       - codigo: "V.4"
         titulo: Ouvidoria estruturada, com servidores alocados
+        macrofuncoes: [ouvidoria]
+        palavras_chave: [ouvidoria]
 
   - codigo: "VI"
     titulo: Segregação de funções
+    tipo: procedimental
+    peso: 3
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [segregação de funções]
     descricao: >-
       As Controladorias Internas Municipais, no âmbito de atuação de seus servidores, deve observar o princípio da
       segregação de funções, que coíbe o conflito de interesses entre a atividade controlada e a controladora,
@@ -147,6 +213,11 @@ requisitos:
 
   - codigo: "VII"
     titulo: Capacitação contínua dos servidores
+    tipo: procedimental
+    peso: 2
+    macrofuncoes: [controladoria]
+    periodicidade: anual
+    palavras_chave: [capacitação]
     descricao: >-
       Os órgãos superiores devem promover a capacitação contínua dos servidores das Controladorias Internas
       Municipais, por ser essencial para garantir que os agentes responsáveis pelo controle estejam preparados
@@ -162,10 +233,17 @@ requisitos:
         orientacao: "Evidência: plano anual de capacitação e certificados do período."
       - codigo: "VII.2"
         titulo: Parcerias com entidades de ensino, Tribunais de Contas ou órgãos de controle
+        peso: 1
+        palavras_chave: [parcerias]
         orientacao: "Evidência: termos de cooperação, adesão a programas de escolas de contas."
 
   - codigo: "VIII"
     titulo: Vedação de delegação das atividades de controle interno a terceiros
+    tipo: estrutural
+    peso: 3
+    macrofuncoes: [controladoria]
+    periodicidade: permanente
+    palavras_chave: [terceirização, indelegabilidade]
     descricao: >-
       É vedada a delegação das atividades de controle interno, a terceiros, uma vez que essas atividades são
       exclusivas do ente público municipal e devem garantir a independência e a transparência dos processos.

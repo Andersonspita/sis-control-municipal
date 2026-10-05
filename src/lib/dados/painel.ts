@@ -54,7 +54,7 @@ export async function resumoPainel(ctx: Contexto) {
           unidadeId: true,
           nome: true,
           status: true,
-          respostas: { select: { situacao: true } },
+          respostas: { select: { situacao: true, requisito: { select: { peso: true } } } },
         },
       }),
       tx.tramitacaoDemanda.findMany({
@@ -73,7 +73,7 @@ export async function resumoPainel(ctx: Contexto) {
     const aderencia = normas.map((n) => {
       const daNorma = ciclos.filter((c) => c.normaId === n.id);
       const ciclo = daNorma.find((c) => c.unidadeId === null) ?? daNorma[0];
-      const resultado = calcularConformidade(ciclo?.respostas ?? []);
+      const resultado = calcularConformidade((ciclo?.respostas ?? []).map((r) => ({ situacao: r.situacao, peso: r.requisito.peso })));
       return {
         normaId: n.id,
         codigo: n.codigo,

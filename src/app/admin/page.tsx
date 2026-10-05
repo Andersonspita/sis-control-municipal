@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { LogOut } from "lucide-react";
-import { exigirUsuario } from "@/lib/auth/dal";
+import { exigirAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
-import { sair } from "@/app/actions/sessao";
-import { Marca } from "@/components/marca";
-import { Button } from "@/components/ui/button";
+import { mascararCnpj } from "@/lib/documentos-br";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TIPO_CLIENTE } from "@/lib/rotulos";
+import { alterarSituacaoCliente } from "./actions";
+import { BotaoSituacao } from "./botao-situacao";
+import { DialogoCliente } from "./dialogo-cliente";
 
-export const metadata: Metadata = { title: "Administração HorizonAJ" };
+export const metadata: Metadata = { title: "Clientes" };
 
 export default async function Admin() {
-  const sessao = await exigirUsuario();
-  if (!sessao.usuario.adminHorizon) redirect("/");
+  await exigirAdmin();
 
   const clientes = await db.cliente.findMany({
     orderBy: [{ municipio: "asc" }, { nome: "asc" }],
@@ -25,65 +23,78 @@ export default async function Admin() {
       cnpj: true,
       municipio: true,
       uf: true,
+      codigoIbge: true,
+      populacao: true,
       ativo: true,
       _count: { select: { vinculos: { where: { ativo: true } } } },
     },
   });
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <header className="bg-sidebar text-sidebar-foreground">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Marca />
-          <form action={sair}>
-            <Button type="submit" variant="ghost" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-              <LogOut aria-hidden="true" /> Sair
-            </Button>
-          </form>
-        </div>
-      </header>
-      <main id="conteudo" className="mx-auto max-w-5xl space-y-6 px-6 py-10">
+    <>
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Clientes</h1>
-          <p className="text-sm text-muted-foreground">
-            Cada entidade é um cliente isolado. O cadastro de clientes e usuários pela interface entra na próxima etapa.
-          </p>
+          <p className="text-sm text-muted-foreground">Cada entidade é um cliente isolado, com seus próprios usuários e dados.</p>
         </div>
-        <Card>
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <caption className="sr-only">Clientes cadastrados</caption>
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th scope="col" className="px-5 py-3 font-medium">Entidade</th>
-                  <th scope="col" className="px-3 py-3 font-medium">Tipo</th>
-                  <th scope="col" className="px-3 py-3 font-medium">CNPJ</th>
-                  <th scope="col" className="px-3 py-3 font-medium">Usuários</th>
-                  <th scope="col" className="px-5 py-3 font-medium">Situação</th>
+        <DialogoCliente />
+      </div>
+      <Card>
+        <CardContent className="overflow-x-auto p-0">
+          <table className="w-full text-sm">
+            <caption className="sr-only">Clientes cadastrados</caption>
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th scope="col" className="px-5 py-3 font-medium">Entidade</th>
+                <th scope="col" className="px-3 py-3 font-medium">Tipo</th>
+                <th scope="col" className="px-3 py-3 font-medium">CNPJ</th>
+                <th scope="col" className="px-3 py-3 font-medium">Usuários</th>
+                <th scope="col" className="px-3 py-3 font-medium">Situação</th>
+                <th scope="col" className="px-5 py-3 font-medium">
+                  <span className="sr-only">Ações</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {clientes.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">
+                    Nenhum cliente cadastrado.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {clientes.map((c) => (
-                  <tr key={c.id} className="border-b last:border-0">
-                    <td className="px-5 py-3">
-                      <span className="block font-medium">{c.nome}</span>
-                      <span className="text-xs text-muted-foreground">{c.municipio}/{c.uf}</span>
-                    </td>
-                    <td className="px-3 py-3">{TIPO_CLIENTE[c.tipo]}</td>
-                    <td className="px-3 py-3 font-mono text-xs">
-                      {c.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")}
-                    </td>
-                    <td className="px-3 py-3 tabular-nums">{c._count.vinculos}</td>
-                    <td className="px-5 py-3">
-                      <Badge variant={c.ativo ? "secondary" : "outline"}>{c.ativo ? "Ativo" : "Inativo"}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+              )}
+              {clientes.map((c) => (
+                <tr key={c.id} className="border-b last:border-0">
+                  <td className="px-5 py-3">
+                    <span className="block font-medium">{c.nome}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {c.municipio}/{c.uf}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3">{TIPO_CLIENTE[c.tipo]}</td>
+                  <td className="px-3 py-3 font-mono text-xs">{mascararCnpj(c.cnpj)}</td>
+                  <td className="px-3 py-3 tabular-nums">{c._count.vinculos}</td>
+                  <td className="px-3 py-3">
+                    <Badge variant={c.ativo ? "secondary" : "outline"}>{c.ativo ? "Ativo" : "Inativo"}</Badge>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex justify-end gap-1">
+                      <DialogoCliente cliente={c} />
+                      <BotaoSituacao
+                        acao={alterarSituacaoCliente}
+                        id={c.id}
+                        ativo={c.ativo}
+                        nome={c.nome}
+                        aviso="Nenhum usuário conseguirá acessar este cliente enquanto ele estiver inativo. Os dados são preservados."
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    </>
   );
 }

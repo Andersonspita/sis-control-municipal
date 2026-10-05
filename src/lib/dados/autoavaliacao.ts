@@ -2,7 +2,8 @@ import "server-only";
 import { z } from "zod";
 import { comCliente, db } from "@/lib/db";
 import type { Contexto } from "@/lib/auth/dal";
-import type { SituacaoRequisito } from "@/generated/prisma/client";
+import type { Macrofuncao, SituacaoRequisito, StatusDemanda, TipoRequisito } from "@/generated/prisma/client";
+import type { Anexo } from "@/components/anexos/lista-anexos";
 import { calcularConformidade } from "./conformidade";
 
 export type NoRequisito = {
@@ -14,6 +15,9 @@ export type NoRequisito = {
   orientacao: string | null;
   fundamento: string | null;
   avaliavel: boolean;
+  tipo: TipoRequisito | null;
+  peso: number;
+  macrofuncoes: Macrofuncao[];
 };
 
 export type RespostaView = {
@@ -24,6 +28,9 @@ export type RespostaView = {
   evidencia: string | null;
   respondidoEm: string | null;
   respondidoPor: string | null;
+  documentos: Anexo[];
+  /** Demandas enviadas às unidades pedindo evidência deste requisito. */
+  demandas: { id: string; numero: number; ano: number; status: StatusDemanda }[];
 };
 
 /** Requisitos que entram num ciclo: avaliáveis (não agrupadores) e aplicáveis ao tipo do cliente. */
@@ -47,12 +54,15 @@ export async function listarCiclos(ctx: Contexto) {
         dataFim: true,
         norma: { select: { id: true, codigo: true, titulo: true } },
         unidade: { select: { nome: true, sigla: true } },
-        respostas: { select: { situacao: true } },
+        respostas: { select: { situacao: true, requisito: { select: { peso: true } } } },
         _count: { select: { planos: true } },
       },
     }),
   );
-  return ciclos.map(({ respostas, ...c }) => ({ ...c, conformidade: calcularConformidade(respostas) }));
+  return ciclos.map(({ respostas, ...c }) => ({
+    ...c,
+    conformidade: calcularConformidade(respostas.map((r) => ({ situacao: r.situacao, peso: r.requisito.peso }))),
+  }));
 }
 
 export async function carregarCiclo(ctx: Contexto, id: string) {
@@ -81,6 +91,14 @@ export async function carregarCiclo(ctx: Contexto, id: string) {
             evidencia: true,
             respondidoEm: true,
             respondidoPorId: true,
+            documentos: {
+              select: { id: true, nome: true, tamanho: true, mimeType: true },
+              orderBy: { criadoEm: "asc" },
+            },
+            demandas: {
+              select: { id: true, numero: true, ano: true, status: true },
+              orderBy: { criadoEm: "asc" },
+            },
           },
         },
         planos: {
@@ -123,6 +141,9 @@ export async function carregarCiclo(ctx: Contexto, id: string) {
         orientacao: true,
         fundamento: true,
         avaliavel: true,
+        tipo: true,
+        peso: true,
+        macrofuncoes: true,
       },
     }),
     db.usuario.findMany({
@@ -152,6 +173,8 @@ export async function carregarCiclo(ctx: Contexto, id: string) {
     evidencia: r.evidencia,
     respondidoEm: r.respondidoEm?.toISOString() ?? null,
     respondidoPor: r.respondidoPorId ? (nomes.get(r.respondidoPorId) ?? null) : null,
+    documentos: r.documentos,
+    demandas: r.demandas,
   }));
 
   return {

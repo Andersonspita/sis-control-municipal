@@ -2,9 +2,11 @@ import "dotenv/config";
 import { Client } from "pg";
 import {
   calcularConformidade,
+  chavesMacrofuncao,
   compararGrupos,
   conformidadePorGrupo,
   mapaCapitulos,
+  TRANSVERSAL,
   validarResposta,
 } from "../src/lib/dados/conformidade";
 import { acaoVencida, lerValorMonetario, percentualExecutado } from "../src/lib/dados/acoes";
@@ -36,6 +38,34 @@ function regrasPuras() {
     { situacao: "NAO_ATENDIDO", peso: 1 },
   ]);
   conferir("conformidade: peso do requisito é respeitado (3/4)", ponderado.indice === 0.75);
+  conferir("conformidade: peso ausente vale 1", calcularConformidade([{ situacao: "ATENDIDO", peso: null }, { situacao: "NAO_ATENDIDO" }]).indice === 0.5);
+  const parcialPesado = calcularConformidade([
+    { situacao: "PARCIALMENTE_ATENDIDO", peso: 2 },
+    { situacao: "ATENDIDO", peso: 1 },
+    { situacao: "NAO_APLICAVEL", peso: 3 },
+  ]);
+  conferir(
+    "conformidade: parcial com peso 2 + atende peso 1 = 2/3; não se aplica não soma peso",
+    parcialPesado.pontos === 2 && parcialPesado.maximo === 3,
+  );
+
+  // Por macrofunção: requisito com várias macrofunções entra inteiro em cada uma; vazio = transversal.
+  const porMacro = conformidadePorGrupo(
+    [
+      { situacao: "ATENDIDO" as const, peso: 3, macro: ["PESSOAL", "GESTAO_FISCAL"] },
+      { situacao: "NAO_ATENDIDO" as const, peso: 1, macro: ["PESSOAL"] },
+      { situacao: "PARCIALMENTE_ATENDIDO" as const, peso: 2, macro: ["GESTAO_FISCAL"] },
+      { situacao: "NAO_ATENDIDO" as const, peso: 2, macro: [] },
+    ],
+    (i) => chavesMacrofuncao(i.macro),
+  );
+  conferir("macrofunção: Pessoal = 3/(3+1) = 75%", porMacro.get("PESSOAL")?.indice === 0.75);
+  conferir("macrofunção: Gestão fiscal = (3 + 0,5×2)/(3+2) = 80%", porMacro.get("GESTAO_FISCAL")?.indice === 0.8);
+  conferir("macrofunção: sem macrofunção vai para transversal", porMacro.get(TRANSVERSAL)?.indice === 0 && porMacro.get(TRANSVERSAL)?.total === 1);
+  conferir(
+    "macrofunção: chave repetida não duplica o item",
+    conformidadePorGrupo([{ situacao: "ATENDIDO" as const }], () => ["A", "A"]).get("A")?.total === 1,
+  );
 
   const nos = [
     { id: "I", paiId: null },
@@ -92,6 +122,22 @@ async function garantiasNoBanco() {
       FROM clientes c, usuarios u, usuarios s
      WHERE c.tipo = 'PREFEITURA' AND u.email LIKE 'controlador%' AND s.email LIKE 'saude%'`);
   const { cliente, controlador, satelite } = ctx[0];
+
+  const { rows: semClassificacao } = await dono.query(
+    `SELECT count(*)::int AS n FROM requisitos WHERE avaliavel AND (tipo IS NULL OR cardinality(macrofuncoes) = 0)`,
+  );
+  conferir("catálogos: todo requisito avaliável tem tipo e macrofunção", semClassificacao[0].n === 0);
+  const { rows: pesos } = await dono.query("SELECT count(DISTINCT peso)::int AS n FROM requisitos WHERE avaliavel");
+  conferir("catálogos: há pesos diferentes entre os requisitos", pesos[0].n > 1);
+  await dono.query("BEGIN");
+  try {
+    await dono.query("UPDATE requisitos SET peso = 0 WHERE id = (SELECT id FROM requisitos LIMIT 1)");
+    conferir("CHECK: peso 0 é recusado", false);
+  } catch {
+    conferir("CHECK: peso 0 é recusado", true);
+  } finally {
+    await dono.query("ROLLBACK");
+  }
 
   async function comContexto<T>(usuario: string, perfil: string, fn: () => Promise<T>) {
     await app.query("BEGIN");

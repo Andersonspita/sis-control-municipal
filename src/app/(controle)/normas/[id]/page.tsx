@@ -7,9 +7,10 @@ import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { db } from "@/lib/db";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
 import { Badge } from "@/components/ui/badge";
+import { ClassificacaoRequisito } from "@/components/requisitos/classificacao";
 import { TIPO_CLIENTE } from "@/lib/rotulos";
 import { cn } from "@/lib/utils";
-import type { TipoCliente } from "@/generated/prisma/client";
+import type { Macrofuncao, TipoCliente, TipoRequisito } from "@/generated/prisma/client";
 
 type No = {
   id: string;
@@ -20,6 +21,11 @@ type No = {
   fundamento: string | null;
   avaliavel: boolean;
   tiposEntidade: TipoCliente[];
+  tipo: TipoRequisito | null;
+  peso: number;
+  macrofuncoes: Macrofuncao[];
+  periodicidade: string | null;
+  palavrasChave: string[];
   paiId: string | null;
   filhos: No[];
 };
@@ -46,6 +52,11 @@ async function carregar(id: string) {
           fundamento: true,
           avaliavel: true,
           tiposEntidade: true,
+          tipo: true,
+          peso: true,
+          macrofuncoes: true,
+          periodicidade: true,
+          palavrasChave: true,
           paiId: true,
         },
       },
@@ -80,10 +91,21 @@ function Requisito({ no, tipo, nivel }: { no: No; tipo: TipoCliente; nivel: numb
           {!aplicavel && <Badge variant="outline">não se aplica a {TIPO_CLIENTE[tipo].toLowerCase()}</Badge>}
           {no.avaliavel && aplicavel && <Badge variant="secondary">avaliável</Badge>}
         </div>
+        {no.avaliavel && (
+          <ClassificacaoRequisito
+            tipo={no.tipo}
+            peso={no.peso}
+            macrofuncoes={no.macrofuncoes}
+            periodicidade={no.periodicidade}
+          />
+        )}
         {no.descricao && <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">{no.descricao}</p>}
         {no.fundamento && <p className="text-xs text-muted-foreground">Fundamento: {no.fundamento}</p>}
         {no.orientacao && (
           <p className="max-w-4xl rounded-md bg-accent px-3 py-2 text-xs text-accent-foreground">{no.orientacao}</p>
+        )}
+        {no.avaliavel && no.palavrasChave.length > 0 && (
+          <p className="text-xs text-muted-foreground">Palavras-chave: {no.palavrasChave.join(", ")}</p>
         )}
       </div>
       {no.filhos.length > 0 && (

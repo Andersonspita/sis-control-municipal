@@ -1,4 +1,5 @@
 import type {
+  Macrofuncao,
   OrigemPlano,
   Perfil,
   Prioridade,
@@ -8,6 +9,7 @@ import type {
   StatusDemanda,
   StatusPlano,
   TipoCliente,
+  TipoRequisito,
   TipoTramite,
   TipoUnidade,
 } from "@/generated/prisma/browser";
@@ -111,4 +113,28 @@ export const STATUS_PLANO: Record<StatusPlano, string> = {
   EM_EXECUCAO: "Em execução",
   CONCLUIDO: "Concluído",
   CANCELADO: "Cancelado",
+};
+
+export const TIPO_REQUISITO: Record<TipoRequisito, string> = {
+  ESTRUTURAL: "Estrutural",
+  PROCEDIMENTAL: "Procedimental",
+  DOCUMENTAL: "Documental",
+};
+
+/** Na ordem de exibição: macrofunções da OT 05/2024 e, depois, as áreas controladas. */
+export const MACROFUNCAO: Record<Macrofuncao, string> = {
+  CONTROLADORIA: "Controladoria",
+  AUDITORIA_INTERNA: "Auditoria interna",
+  CORREGEDORIA: "Corregedoria",
+  OUVIDORIA: "Ouvidoria",
+  PLANEJAMENTO_ORCAMENTO: "Planejamento e orçamento",
+  CONTABILIDADE_FINANCAS: "Contabilidade e finanças",
+  GESTAO_FISCAL: "Gestão fiscal (LRF)",
+  RECEITA: "Receita e dívida ativa",
+  PESSOAL: "Pessoal",
+  PATRIMONIO: "Patrimônio, almoxarifado e frota",
+  LICITACOES_CONTRATOS: "Licitações e contratos",
+  OBRAS: "Obras públicas",
+  TRANSFERENCIAS: "Subvenções e transferências",
+  TRANSPARENCIA: "Transparência e prestação de contas",
 };

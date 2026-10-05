@@ -1,12 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { CircleAlert, CircleCheck, Loader2, Save, Undo2 } from "lucide-react";
+import { CircleAlert, CircleCheck, Loader2, Save, Send, Undo2 } from "lucide-react";
 import type { SituacaoRequisito } from "@/generated/prisma/browser";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Evidencias } from "@/components/anexos/evidencias";
+import { SituacaoDemanda } from "@/components/demandas/situacao";
+import { numeroDemanda } from "@/lib/demandas";
 import { SeloSituacao, VISUAL_SITUACAO, type Tom } from "@/components/selos-status";
+import { ClassificacaoRequisito } from "@/components/requisitos/classificacao";
 import { EXIGE_JUSTIFICATIVA, validarResposta } from "@/lib/dados/conformidade";
 import type { NoRequisito, RespostaView } from "@/lib/dados/autoavaliacao";
 import { RESPOSTA_REQUISITO } from "@/lib/rotulos";
@@ -110,10 +115,13 @@ export function CartaoRequisito({
       )}
     >
       <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <h3 id={`${idBase}-titulo`} className="min-w-0 flex-1 font-medium leading-snug">
-          <span className="mr-2 font-mono text-xs font-semibold text-muted-foreground">{no.codigo}</span>
-          {no.titulo}
-        </h3>
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <h3 id={`${idBase}-titulo`} className="font-medium leading-snug">
+            <span className="mr-2 font-mono text-xs font-semibold text-muted-foreground">{no.codigo}</span>
+            {no.titulo}
+          </h3>
+          <ClassificacaoRequisito tipo={no.tipo} peso={no.peso} macrofuncoes={no.macrofuncoes} />
+        </div>
         <SeloSituacao situacao={resposta.situacao} />
       </header>
 
@@ -203,10 +211,36 @@ export function CartaoRequisito({
               rows={3}
               placeholder="Atos, documentos, links ou locais que comprovam o atendimento."
             />
-            {/* TODO(anexos): incluir o componente de anexos (Documento.respostaRequisitoId) quando disponível. */}
           </div>
         </div>
       </fieldset>
+
+      <section aria-label={`Evidências em arquivo do requisito ${no.codigo}`} className="mt-4">
+        <Evidencias alvo="resposta" id={resposta.id} iniciais={resposta.documentos} bloqueado={bloqueado} />
+        {(resposta.demandas.length > 0 || !bloqueado) && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            {resposta.demandas.length > 0 ? (
+              <ul aria-label={`Demandas que pedem evidência do requisito ${no.codigo}`} className="flex flex-wrap items-center gap-2 text-xs">
+                {resposta.demandas.map((d) => (
+                  <li key={d.id}>
+                    <Link href={`/demandas/${d.id}`} className="inline-flex items-center gap-1.5 rounded-md hover:underline">
+                      <span className="font-mono font-semibold">Demanda {numeroDemanda(d.numero, d.ano)}</span>
+                      <SituacaoDemanda status={d.status} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span />
+            )}
+            {!bloqueado && (
+              <Link href={`/demandas/nova?requisito=${resposta.id}`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+                <Send aria-hidden="true" /> Solicitar documento a uma unidade
+              </Link>
+            )}
+          </div>
+        )}
+      </section>
 
       <footer className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <p aria-live="polite" className="flex items-center gap-1.5 text-xs text-muted-foreground">

@@ -103,6 +103,7 @@ export default async function DetalhePlano({ params }: PageProps<"/planos/[id]">
 
       <TabelaAcoes
         planoId={plano.id}
+        situacaoPlano={plano.status}
         acoes={acoes}
         unidades={unidades}
         podeAdicionar={!encerrado}
