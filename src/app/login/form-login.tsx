@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { entrar } from "./actions";
 
-export function FormLogin({ voltar }: { voltar?: string }) {
+export function FormLogin({ voltar, municipio }: { voltar?: string; municipio?: string }) {
   const [estado, acao, pendente] = useActionState(entrar, undefined);
 
   return (
     <form action={acao} className="space-y-5" noValidate>
       {voltar && <input type="hidden" name="voltar" value={voltar} />}
+      {municipio && <input type="hidden" name="municipio" value={municipio} />}
 
       {estado?.erro && (
         <Alert variant="destructive" aria-live="assertive">

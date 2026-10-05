@@ -1,6 +1,6 @@
 // Sistema de Controladoria Municipal — HorizonAJ
 //
-// Tabelas globais (sem RLS): clientes, usuarios, sessoes, vinculos_cliente, normas, requisitos.
+// Tabelas globais (sem RLS): municipios, clientes, usuarios, sessoes, vinculos_cliente, normas, requisitos.
 // Demais tabelas carregam cliente_id e são isoladas por Row Level Security
 // (ver prisma/migrations/*_rls). A aplicação conecta com um papel sem BYPASSRLS.
 
@@ -40,11 +40,31 @@ enum TipoUnidade {
   OUTRO
 }
 
+/// Município de acesso: agrupa as entidades do mesmo município e define o link /m/<slug>.
+model Municipio {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  slug         String   @unique @db.VarChar(80)
+  nome         String
+  uf           String   @db.Char(2)
+  codigoIbge   String?  @unique @map("codigo_ibge") @db.VarChar(7)
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm DateTime @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  clientes Cliente[]
+  sessoes  Sessao[]
+
+  @@map("municipios")
+}
+
 model Cliente {
   id           String      @id @default(uuid(7)) @db.Uuid
   nome         String
   tipo         TipoCliente
   cnpj         String      @unique @db.VarChar(14)
+  /// NOT NULL no banco: se omitido, o gatilho clientes_municipio agrupa pelo código IBGE ou pelo slug.
+  municipioId  String?     @map("municipio_id") @db.Uuid
+  /// Cópias de municipios.nome/uf/codigo_ibge, mantidas pelo banco.
   municipio    String
   uf           String      @db.Char(2)
   codigoIbge   String?     @map("codigo_ibge") @db.VarChar(7)
@@ -56,6 +76,7 @@ model Cliente {
   criadoEm     DateTime    @default(now()) @map("criado_em") @db.Timestamptz(3)
   atualizadoEm DateTime    @updatedAt @map("atualizado_em") @db.Timestamptz(3)
 
+  municipioCadastro Municipio? @relation(fields: [municipioId], references: [id], onDelete: Restrict)
   vinculos  VinculoCliente[]
   unidades  Unidade[]
   sessoes   Sessao[]
@@ -79,6 +100,7 @@ model Cliente {
   relatoriosAnuais RelatorioAnual[]
   coletasIntegracao ColetaIntegracao[]
 
+  @@index([municipioId])
   @@map("clientes")
 }
 
@@ -106,6 +128,8 @@ model Sessao {
   id             String   @id @db.VarChar(64)
   usuarioId      String   @map("usuario_id") @db.Uuid
   clienteAtivoId String?  @map("cliente_ativo_id") @db.Uuid
+  /// Sessão aberta pelo link do município: restrita às entidades dele (exceto administradores).
+  municipioAcessoId String? @map("municipio_acesso_id") @db.Uuid
   expiraEm       DateTime @map("expira_em") @db.Timestamptz(3)
   ip             String?
   userAgent      String?  @map("user_agent")
@@ -113,6 +137,7 @@ model Sessao {
 
   usuario      Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   clienteAtivo Cliente? @relation(fields: [clienteAtivoId], references: [id], onDelete: SetNull)
+  municipioAcesso Municipio? @relation(fields: [municipioAcessoId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
   @@map("sessoes")

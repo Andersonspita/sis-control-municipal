@@ -8,7 +8,7 @@ export function hashSid(sid: string) {
   return createHash("sha256").update(sid).digest("hex");
 }
 
-export async function criarSessao(usuarioId: string, clienteAtivoId: string | null) {
+export async function criarSessao(usuarioId: string, clienteAtivoId: string | null, municipioAcessoId: string | null = null) {
   const sid = randomBytes(32).toString("base64url");
   const expiraEm = new Date(Date.now() + DURACAO_SESSAO_MS);
   const h = await headers();
@@ -18,6 +18,7 @@ export async function criarSessao(usuarioId: string, clienteAtivoId: string | nu
       id: hashSid(sid),
       usuarioId,
       clienteAtivoId,
+      municipioAcessoId,
       expiraEm,
       ip: h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
       userAgent: h.get("user-agent")?.slice(0, 400) ?? null,
@@ -53,4 +54,11 @@ export async function definirClienteAtivo(clienteId: string) {
   const id = await idSessaoDoCookie();
   if (!id) return;
   await db.sessao.update({ where: { id }, data: { clienteAtivoId: clienteId } });
+}
+
+/** Remove a restrição de município da sessão atual. Reservado a administradores HorizonAJ. */
+export async function liberarMunicipioAcesso() {
+  const id = await idSessaoDoCookie();
+  if (!id) return;
+  await db.sessao.update({ where: { id }, data: { municipioAcessoId: null } });
 }

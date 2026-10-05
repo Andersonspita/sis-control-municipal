@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Loader2, Pencil, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,38 +16,29 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAcaoFormulario } from "@/components/use-acao-formulario";
-import { mascararCnpj, UFS } from "@/lib/documentos-br";
+import { mascararCnpj } from "@/lib/documentos-br";
+import { caminhoAcessoMunicipio } from "@/lib/municipios";
 import { TIPO_CLIENTE } from "@/lib/rotulos";
 import type { TipoCliente } from "@/generated/prisma/enums";
-import { buscarMunicipiosIbge, buscarPopulacaoIbge, salvarCliente, type MunicipioOpcao } from "./actions";
+import { buscarPopulacaoIbge, salvarCliente } from "./actions";
 import { CLASSE_SELECT } from "./comum";
+import { CamposMunicipio, type MunicipioCadastrado } from "./campos-municipio";
 
 export type ClienteEditavel = {
   id: string;
   nome: string;
   tipo: TipoCliente;
   cnpj: string;
-  municipio: string;
-  uf: string;
-  codigoIbge: string | null;
+  municipioId: string | null;
   populacao: number | null;
 };
 
-const normalizar = (nome: string) =>
-  nome
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .trim();
-
-export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
+export function DialogoCliente({ cliente, municipios }: { cliente?: ClienteEditavel; municipios: MunicipioCadastrado[] }) {
   const [aberto, setAberto] = useState(false);
   const [cnpj, setCnpj] = useState(cliente ? mascararCnpj(cliente.cnpj) : "");
-  const [uf, setUf] = useState(cliente?.uf ?? "");
-  const [municipio, setMunicipio] = useState(cliente?.municipio ?? "");
-  const [codigoIbge, setCodigoIbge] = useState(cliente?.codigoIbge ?? "");
+  const [municipioId, setMunicipioId] = useState(cliente?.municipioId ?? "");
+  const [codigoNovo, setCodigoNovo] = useState("");
   const [populacao, setPopulacao] = useState(cliente?.populacao?.toString() ?? "");
-  const [municipios, setMunicipios] = useState<MunicipioOpcao[]>([]);
   const [infoIbge, setInfoIbge] = useState<string | null>(null);
   const [buscando, iniciarBusca] = useTransition();
   const { pendente, formRef, onSubmit } = useAcaoFormulario(salvarCliente, {
@@ -55,28 +46,16 @@ export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
       setAberto(false);
       if (!cliente) {
         setCnpj("");
-        setMunicipio("");
-        setCodigoIbge("");
+        setMunicipioId("");
+        setCodigoNovo("");
         setPopulacao("");
         setInfoIbge(null);
       }
     },
   });
   const p = cliente ? `cli-${cliente.id}` : "cli-novo";
-
-  // Lista de municípios do IBGE para a UF escolhida (sugestões do campo Município).
-  useEffect(() => {
-    if (!aberto || !uf) return;
-    let ativo = true;
-    buscarMunicipiosIbge(uf).then((r) => {
-      if (!ativo) return;
-      setMunicipios(r.municipios ?? []);
-      if (r.erro) setInfoIbge(r.erro);
-    });
-    return () => {
-      ativo = false;
-    };
-  }, [aberto, uf]);
+  const existente = municipios.find((m) => m.id === municipioId);
+  const codigoIbge = existente ? (existente.codigoIbge ?? "") : codigoNovo;
 
   function consultarPopulacao(codigo: string) {
     iniciarBusca(async () => {
@@ -87,16 +66,6 @@ export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
       } else setInfoIbge(r.erro ?? null);
     });
   }
-
-  function alterarMunicipio(valor: string) {
-    setMunicipio(valor);
-    const encontrado = municipios.find((m) => normalizar(m.nome) === normalizar(valor));
-    if (encontrado && encontrado.codigo !== codigoIbge) {
-      setCodigoIbge(encontrado.codigo);
-      consultarPopulacao(encontrado.codigo);
-    }
-  }
-
   return (
     <Dialog open={aberto} onOpenChange={setAberto}>
       {cliente ? (
@@ -112,7 +81,10 @@ export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
         <form ref={formRef} onSubmit={onSubmit} className="grid gap-4">
           <DialogHeader>
             <DialogTitle>{cliente ? "Editar cliente" : "Novo cliente"}</DialogTitle>
-            <DialogDescription>Cada entidade (Prefeitura, Câmara, autarquia…) é um cliente com dados isolados.</DialogDescription>
+            <DialogDescription>
+              Cada entidade (Prefeitura, Câmara, autarquia…) é um cliente com dados isolados. As entidades do mesmo
+              município compartilham o link de acesso.
+            </DialogDescription>
           </DialogHeader>
           {cliente && <input type="hidden" name="id" value={cliente.id} />}
           <div className="space-y-1.5">
@@ -163,67 +135,57 @@ export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
               />
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_6rem]">
-            <div className="space-y-1.5">
-              <Label htmlFor={`${p}-municipio`}>
-                Município <span aria-hidden="true">*</span>
-              </Label>
-              <Input
-                id={`${p}-municipio`}
-                name="municipio"
-                required
-                minLength={2}
-                maxLength={120}
-                value={municipio}
-                onChange={(e) => alterarMunicipio(e.target.value)}
-                list={`${p}-municipios`}
-                autoComplete="off"
-                className="h-9"
-              />
-              <datalist id={`${p}-municipios`}>
-                {municipios.map((m) => (
-                  <option key={m.codigo} value={m.nome} />
-                ))}
-              </datalist>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`${p}-uf`}>
-                UF <span aria-hidden="true">*</span>
-              </Label>
-              <select
-                id={`${p}-uf`}
-                name="uf"
-                required
-                value={uf}
-                onChange={(e) => {
-                  setUf(e.target.value);
-                  setMunicipios([]);
-                }}
-                className={CLASSE_SELECT}
-              >
-                <option value="" disabled>
-                  —
+
+          <div className="space-y-1.5">
+            <Label htmlFor={`${p}-municipio`}>
+              Município <span aria-hidden="true">*</span>
+            </Label>
+            <select
+              id={`${p}-municipio`}
+              name="municipioId"
+              required
+              value={municipioId}
+              onChange={(e) => {
+                setMunicipioId(e.target.value);
+                setInfoIbge(null);
+              }}
+              className={CLASSE_SELECT}
+            >
+              <option value="" disabled>
+                Selecione…
+              </option>
+              {municipios.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nome}/{m.uf}
+                  {m.ativo ? "" : " (link inativo)"}
                 </option>
-                {UFS.map((uf) => (
-                  <option key={uf} value={uf}>
-                    {uf}
-                  </option>
-                ))}
-              </select>
-            </div>
+              ))}
+              <option value="novo">+ Novo município…</option>
+            </select>
+            {existente && (
+              <p className="text-xs text-muted-foreground">
+                Link de acesso: <span className="font-mono">{caminhoAcessoMunicipio(existente.slug)}</span>
+                {existente.codigoIbge ? ` · IBGE ${existente.codigoIbge}` : " · sem código IBGE"}
+              </p>
+            )}
           </div>
+
+          {municipioId === "novo" && (
+            <CamposMunicipio prefixo={`${p}-mun`} aoAlterarCodigo={setCodigoNovo} aoEscolherDoIbge={consultarPopulacao} />
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor={`${p}-ibge`}>Código IBGE</Label>
+              <Label htmlFor={`${p}-populacao`}>População</Label>
               <div className="flex gap-2">
                 <Input
-                  id={`${p}-ibge`}
-                  name="codigoIbge"
+                  id={`${p}-populacao`}
+                  name="populacao"
                   inputMode="numeric"
-                  pattern="\d{7}"
-                  maxLength={7}
-                  value={codigoIbge}
-                  onChange={(e) => setCodigoIbge(e.target.value.replace(/\D/g, ""))}
+                  pattern="\d*"
+                  maxLength={9}
+                  value={populacao}
+                  onChange={(e) => setPopulacao(e.target.value.replace(/\D/g, ""))}
                   className="h-9"
                 />
                 <Button
@@ -239,21 +201,8 @@ export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
                 </Button>
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`${p}-populacao`}>População</Label>
-              <Input
-                id={`${p}-populacao`}
-                name="populacao"
-                inputMode="numeric"
-                pattern="\d*"
-                maxLength={9}
-                value={populacao}
-                onChange={(e) => setPopulacao(e.target.value.replace(/\D/g, ""))}
-                className="h-9"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground sm:col-span-2" aria-live="polite">
-              {infoIbge ?? "Escolha o município na lista para preencher o código IBGE e a população oficial."}
+            <p className="self-end text-xs text-muted-foreground" aria-live="polite">
+              {infoIbge ?? "A população oficial vem do IBGE pelo código do município."}
             </p>
           </div>
           <DialogFooter>

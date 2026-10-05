@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_SESSAO, lerToken } from "@/lib/auth/token";
 
-const ROTAS_PUBLICAS = ["/login", "/propostas-visuais"];
+// /m/<slug>: entrada pelo link do município (a página responde 404 para slug inexistente ou inativo).
+const ROTAS_PUBLICAS = ["/login", "/m", "/propostas-visuais"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Building2, ChevronRight, Landmark, LogOut, ShieldUser } from "lucide-react";
-import { exigirUsuario, listarVinculos } from "@/lib/auth/dal";
-import { selecionarCliente, sair } from "@/app/actions/sessao";
+import { Building2, ChevronRight, Globe, Landmark, LogOut, ShieldUser } from "lucide-react";
+import { exigirUsuario, listarVinculos, temVinculosForaDoMunicipio } from "@/lib/auth/dal";
+import { selecionarCliente, sair, verTodasEntidades } from "@/app/actions/sessao";
 import { Marca } from "@/components/marca";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PERFIL, TIPO_CLIENTE } from "@/lib/rotulos";
@@ -16,6 +16,8 @@ export default async function SelecionarCliente() {
   const sessao = await exigirUsuario();
   const vinculos = await listarVinculos(sessao.usuario.id);
   const admin = sessao.usuario.adminHorizon;
+  const municipio = sessao.municipioAcesso;
+  const outrosMunicipios = municipio ? await temVinculosForaDoMunicipio(sessao.usuario.id, municipio.id) : false;
 
   return (
     <div className="min-h-screen bg-muted/40">
@@ -40,12 +42,18 @@ export default async function SelecionarCliente() {
       <main id="conteudo" className="mx-auto max-w-3xl space-y-6 px-6 py-10">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Olá, {sessao.usuario.nome.split(" ")[0]}</h1>
-          <p className="text-muted-foreground">Escolha a entidade em que deseja trabalhar.</p>
+          <p className="text-muted-foreground">
+            {municipio
+              ? `Escolha a entidade de ${municipio.nome}/${municipio.uf} em que deseja trabalhar.`
+              : "Escolha a entidade em que deseja trabalhar."}
+          </p>
         </div>
 
         {vinculos.length === 0 ? (
           <p className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-            Seu usuário ainda não está vinculado a nenhuma entidade. Procure a controladoria responsável.
+            {municipio
+              ? `Seu usuário não está vinculado a nenhuma entidade de ${municipio.nome}/${municipio.uf}.`
+              : "Seu usuário ainda não está vinculado a nenhuma entidade. Procure a controladoria responsável."}
           </p>
         ) : (
           <ul className="space-y-3">
@@ -75,6 +83,18 @@ export default async function SelecionarCliente() {
               );
             })}
           </ul>
+        )}
+
+        {outrosMunicipios && (
+          <form action={verTodasEntidades} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed bg-card p-4">
+            <p className="text-sm text-muted-foreground">
+              Você também tem acesso a entidades de outros municípios.
+              {!admin && " Para vê-las, entre novamente pelo acesso geral."}
+            </p>
+            <Button type="submit" variant="outline">
+              <Globe aria-hidden="true" /> Ver todas as entidades
+            </Button>
+          </form>
         )}
 
         {admin && (
