@@ -212,7 +212,10 @@ async function main() {
     await toast(ctl, "1 documento virou evidência do requisito.");
     conferir("conclusão informa o documento que virou evidência", true);
     await ctl.goto(urlCiclo);
-    conferir("documento da resposta aparece nas evidências do requisito", await aparece(ctl.getByText(nomeEvidencia)));
+    conferir(
+      "documento da resposta aparece nas evidências do requisito",
+      await aparece(ctl.locator('section[aria-label^="Evidências em arquivo"]').getByText(nomeEvidencia)),
+    );
 
     await ctl.goto(`${BASE}/trilha`);
     const trilha = await ctl.locator("main").innerText();

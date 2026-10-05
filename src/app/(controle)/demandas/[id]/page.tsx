@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarClock, ClipboardCheck, ListTodo, SearchCheck } from "lucide-react";
+import { ArrowLeft, CalendarClock, ClipboardCheck, FileDown, ListTodo, SearchCheck } from "lucide-react";
 import { z } from "zod";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { db } from "@/lib/db";
@@ -14,6 +14,7 @@ import { LinhaDoTempo } from "@/components/demandas/linha-do-tempo";
 import { PrioridadeDemanda, SituacaoCompleta } from "@/components/demandas/situacao";
 import { formatarDataHora, formatarDataSimples, hojeComoDataSimples, paraCampoData, somarDias } from "@/lib/datas";
 import { descricaoPrazo, numeroDemanda } from "@/lib/demandas";
+import { PDF_RELATORIO } from "@/lib/relatorios/urls";
 import { cn } from "@/lib/utils";
 import { AcoesControle, FormComentario } from "./acoes-controle";
 
@@ -38,10 +39,16 @@ export default async function DetalheDemanda(props: PageProps<"/demandas/[id]">)
         titulo={d.assunto}
         descricao={`Demanda nº ${numeroDemanda(d.numero, d.ano)} · ${d.unidadeDestino.nome}`}
         acoes={
-          <Link href="/demandas" className={buttonVariants({ variant: "outline", size: "lg" })}>
-            <ArrowLeft aria-hidden="true" />
-            Voltar às demandas
-          </Link>
+          <>
+            <a href={PDF_RELATORIO.oficio(d.id)} target="_blank" rel="noopener" className={buttonVariants({ variant: "outline", size: "lg" })}>
+              <FileDown aria-hidden="true" />
+              Emitir ofício (PDF)
+            </a>
+            <Link href="/demandas" className={buttonVariants({ variant: "outline", size: "lg" })}>
+              <ArrowLeft aria-hidden="true" />
+              Voltar às demandas
+            </Link>
+          </>
         }
       />
 

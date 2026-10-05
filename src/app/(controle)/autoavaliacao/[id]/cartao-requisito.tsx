@@ -12,6 +12,7 @@ import { SituacaoDemanda } from "@/components/demandas/situacao";
 import { numeroDemanda } from "@/lib/demandas";
 import { SeloSituacao, VISUAL_SITUACAO, type Tom } from "@/components/selos-status";
 import { ClassificacaoRequisito } from "@/components/requisitos/classificacao";
+import { IndicadorIARequisito } from "@/components/ia/ia-ciclo";
 import { EXIGE_JUSTIFICATIVA, validarResposta } from "@/lib/dados/conformidade";
 import type { NoRequisito, RespostaView } from "@/lib/dados/autoavaliacao";
 import { RESPOSTA_REQUISITO } from "@/lib/rotulos";
@@ -146,6 +147,7 @@ export function CartaoRequisito({
           )}
         </dl>
       )}
+      <IndicadorIARequisito respostaId={resposta.id} temDocumentos={resposta.documentos.length > 0} bloqueado={bloqueado} />
 
       <fieldset className="mt-4" disabled={bloqueado}>
         <legend className="mb-2 text-sm font-medium">

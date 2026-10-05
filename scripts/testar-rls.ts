@@ -274,6 +274,7 @@ async function main() {
 
   await testarMedidas(pm, cm, controlador, satelite);
   await testarAuditorias(pm, cm, controlador, satelite);
+  await testarIA(pm, cm, controlador, satelite);
 
   await app.end();
   await dono.end();
@@ -442,6 +443,72 @@ async function testarAuditorias(pm: string, cm: string, controlador: string, sat
     await dono.query("DELETE FROM demandas WHERE id = $1", [idDemanda]);
     await dono.query("DELETE FROM documentos WHERE id = $1", [idDoc]);
     await dono.query("DELETE FROM auditorias WHERE id = ANY($1)", [[idPm, idCm]]);
+  }
+}
+
+// IA: análises, sugestões, extrações e trechos são internos da controladoria e isolados por cliente.
+async function testarIA(pm: string, cm: string, controlador: string, satelite: string) {
+  const ids: Record<string, { doc: string; analise: string; sugestao: string }> = {};
+  for (const cliente of [pm, cm]) {
+    const { rows: d } = await dono.query(
+      `INSERT INTO documentos (id, cliente_id, nome, mime_type, tamanho, sha256, storage_key, enviado_por_id)
+       VALUES (gen_random_uuid(), $1, 'teste-rls-ia.txt', 'text/plain', 1, repeat('0', 64), 'teste-rls/' || gen_random_uuid(), $2) RETURNING id`,
+      [cliente, controlador],
+    );
+    const doc = d[0].id as string;
+    await dono.query("INSERT INTO extracoes_documento (id, cliente_id, documento_id, status) VALUES (gen_random_uuid(), $1, $2, 'CONCLUIDA')", [cliente, doc]);
+    await dono.query(
+      `INSERT INTO trechos_documento (id, cliente_id, documento_id, ordem, pagina, posicao, texto, embedding)
+       VALUES (gen_random_uuid(), $1, $2, 0, 1, 0, 'trecho de teste', array_fill(0.01::real, ARRAY[1536])::vector)`,
+      [cliente, doc],
+    );
+    const { rows: a } = await dono.query(
+      `INSERT INTO analises_ia (id, cliente_id, tipo, solicitado_por_id, documento_ids, provedor)
+       VALUES (gen_random_uuid(), $1, 'COMPARAR_NORMA', $2, ARRAY[$3]::uuid[], 'falso') RETURNING id`,
+      [cliente, controlador, doc],
+    );
+    const { rows: s } = await dono.query(
+      `INSERT INTO sugestoes_ia (id, cliente_id, analise_id, conteudo, citacoes) VALUES (gen_random_uuid(), $1, $2, '{}', '[]') RETURNING id`,
+      [cliente, a[0].id],
+    );
+    ids[cliente] = { doc, analise: a[0].id, sugestao: s[0].id };
+  }
+  const tabelas = "SELECT id FROM analises_ia UNION ALL SELECT id FROM sugestoes_ia UNION ALL SELECT id FROM extracoes_documento UNION ALL SELECT id FROM trechos_documento";
+
+  try {
+    await comContexto(pm, controlador, "CONTROLADOR", async () => {
+      conferir("controlador na PM vê análise e sugestão de IA da PM", (await contar("SELECT * FROM analises_ia WHERE id = $1", [ids[pm].analise])) === 1 && (await contar("SELECT * FROM sugestoes_ia WHERE id = $1", [ids[pm].sugestao])) === 1);
+      conferir("controlador na PM vê trechos e extração da PM", (await contar("SELECT * FROM trechos_documento WHERE documento_id = $1", [ids[pm].doc])) === 1 && (await contar("SELECT * FROM extracoes_documento WHERE documento_id = $1", [ids[pm].doc])) === 1);
+      conferir(
+        "controlador na PM não vê IA da Câmara",
+        (await contar("SELECT * FROM analises_ia WHERE id = $1", [ids[cm].analise])) === 0 &&
+          (await contar("SELECT * FROM sugestoes_ia WHERE id = $1", [ids[cm].sugestao])) === 0 &&
+          (await contar("SELECT * FROM trechos_documento WHERE documento_id = $1", [ids[cm].doc])) === 0,
+      );
+      conferir(
+        "controlador na PM não grava análise na Câmara",
+        await recusado("INSERT INTO analises_ia (id, cliente_id, tipo, solicitado_por_id, provedor) VALUES (gen_random_uuid(), $1, 'COMPARAR_NORMA', $2, 'falso')", [cm, controlador]),
+      );
+      conferir("sugestão aceita sem revisor é recusada (CHECK)", await recusado("UPDATE sugestoes_ia SET status = 'ACEITA' WHERE id = $1", [ids[pm].sugestao]));
+    });
+
+    await comContexto(pm, satelite, "SATELITE", async () => {
+      conferir("satélite não lê análises nem sugestões de IA", (await contar("SELECT * FROM analises_ia")) === 0 && (await contar("SELECT * FROM sugestoes_ia")) === 0);
+      conferir("satélite não lê trechos nem extrações de documentos", (await contar("SELECT * FROM trechos_documento")) === 0 && (await contar("SELECT * FROM extracoes_documento")) === 0);
+      conferir(
+        "satélite não aciona a IA (não grava análise)",
+        await recusado("INSERT INTO analises_ia (id, cliente_id, tipo, solicitado_por_id, provedor) VALUES (gen_random_uuid(), $1, 'COMPARAR_NORMA', $2, 'falso')", [pm, satelite]),
+      );
+      const { rowCount } = await app.query("UPDATE sugestoes_ia SET motivo_rejeicao = 'x' WHERE id = $1", [ids[pm].sugestao]);
+      conferir("satélite não revisa sugestões", rowCount === 0);
+    });
+
+    await comContexto(null, null, null, async () => {
+      conferir("sem contexto: só a soma de gasto lê análises; sugestões e trechos invisíveis", (await contar(tabelas)) === (await contar("SELECT id FROM analises_ia")));
+    });
+  } finally {
+    await dono.query("DELETE FROM analises_ia WHERE id = ANY($1)", [[ids[pm].analise, ids[cm].analise]]);
+    await dono.query("DELETE FROM documentos WHERE id = ANY($1)", [[ids[pm].doc, ids[cm].doc]]);
   }
 }
 

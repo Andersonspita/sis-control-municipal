@@ -45,3 +45,6 @@ next-env.d.ts
 
 # arquivos enviados (driver de armazenamento local)
 /storage
+
+# saídas temporárias (PDFs de exemplo, testes)
+/tmp

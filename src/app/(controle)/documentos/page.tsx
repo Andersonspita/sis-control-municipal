@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Download, Filter, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Filter, Lock, Sparkles } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { comCliente, db } from "@/lib/db";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
@@ -187,7 +187,15 @@ export default async function Documentos(props: PageProps<"/documentos">) {
                             <span className="block text-xs text-muted-foreground">{formatarDataHora(d.criadoEm)}</span>
                           </td>
                           <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums text-muted-foreground">{formatarTamanho(d.tamanho)}</td>
-                          <td className="px-5 py-3 text-right">
+                          <td className="px-5 py-3 text-right whitespace-nowrap">
+                            <Link
+                              href={`/documentos/${d.id}`}
+                              aria-label={`Detalhes e análise com IA de ${d.nome}`}
+                              title="Detalhes e análise com IA"
+                              className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+                            >
+                              <Sparkles aria-hidden="true" />
+                            </Link>
                             <a
                               href={`/arquivos/${d.id}`}
                               download={d.nome}

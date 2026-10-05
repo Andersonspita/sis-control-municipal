@@ -72,6 +72,11 @@ model Cliente {
   auditorias       Auditoria[]
   modelosChecklist ModeloChecklist[]
   logs      LogAuditoria[]
+  extracoesDocumento ExtracaoDocumento[]
+  trechosDocumento   TrechoDocumento[]
+  analisesIA         AnaliseIA[]
+  sugestoesIA        SugestaoIA[]
+  relatoriosAnuais RelatorioAnual[]
 
   @@map("clientes")
 }
@@ -306,6 +311,7 @@ model RespostaRequisito {
   acoes      Acao[]
   documentos Documento[]
   demandas   Demanda[]
+  sugestoesIA SugestaoIA[]
 
   @@unique([cicloId, requisitoId])
   @@index([clienteId])
@@ -854,6 +860,8 @@ model Documento {
   auditoria         Auditoria?         @relation(fields: [auditoriaId], references: [id], onDelete: SetNull)
   itemAuditoria     ItemChecklistAuditoria? @relation(fields: [itemAuditoriaId], references: [id], onDelete: SetNull)
   achado            Achado?            @relation(fields: [achadoId], references: [id], onDelete: SetNull)
+  extracao          ExtracaoDocumento?
+  trechos           TrechoDocumento[]
 
   @@index([clienteId])
   @@index([demandaId])
@@ -885,18 +893,183 @@ model LogAuditoria {
   @@map("log_auditoria")
 }
 
-/// Configuração global da IA (OpenAI), em linha única (id = 1). A chave da API fica cifrada
+/// Configuração global da IA, em linha única (id = 1). As chaves de API ficam cifradas
 /// com AES-256-GCM (ver src/lib/cripto.ts); só os 4 últimos caracteres ficam em claro, para exibição.
+/// provedor: OPENAI, ANTHROPIC, GOOGLE ou OPENAI_COMPATIVEL (CHECK na migração; ver src/lib/ia/config.ts).
+/// Embeddings: provedorEmbeddings nulo = mesmo provedor e chave do texto (a Anthropic não oferece embeddings).
 model ConfiguracaoIA {
-  id               Int      @id @default(1) @db.SmallInt
-  habilitada       Boolean  @default(false)
-  chaveCifrada     String?  @map("chave_cifrada")
-  chaveFinal       String?  @map("chave_final") @db.VarChar(4)
-  modeloTexto      String   @default("gpt-4.1-mini") @map("modelo_texto") @db.VarChar(100)
-  modeloEmbeddings String   @default("text-embedding-3-small") @map("modelo_embeddings") @db.VarChar(100)
-  limiteMensalUsd  Decimal? @map("limite_mensal_usd") @db.Decimal(12, 2)
-  alteradoPorId    String?  @map("alterado_por_id") @db.Uuid
-  atualizadoEm     DateTime @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+  id                     Int      @id @default(1) @db.SmallInt
+  habilitada             Boolean  @default(false)
+  provedor               String   @default("OPENAI") @db.VarChar(30)
+  urlBase                String?  @map("url_base") @db.VarChar(300)
+  chaveCifrada           String?  @map("chave_cifrada")
+  chaveFinal             String?  @map("chave_final") @db.VarChar(4)
+  modeloTexto            String   @default("gpt-4.1-mini") @map("modelo_texto") @db.VarChar(100)
+  modeloEmbeddings       String   @default("text-embedding-3-small") @map("modelo_embeddings") @db.VarChar(100)
+  provedorEmbeddings     String?  @map("provedor_embeddings") @db.VarChar(30)
+  urlBaseEmbeddings      String?  @map("url_base_embeddings") @db.VarChar(300)
+  chaveEmbeddingsCifrada String?  @map("chave_embeddings_cifrada")
+  chaveEmbeddingsFinal   String?  @map("chave_embeddings_final") @db.VarChar(4)
+  limiteMensalUsd        Decimal? @map("limite_mensal_usd") @db.Decimal(12, 2)
+  alteradoPorId          String?  @map("alterado_por_id") @db.Uuid
+  atualizadoEm           DateTime @updatedAt @map("atualizado_em") @db.Timestamptz(3)
 
   @@map("configuracoes_ia")
+}
+
+// ───────────────────────── Relatórios ─────────────────────────
+
+/// Relatório Anual de Controle Interno (art. 17 da Res. TCM-BA 1.120/2005): textos do controlador por cliente e ano.
+/// As seções numéricas são montadas na emissão (src/lib/relatorios/anual.ts). Nunca visível ao satélite (RLS).
+model RelatorioAnual {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  clienteId       String    @map("cliente_id") @db.Uuid
+  ano             Int
+  /// Textos por seção (chaves em src/lib/relatorios/anual-secoes.ts).
+  secoes          Json      @default("{}")
+  atualizadoPorId String?   @map("atualizado_por_id") @db.Uuid
+  criadoEm        DateTime  @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm    DateTime  @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+  emitidoEm       DateTime? @map("emitido_em") @db.Timestamptz(3)
+
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, ano])
+  @@map("relatorios_anuais")
+}
+
+// ───────────────────────── IA: análise de documentos ─────────────────────────
+// Uso exclusivo da controladoria (o satélite não vê nem aciona: RLS restritiva). Toda sugestão
+// fica pendente de revisão até o controlador aceitar, editar ou rejeitar (src/lib/ia/revisao.ts).
+
+enum StatusExtracao {
+  PENDENTE
+  PROCESSANDO
+  CONCLUIDA
+  SEM_TEXTO
+  ERRO
+}
+
+enum TipoAnaliseIA {
+  COMPARAR_NORMA
+  AVALIAR_EVIDENCIA
+}
+
+enum StatusAnaliseIA {
+  PENDENTE
+  PROCESSANDO
+  CONCLUIDO
+  ERRO
+}
+
+enum StatusSugestaoIA {
+  PENDENTE_REVISAO
+  ACEITA
+  EDITADA
+  REJEITADA
+}
+
+/// Texto extraído de um documento. Só o texto com dados pessoais mascarados é guardado (nos trechos) e enviado à OpenAI.
+model ExtracaoDocumento {
+  id               String         @id @default(uuid(7)) @db.Uuid
+  clienteId        String         @map("cliente_id") @db.Uuid
+  documentoId      String         @unique @map("documento_id") @db.Uuid
+  status           StatusExtracao @default(PENDENTE)
+  paginas          Int?
+  caracteres       Int?
+  /// Quantidade de dados pessoais mascarados, por tipo (cpf, email, telefone...).
+  mascaramentos    Json?
+  modeloEmbeddings String?        @map("modelo_embeddings") @db.VarChar(100)
+  tokens           Int            @default(0)
+  erro             String?
+  criadoEm         DateTime       @default(now()) @map("criado_em") @db.Timestamptz(3)
+  processadoEm     DateTime?      @map("processado_em") @db.Timestamptz(3)
+
+  cliente   Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId])
+  @@map("extracoes_documento")
+}
+
+/// Trecho do texto mascarado com o embedding (pgvector). Gravado e consultado por SQL bruto (src/lib/ia/documento.ts).
+model TrechoDocumento {
+  id          String                       @id @default(uuid(7)) @db.Uuid
+  clienteId   String                       @map("cliente_id") @db.Uuid
+  documentoId String                       @map("documento_id") @db.Uuid
+  ordem       Int
+  /// Página de origem; nulo quando o formato não tem paginação (DOCX, TXT sem quebra de página).
+  pagina      Int?
+  /// Posição (em caracteres) do início do trecho no texto da página.
+  posicao     Int
+  texto       String
+  embedding   Unsupported("vector(1536)")?
+
+  cliente   Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+
+  @@unique([documentoId, ordem])
+  @@index([clienteId])
+  @@map("trechos_documento")
+}
+
+/// Pedido de análise (fila no banco: PENDENTE → PROCESSANDO → CONCLUIDO/ERRO), com modelo, tokens e custo.
+model AnaliseIA {
+  id                  String          @id @default(uuid(7)) @db.Uuid
+  clienteId           String          @map("cliente_id") @db.Uuid
+  tipo                TipoAnaliseIA
+  status              StatusAnaliseIA @default(PENDENTE)
+  solicitadoPorId     String          @map("solicitado_por_id") @db.Uuid
+  documentoIds        String[]        @map("documento_ids") @db.Uuid
+  /// Referências sem chave estrangeira (a análise sobrevive como registro de custo).
+  cicloId             String?         @map("ciclo_id") @db.Uuid
+  respostaRequisitoId String?         @map("resposta_requisito_id") @db.Uuid
+  provedor            String          @db.VarChar(20)
+  modelo              String?         @db.VarChar(100)
+  modeloEmbeddings    String?         @map("modelo_embeddings") @db.VarChar(100)
+  tokensEntrada       Int             @default(0) @map("tokens_entrada")
+  tokensSaida         Int             @default(0) @map("tokens_saida")
+  tokensEmbeddings    Int             @default(0) @map("tokens_embeddings")
+  custoUsd            Decimal         @default(0) @map("custo_usd") @db.Decimal(12, 6)
+  /// Resumo do resultado: requisitos analisados, sugestões criadas, citações descartadas.
+  resumo              Json?
+  erro                String?
+  criadoEm            DateTime        @default(now()) @map("criado_em") @db.Timestamptz(3)
+  iniciadoEm          DateTime?       @map("iniciado_em") @db.Timestamptz(3)
+  concluidoEm         DateTime?       @map("concluido_em") @db.Timestamptz(3)
+
+  cliente   Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  sugestoes SugestaoIA[]
+
+  @@index([clienteId, criadoEm])
+  @@index([cicloId])
+  @@map("analises_ia")
+}
+
+model SugestaoIA {
+  id                  String           @id @default(uuid(7)) @db.Uuid
+  clienteId           String           @map("cliente_id") @db.Uuid
+  analiseId           String           @map("analise_id") @db.Uuid
+  respostaRequisitoId String?          @map("resposta_requisito_id") @db.Uuid
+  status              StatusSugestaoIA @default(PENDENTE_REVISAO)
+  /// Conteúdo sugerido ({ situacao, justificativa, evidencia, faltantes }), validado com zod.
+  conteudo            Json
+  /// O que foi aplicado de fato (o sugerido ou a versão editada pelo controlador).
+  conteudoAplicado    Json?            @map("conteudo_aplicado")
+  /// Citações conferidas no texto: [{ documentoId, documentoNome, trechoId, pagina, texto }].
+  citacoes            Json
+  citacoesDescartadas Int              @default(0) @map("citacoes_descartadas")
+  revisadoPorId       String?          @map("revisado_por_id") @db.Uuid
+  revisadoEm          DateTime?        @map("revisado_em") @db.Timestamptz(3)
+  motivoRejeicao      String?          @map("motivo_rejeicao")
+  criadoEm            DateTime         @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  cliente           Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  analise           AnaliseIA          @relation(fields: [analiseId], references: [id], onDelete: Cascade)
+  respostaRequisito RespostaRequisito? @relation(fields: [respostaRequisitoId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId, status])
+  @@index([analiseId])
+  @@index([respostaRequisitoId])
+  @@map("sugestoes_ia")
 }

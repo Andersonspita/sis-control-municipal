@@ -16,6 +16,7 @@ import {
   Send,
   ShieldCheck,
   Siren,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -39,6 +40,7 @@ export const MENUS: Record<VarianteMenu, GrupoMenu[]> = {
         { href: "/normas", rotulo: "Normas", icone: BookOpenCheck },
         { href: "/autoavaliacao", rotulo: "Autoavaliação", icone: ClipboardCheck },
         { href: "/planos", rotulo: "Planos de ação", icone: ListChecks },
+        { href: "/ia", rotulo: "Sugestões da IA", icone: Sparkles },
       ],
     },
     {
@@ -57,7 +59,7 @@ export const MENUS: Record<VarianteMenu, GrupoMenu[]> = {
       icone: FolderCog,
       itens: [
         { href: "/documentos", rotulo: "Documentos", icone: FolderOpen },
-        { href: "/relatorios", rotulo: "Relatórios", icone: FileText, emBreve: true },
+        { href: "/relatorios", rotulo: "Relatórios", icone: FileText },
         { href: "/unidades", rotulo: "Unidades", icone: Network },
         { href: "/trilha", rotulo: "Trilha de auditoria", icone: History },
         { href: "/aparencia", rotulo: "Aparência", icone: Palette },

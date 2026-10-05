@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlarmClock, ChevronLeft, ChevronRight, EyeOff, Filter, Paperclip, Plus } from "lucide-react";
+import { AlarmClock, ChevronLeft, ChevronRight, EyeOff, FileDown, Filter, Paperclip, Plus } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { listarSituacoes, numeroSituacao } from "@/lib/dados/medidas";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
@@ -13,6 +13,7 @@ import { SeloVencida } from "@/components/selos-status";
 import { NIVEIS_RISCO, NIVEL_RISCO } from "@/lib/risco";
 import { ORIGEM_SITUACAO, STATUS_SITUACAO } from "@/lib/rotulos";
 import { cn } from "@/lib/utils";
+import { PDF_RELATORIO } from "@/lib/relatorios/urls";
 import { CLASSE_SELECT, filtrosSituacoes, POR_PAGINA } from "./filtros";
 import { MatrizRisco } from "./matriz-risco";
 
@@ -41,10 +42,16 @@ export default async function Medidas(props: PageProps<"/medidas">) {
         titulo="Medidas"
         descricao="Situações que precisam de intervenção, fora da conformidade normativa, classificadas por gravidade e tratadas com plano de ação."
         acoes={
-          <Link href="/medidas/nova" className={buttonVariants({ size: "lg" })}>
-            <Plus aria-hidden="true" />
-            Nova situação
-          </Link>
+          <>
+            <a href={PDF_RELATORIO.medidas(filtros.unidade)} target="_blank" rel="noopener" className={buttonVariants({ variant: "outline", size: "lg" })}>
+              <FileDown aria-hidden="true" />
+              Painel (PDF)
+            </a>
+            <Link href="/medidas/nova" className={buttonVariants({ size: "lg" })}>
+              <Plus aria-hidden="true" />
+              Nova situação
+            </Link>
+          </>
         }
       />
 

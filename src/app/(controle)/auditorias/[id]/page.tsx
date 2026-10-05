@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarRange, ClipboardList, ListPlus, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarRange, ClipboardList, FileDown, ListPlus, Send, Trash2 } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { carregarAuditoria, rotuloUnidade } from "@/lib/dados/auditorias";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
@@ -28,6 +28,7 @@ import {
 } from "@/lib/auditorias";
 import { formatarDataHora, formatarDataSimples, paraCampoData } from "@/lib/datas";
 import { numeroDemanda } from "@/lib/demandas";
+import { PDF_RELATORIO } from "@/lib/relatorios/urls";
 import { RESULTADO_ITEM_CHECKLIST, STATUS_AUDITORIA, TIPO_AUDITORIA } from "@/lib/rotulos";
 import { cn } from "@/lib/utils";
 import { excluirAchado, excluirQuestao, excluirRecomendacao, gerarAcaoDaRecomendacao, removerChecklist } from "../actions";
@@ -136,6 +137,10 @@ export default async function DetalheAuditoria({ params, searchParams }: PagePro
               />
             )}
             <DialogoStatusAuditoria key={a.status} auditoriaId={a.id} status={a.status} podeEncerrar={ctx.perfil === "CONTROLADOR"} />
+            <a href={PDF_RELATORIO.auditoria(a.id)} target="_blank" rel="noopener" className={buttonVariants({ variant: "outline" })}>
+              <FileDown aria-hidden="true" />
+              Relatório (PDF)
+            </a>
           </div>
         }
       />

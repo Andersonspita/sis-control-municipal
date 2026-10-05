@@ -30,6 +30,9 @@ const ACOES: Record<string, string> = {
   "situacao.reaberta": "Reabriu situação (Medidas)",
   "documento.enviado": "Enviou documento",
   "documento.baixado": "Baixou documento",
+  "relatorio.emitido": "Emitiu relatório em PDF",
+  "relatorio_anual.salvo": "Editou o Relatório Anual de Controle Interno",
+  "oficio.emitido": "Emitiu ofício de demanda",
 };
 
 export default async function Trilha() {
