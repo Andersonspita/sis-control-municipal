@@ -10,6 +10,10 @@ export type VinculoDocumento = {
   tramiteId?: string;
   acaoId?: string;
   respostaRequisitoId?: string;
+  situacaoId?: string;
+  auditoriaId?: string;
+  itemAuditoriaId?: string;
+  achadoId?: string;
 };
 
 export function arquivosDoFormulario(formData: FormData, campo = "anexos"): File[] {

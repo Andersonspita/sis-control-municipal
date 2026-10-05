@@ -1,13 +1,19 @@
 import type {
   Macrofuncao,
   OrigemPlano,
+  OrigemSituacao,
   Perfil,
   Prioridade,
+  ResultadoItemChecklist,
   SituacaoRequisito,
+  StatusAuditoria,
+  StatusPlanoAuditoria,
+  TipoAuditoria,
   StatusAcao,
   StatusCiclo,
   StatusDemanda,
   StatusPlano,
+  StatusSituacao,
   TipoCliente,
   TipoRequisito,
   TipoTramite,
@@ -108,6 +114,21 @@ export const ORIGEM_PLANO: Record<OrigemPlano, string> = {
   OUTRA: "Outra",
 };
 
+export const ORIGEM_SITUACAO: Record<OrigemSituacao, string> = {
+  CONSTATACAO: "Constatação",
+  DENUNCIA: "Denúncia",
+  ALERTA: "Alerta",
+  ANALISE_IA: "Análise da IA",
+  DEMANDA_EXTERNA: "Demanda externa",
+};
+
+export const STATUS_SITUACAO: Record<StatusSituacao, string> = {
+  ABERTA: "Aberta",
+  EM_TRATAMENTO: "Em tratamento",
+  RESOLVIDA: "Resolvida",
+  ARQUIVADA: "Arquivada",
+};
+
 export const STATUS_PLANO: Record<StatusPlano, string> = {
   RASCUNHO: "Rascunho",
   EM_EXECUCAO: "Em execução",
@@ -137,4 +158,36 @@ export const MACROFUNCAO: Record<Macrofuncao, string> = {
   OBRAS: "Obras públicas",
   TRANSFERENCIAS: "Subvenções e transferências",
   TRANSPARENCIA: "Transparência e prestação de contas",
+};
+
+export const TIPO_AUDITORIA: Record<TipoAuditoria, string> = {
+  CONFORMIDADE: "Conformidade",
+  OPERACIONAL: "Operacional",
+  FINANCEIRA: "Financeira/contábil",
+  GESTAO: "De gestão",
+  ESPECIAL: "Especial",
+};
+
+export const STATUS_PLANO_AUDITORIA: Record<StatusPlanoAuditoria, string> = {
+  RASCUNHO: "Rascunho",
+  APROVADO: "Aprovado",
+};
+
+/** Na ordem do ciclo da auditoria. */
+export const STATUS_AUDITORIA: Record<StatusAuditoria, string> = {
+  PLANEJAMENTO: "Planejamento",
+  EXECUCAO: "Execução",
+  RELATORIO_PRELIMINAR: "Relatório preliminar",
+  MANIFESTACAO: "Manifestação do gestor",
+  RELATORIO_FINAL: "Relatório final",
+  MONITORAMENTO: "Monitoramento",
+  ENCERRADA: "Encerrada",
+  CANCELADA: "Cancelada",
+};
+
+export const RESULTADO_ITEM_CHECKLIST: Record<ResultadoItemChecklist, string> = {
+  CONFORME: "Conforme",
+  NAO_CONFORME: "Não conforme",
+  PARCIAL: "Parcialmente conforme",
+  NAO_APLICAVEL: "Não se aplica",
 };

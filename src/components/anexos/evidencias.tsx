@@ -9,7 +9,7 @@ import { CampoAnexos } from "./campo-anexos";
 import { ListaAnexos, type Anexo } from "./lista-anexos";
 
 /**
- * Evidências em arquivo de uma resposta da autoavaliação ou de uma ação do plano.
+ * Evidências em arquivo de uma resposta da autoavaliação, de uma ação do plano ou de uma situação (Medidas).
  * Não usa <form> porque pode ficar dentro de outro formulário; o envio é imediato e independente do "Salvar".
  */
 export function Evidencias({
@@ -17,11 +17,13 @@ export function Evidencias({
   id,
   iniciais,
   bloqueado = false,
+  rotulo = "Evidências em arquivo",
 }: {
-  alvo: "resposta" | "acao";
+  alvo: "resposta" | "acao" | "situacao" | "auditoria" | "item_auditoria" | "achado";
   id: string;
   iniciais: Anexo[];
   bloqueado?: boolean;
+  rotulo?: string;
 }) {
   const [documentos, setDocumentos] = useState(iniciais);
   const [selecionados, setSelecionados] = useState<File[]>([]);
@@ -51,7 +53,7 @@ export function Evidencias({
     <div className="space-y-2">
       <ListaAnexos
         anexos={documentos}
-        rotulo="Evidências em arquivo"
+        rotulo={rotulo}
         vazio={bloqueado ? "Nenhuma evidência em arquivo." : undefined}
       />
       {!bloqueado && (

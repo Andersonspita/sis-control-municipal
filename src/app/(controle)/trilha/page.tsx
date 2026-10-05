@@ -22,6 +22,12 @@ const ACOES: Record<string, string> = {
   "demanda.prorrogacao_solicitada": "Pediu prorrogação de prazo",
   "demanda.prorrogacao_deferida": "Deferiu prorrogação de prazo",
   "demanda.prorrogacao_indeferida": "Indeferiu prorrogação de prazo",
+  "demanda.lembrete_enviado": "Enviou lembretes de prazo por e-mail",
+  "situacao.criada": "Registrou situação (Medidas)",
+  "situacao.atualizada": "Editou situação (Medidas)",
+  "situacao.status_alterado": "Mudou a situação de uma medida",
+  "situacao.encerrada": "Encerrou situação (Medidas)",
+  "situacao.reaberta": "Reabriu situação (Medidas)",
   "documento.enviado": "Enviou documento",
   "documento.baixado": "Baixou documento",
 };

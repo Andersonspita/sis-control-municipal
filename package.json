@@ -16,11 +16,16 @@
     "db:seed": "tsx prisma/seed.ts",
     "catalogos:importar": "tsx scripts/importar-catalogos.ts",
     "test:rls": "tsx scripts/testar-rls.ts",
+    "test:config-ia": "tsx --conditions=react-server scripts/testar-config-ia.ts",
     "test:autoavaliacao": "tsx scripts/testar-autoavaliacao.ts",
+    "test:risco": "tsx scripts/testar-risco.ts",
+    "test:auditorias": "tsx scripts/testar-auditorias.ts",
     "usuario:criar": "tsx scripts/criar-usuario.ts",
     "docs:propostas": "tsx scripts/gerar-pdf-propostas.ts",
     "test:e2e": "tsx scripts/e2e-smoke.ts",
     "test:e2e:demandas": "tsx scripts/e2e-demandas.ts",
+    "test:emails": "tsx scripts/testar-emails.ts",
+    "lembretes:prazo": "tsx scripts/lembretes-prazo.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -36,6 +41,7 @@
     "lucide-react": "^1.50.0",
     "next": "16.3.8",
     "next-themes": "^0.4.6",
+    "nodemailer": "^10.0.15",
     "pg": "^8.23.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -49,6 +55,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",

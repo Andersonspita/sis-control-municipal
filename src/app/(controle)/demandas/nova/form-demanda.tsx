@@ -22,6 +22,7 @@ export type ValoresIniciais = {
   prioridade?: keyof typeof PRIORIDADE;
   respostaRequisitoId?: string;
   acaoId?: string;
+  auditoriaId?: string;
 };
 
 export function FormDemanda({
@@ -41,6 +42,7 @@ export function FormDemanda({
     <form ref={formRef} onSubmit={onSubmit} className="space-y-5" aria-busy={pendente}>
       {iniciais.respostaRequisitoId && <input type="hidden" name="respostaRequisitoId" value={iniciais.respostaRequisitoId} />}
       {iniciais.acaoId && <input type="hidden" name="acaoId" value={iniciais.acaoId} />}
+      {iniciais.auditoriaId && <input type="hidden" name="auditoriaId" value={iniciais.auditoriaId} />}
       <div className="space-y-1.5">
         <Label htmlFor="assunto">
           Assunto <span aria-hidden="true">*</span>

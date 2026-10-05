@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarClock, ClipboardCheck, ListTodo } from "lucide-react";
+import { ArrowLeft, CalendarClock, ClipboardCheck, ListTodo, SearchCheck } from "lucide-react";
 import { z } from "zod";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { db } from "@/lib/db";
@@ -100,7 +100,7 @@ export default async function DetalheDemanda(props: PageProps<"/demandas/[id]">)
                     {criador && <span className="block text-xs text-muted-foreground">por {criador.nome}</span>}
                   </dd>
                 </div>
-                {(d.respostaRequisito || d.acao) && (
+                {(d.respostaRequisito || d.acao || d.auditoria) && (
                   <div className="space-y-1 sm:col-span-2 lg:col-span-3">
                     <dt className="text-muted-foreground">Origem</dt>
                     {d.respostaRequisito && (
@@ -129,6 +129,17 @@ export default async function DetalheDemanda(props: PageProps<"/demandas/[id]">)
                           <span className="block text-xs text-muted-foreground">
                             Plano de ação “{d.acao.plano.titulo}”. Ao concluir, os documentos da resposta viram evidência da ação.
                           </span>
+                        </span>
+                      </dd>
+                    )}
+                    {d.auditoria && (
+                      <dd className="flex items-start gap-1.5">
+                        <SearchCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                        <span>
+                          <Link href={`/auditorias/${d.auditoria.id}`} className="font-medium text-primary underline-offset-4 hover:underline">
+                            Auditoria {String(d.auditoria.numero).padStart(3, "0")}/{d.auditoria.ano} — {d.auditoria.titulo}
+                          </Link>
+                          <span className="block text-xs text-muted-foreground">Solicitação de auditoria.</span>
                         </span>
                       </dd>
                     )}

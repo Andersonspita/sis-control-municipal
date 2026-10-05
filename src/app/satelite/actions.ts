@@ -5,9 +5,10 @@ import { z } from "zod";
 import { exigirContexto } from "@/lib/auth/dal";
 import { comCliente } from "@/lib/db";
 import { registrarLog } from "@/lib/auditoria";
+import { notificarDemanda } from "@/lib/email/notificar";
 import { arquivosDoFormulario, comArquivos, registrarDocumentos } from "@/lib/documentos";
 import { buscarProrrogacaoPendente, travarDemanda } from "@/lib/dados/demandas";
-import { hojeComoDataSimples } from "@/lib/datas";
+import { formatarDataSimples, hojeComoDataSimples } from "@/lib/datas";
 import { numeroDemanda, STATUS_AGUARDANDO_UNIDADE } from "@/lib/demandas";
 import { ErroNegocio, mensagemDeErro } from "@/lib/erros";
 import type { EstadoAcao } from "@/lib/acoes";
@@ -97,6 +98,7 @@ export async function responderDemanda(_: EstadoAcao, formData: FormData): Promi
     return { erro: mensagemDeErro(err) };
   }
 
+  notificarDemanda(ctx, demandaId, "respondida");
   revalidar(demandaId);
   return { ok: true, mensagem: "Resposta enviada à controladoria." };
 }
@@ -154,6 +156,7 @@ export async function pedirProrrogacao(_: EstadoAcao, formData: FormData): Promi
     return { erro: mensagemDeErro(err) };
   }
 
+  notificarDemanda(ctx, demandaId, "prorrogacao_solicitada", formatarDataSimples(novoPrazo));
   revalidar(demandaId);
   return { ok: true, mensagem: "Pedido de prorrogação enviado à controladoria." };
 }

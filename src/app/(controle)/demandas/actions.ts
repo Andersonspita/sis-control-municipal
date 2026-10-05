@@ -6,9 +6,12 @@ import { z } from "zod";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { comCliente } from "@/lib/db";
 import { registrarLog } from "@/lib/auditoria";
+import { notificarDemanda } from "@/lib/email/notificar";
+import type { EventoDemanda } from "@/lib/email/modelos";
 import { arquivosDoFormulario, comArquivos, registrarDocumentos } from "@/lib/documentos";
 import {
   buscarOrigemAcao,
+  buscarOrigemAuditoria,
   buscarOrigemRequisito,
   buscarProrrogacaoPendente,
   travarDemanda,
@@ -39,6 +42,7 @@ const esquemaCriacao = z.object({
   prioridade: z.enum(["BAIXA", "MEDIA", "ALTA", "URGENTE"]),
   respostaRequisitoId: idOpcional,
   acaoId: idOpcional,
+  auditoriaId: idOpcional,
 });
 
 export async function criarDemanda(_: EstadoAcao, formData: FormData): Promise<EstadoAcao> {
@@ -61,6 +65,9 @@ export async function criarDemanda(_: EstadoAcao, formData: FormData): Promise<E
         if (origemRequisito && !origemRequisito.ok) throw new ErroNegocio(origemRequisito.motivo);
         const origemAcao = acaoId ? await buscarOrigemAcao(tx, acaoId) : null;
         if (origemAcao && !origemAcao.ok) throw new ErroNegocio(origemAcao.motivo);
+        const { auditoriaId } = dados.data;
+        const origemAuditoria = auditoriaId ? await buscarOrigemAuditoria(tx, auditoriaId) : null;
+        if (origemAuditoria && !origemAuditoria.ok) throw new ErroNegocio(origemAuditoria.motivo);
 
         const ano = Number(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bahia", year: "numeric" }).format(new Date()));
         // Numeração sequencial por cliente e ano, serializada por trava transacional.
@@ -98,11 +105,13 @@ export async function criarDemanda(_: EstadoAcao, formData: FormData): Promise<E
             anexos: salvos.length,
             ...(origemRequisito?.ok && { respostaRequisitoId, requisito: origemRequisito.origem.requisito.codigo }),
             ...(origemAcao?.ok && { acaoId }),
+            ...(origemAuditoria?.ok && { auditoriaId }),
           },
         });
         const caminhos = [
           ...(origemRequisito?.ok ? [`/autoavaliacao/${origemRequisito.origem.cicloId}`] : []),
           ...(origemAcao?.ok ? [`/planos/${origemAcao.origem.planoId}`] : []),
+          ...(origemAuditoria?.ok ? [`/auditorias/${auditoriaId}`] : []),
         ];
         return { id: demanda.id, caminhos };
       }),
@@ -111,6 +120,7 @@ export async function criarDemanda(_: EstadoAcao, formData: FormData): Promise<E
     return { erro: mensagemDeErro(err) };
   }
 
+  notificarDemanda(ctx, criada.id, "enviada");
   revalidatePath("/demandas");
   criada.caminhos.forEach((c) => revalidatePath(c));
   redirect(`/demandas/${criada.id}`);
@@ -136,7 +146,7 @@ const esquemaTramite = z.discriminatedUnion("acao", [
   }),
 ]);
 
-type Transicao = { de: StatusDemanda[]; para?: StatusDemanda; tipo: TipoTramite; log: string; mensagem: string };
+type Transicao = { de: StatusDemanda[]; para?: StatusDemanda; tipo: TipoTramite; log: string; mensagem: string; email?: EventoDemanda };
 
 const TRANSICOES: Record<z.infer<typeof esquemaTramite>["acao"], Transicao> = {
   analisar: { de: ["RESPONDIDA"], para: "EM_ANALISE", tipo: "ANALISE", log: "demanda.em_analise", mensagem: "Resposta em análise." },
@@ -145,6 +155,7 @@ const TRANSICOES: Record<z.infer<typeof esquemaTramite>["acao"], Transicao> = {
     para: "CONCLUIDA",
     tipo: "CONCLUSAO",
     log: "demanda.concluida",
+    email: "concluida",
     mensagem: "Resposta aceita e demanda concluída.",
   },
   devolver: {
@@ -152,6 +163,7 @@ const TRANSICOES: Record<z.infer<typeof esquemaTramite>["acao"], Transicao> = {
     para: "DEVOLVIDA",
     tipo: "DEVOLUCAO",
     log: "demanda.devolvida",
+    email: "devolvida",
     mensagem: "Demanda devolvida para complementação.",
   },
   cancelar: { de: STATUS_ABERTOS, para: "CANCELADA", tipo: "CANCELAMENTO", log: "demanda.cancelada", mensagem: "Demanda cancelada." },
@@ -159,12 +171,14 @@ const TRANSICOES: Record<z.infer<typeof esquemaTramite>["acao"], Transicao> = {
     de: STATUS_ABERTOS,
     tipo: "PRORROGACAO_DEFERIDA",
     log: "demanda.prorrogacao_deferida",
+    email: "prorrogacao_deferida",
     mensagem: "Prorrogação deferida e prazo atualizado.",
   },
   indeferir: {
     de: STATUS_ABERTOS,
     tipo: "PRORROGACAO_INDEFERIDA",
     log: "demanda.prorrogacao_indeferida",
+    email: "prorrogacao_indeferida",
     mensagem: "Prorrogação indeferida.",
   },
   comentar: {
@@ -257,6 +271,7 @@ export async function tramitarDemanda(_: EstadoAcao, formData: FormData): Promis
     return { erro: mensagemDeErro(err) };
   }
 
+  if (regra.email) notificarDemanda(ctx, entrada.demandaId, regra.email);
   revalidatePath(`/demandas/${entrada.demandaId}`);
   revalidatePath("/demandas");
   evidencias?.caminhos.forEach((c) => revalidatePath(c));

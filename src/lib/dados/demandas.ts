@@ -1,6 +1,7 @@
 import "server-only";
 import { comCliente, type ContextoCliente, type Tx } from "@/lib/db";
 import type { TipoTramite } from "@/generated/prisma/client";
+import { STATUS_SOLICITA } from "@/lib/auditorias";
 
 const SELECAO_DOCUMENTO = { id: true, nome: true, tamanho: true, mimeType: true } as const;
 
@@ -27,6 +28,7 @@ export async function obterDemanda(ctx: ContextoCliente, id: string) {
           select: { cicloId: true, ciclo: { select: { nome: true } }, requisito: { select: { id: true, codigo: true, titulo: true } } },
         },
         acao: { select: { id: true, oQue: true, planoId: true, plano: { select: { titulo: true } } } },
+        auditoria: { select: { id: true, numero: true, ano: true, titulo: true } },
         tramites: {
           orderBy: [{ criadoEm: "asc" }, { id: "asc" }],
           select: {
@@ -122,6 +124,19 @@ export async function buscarOrigemAcao(tx: Tx, acaoId: string) {
   });
   return avaliarOrigem(acao, "A ação de origem não foi encontrada.", (a) =>
     a.status === "CANCELADA" || a.plano.status === "CANCELADO" ? "A ação de origem (ou o plano dela) está cancelada." : null,
+  );
+}
+
+/** Auditoria que pode enviar solicitação: só no planejamento, na execução ou na manifestação do gestor. */
+export async function buscarOrigemAuditoria(tx: Tx, auditoriaId: string) {
+  const auditoria = await tx.auditoria.findUnique({
+    where: { id: auditoriaId },
+    select: { id: true, numero: true, ano: true, titulo: true, objetivo: true, status: true, unidadeId: true },
+  });
+  return avaliarOrigem(auditoria, "A auditoria de origem não foi encontrada.", (a) =>
+    STATUS_SOLICITA.includes(a.status)
+      ? null
+      : "A auditoria de origem só envia solicitações no planejamento, na execução ou na manifestação do gestor.",
   );
 }
 

@@ -9,7 +9,7 @@ import { ErroNegocio, mensagemDeErro } from "@/lib/erros";
 import type { Anexo } from "@/components/anexos/lista-anexos";
 
 const esquema = z.object({
-  alvo: z.enum(["resposta", "acao"]),
+  alvo: z.enum(["resposta", "acao", "situacao", "auditoria", "item_auditoria", "achado"]),
   id: z.uuid(),
 });
 
@@ -17,7 +17,7 @@ export type ResultadoEvidencias = { ok: true; documentos: Anexo[] } | { ok: fals
 
 const SELECAO = { id: true, nome: true, tamanho: true, mimeType: true } as const;
 
-/** Anexa arquivos de evidência a uma resposta de autoavaliação ou a uma ação de plano. */
+/** Anexa arquivos de evidência a uma resposta de autoavaliação, a uma ação de plano ou a uma situação (Medidas). */
 export async function anexarEvidencias(formData: FormData): Promise<ResultadoEvidencias> {
   const ctx = await exigirContexto(PERFIS_CONTROLE);
   const dados = esquema.safeParse({ alvo: formData.get("alvo"), id: formData.get("id") });
@@ -25,6 +25,7 @@ export async function anexarEvidencias(formData: FormData): Promise<ResultadoEvi
   const arquivos = arquivosDoFormulario(formData);
   if (arquivos.length === 0) return { ok: false, erro: "Selecione ao menos um arquivo." };
   const { alvo, id } = dados.data;
+  let auditoriaRevalidar: string | null = null;
 
   try {
     const documentos = await comArquivos(ctx.clienteId, arquivos, (salvos) =>
@@ -42,6 +43,36 @@ export async function anexarEvidencias(formData: FormData): Promise<ResultadoEvi
           return tx.documento.findMany({ where: { respostaRequisitoId: id }, orderBy: { criadoEm: "asc" }, select: SELECAO });
         }
 
+        if (alvo === "situacao") {
+          const situacao = await tx.situacao.findUnique({ where: { id }, select: { id: true } });
+          if (!situacao) throw new ErroNegocio("Situação não encontrada.");
+          await registrarDocumentos(tx, ctx, salvos, { situacaoId: id });
+          return tx.documento.findMany({ where: { situacaoId: id }, orderBy: { criadoEm: "asc" }, select: SELECAO });
+        }
+
+        if (alvo === "auditoria" || alvo === "item_auditoria" || alvo === "achado") {
+          const auditoria =
+            alvo === "auditoria"
+              ? await tx.auditoria.findUnique({ where: { id }, select: { id: true, status: true } })
+              : alvo === "achado"
+                ? (await tx.achado.findUnique({ where: { id }, select: { auditoria: { select: { id: true, status: true } } } }))?.auditoria
+                : (
+                    await tx.itemChecklistAuditoria.findUnique({
+                      where: { id },
+                      select: { checklist: { select: { auditoria: { select: { id: true, status: true } } } } },
+                    })
+                  )?.checklist.auditoria;
+          if (!auditoria) throw new ErroNegocio("Papel de trabalho não encontrado.");
+          if (auditoria.status === "ENCERRADA" || auditoria.status === "CANCELADA") {
+            throw new ErroNegocio("Auditoria encerrada ou cancelada: não é possível anexar documentos.");
+          }
+          const vinculo =
+            alvo === "auditoria" ? { auditoriaId: id } : alvo === "achado" ? { achadoId: id } : { itemAuditoriaId: id };
+          await registrarDocumentos(tx, ctx, salvos, vinculo);
+          auditoriaRevalidar = auditoria.id;
+          return tx.documento.findMany({ where: vinculo, orderBy: { criadoEm: "asc" }, select: SELECAO });
+        }
+
         const acao = await tx.acao.findUnique({
           where: { id },
           select: { status: true, plano: { select: { status: true } } },
@@ -55,6 +86,8 @@ export async function anexarEvidencias(formData: FormData): Promise<ResultadoEvi
       }),
     );
     revalidatePath("/documentos");
+    if (alvo === "situacao") revalidatePath(`/medidas/${id}`);
+    if (auditoriaRevalidar) revalidatePath(`/auditorias/${auditoriaRevalidar}`);
     return { ok: true, documentos };
   } catch (err) {
     return { ok: false, erro: mensagemDeErro(err) };

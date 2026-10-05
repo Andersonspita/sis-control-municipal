@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ClipboardCheck, ListTodo, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, FileSearch, ListTodo, TriangleAlert } from "lucide-react";
 import { z } from "zod";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { comCliente } from "@/lib/db";
-import { buscarOrigemAcao, buscarOrigemRequisito } from "@/lib/dados/demandas";
+import { buscarOrigemAcao, buscarOrigemAuditoria, buscarOrigemRequisito } from "@/lib/dados/demandas";
+import { numeroAuditoria } from "@/lib/auditorias";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -30,13 +31,14 @@ function parametro(valor: string | string[] | undefined) {
   return v || undefined;
 }
 
-type Origem = { tipo: "requisito" | "acao"; href: string; rotulo: string; detalhe: string };
+type Origem = { tipo: "requisito" | "acao" | "auditoria"; href: string; rotulo: string; detalhe: string };
 
 export default async function NovaDemanda(props: PageProps<"/demandas/nova">) {
   const ctx = await exigirContexto(PERFIS_CONTROLE);
   const busca = await props.searchParams;
   const idRequisito = parametro(busca.requisito);
   const idAcao = idRequisito ? undefined : parametro(busca.acao);
+  const idAuditoria = idRequisito || idAcao ? undefined : parametro(busca.auditoria);
   const hoje = hojeComoDataSimples();
   const prazoMinimo = paraCampoData(hoje);
 
@@ -108,6 +110,25 @@ export default async function NovaDemanda(props: PageProps<"/demandas/nova">) {
           prioridade: acao.prioridade,
         };
       }
+    } else if (idAuditoria) {
+      const r = z.uuid().safeParse(idAuditoria).success ? await buscarOrigemAuditoria(tx, idAuditoria) : null;
+      if (!r?.ok) aviso = r?.motivo ?? "A auditoria de origem informada é inválida.";
+      else {
+        const a = r.origem;
+        const numero = numeroAuditoria(a.numero, a.ano);
+        origem = {
+          tipo: "auditoria",
+          href: `/auditorias/${a.id}?aba=solicitacoes`,
+          rotulo: `Auditoria ${numero} — ${resumir(a.titulo, 160)}`,
+          detalhe: "Solicitação de auditoria: a unidade vê só esta demanda, nunca os papéis de trabalho da auditoria.",
+        };
+        iniciais = {
+          auditoriaId: a.id,
+          assunto: resumir(`Solicitação de auditoria ${numero}: `, 200),
+          descricao: `No âmbito da auditoria ${numero} (${resumir(a.titulo, 160)}), solicitamos:\n\n`,
+          unidadeDestinoId: unidades.find((u) => u.id === a.unidadeId)?.id,
+        };
+      }
     }
     return { unidades, origem, iniciais, aviso };
   });
@@ -134,7 +155,13 @@ export default async function NovaDemanda(props: PageProps<"/demandas/nova">) {
         )}
         {origem && (
           <Alert role="status" className="border-primary/35 bg-primary/5">
-            {origem.tipo === "requisito" ? <ClipboardCheck aria-hidden="true" className="text-primary" /> : <ListTodo aria-hidden="true" className="text-primary" />}
+            {origem.tipo === "requisito" ? (
+              <ClipboardCheck aria-hidden="true" className="text-primary" />
+            ) : origem.tipo === "auditoria" ? (
+              <FileSearch aria-hidden="true" className="text-primary" />
+            ) : (
+              <ListTodo aria-hidden="true" className="text-primary" />
+            )}
             <AlertTitle>
               Origem:{" "}
               <Link href={origem.href} className={CLASSE_LINK}>

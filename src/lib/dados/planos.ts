@@ -44,6 +44,7 @@ export async function carregarPlano(ctx: Contexto, id: string) {
         criadoEm: true,
         criadoPorId: true,
         ciclo: { select: { id: true, nome: true, norma: { select: { codigo: true } } } },
+        situacao: { select: { id: true, numero: true, ano: true, titulo: true } },
         acoes: {
           orderBy: [{ criadoEm: "asc" }],
           select: {
@@ -139,6 +140,7 @@ export async function carregarPlano(ctx: Contexto, id: string) {
       criadoEm: plano.criadoEm,
       criadoPor: nomes.get(plano.criadoPorId) ?? null,
       ciclo: plano.ciclo,
+      situacao: plano.situacao,
     },
     acoes,
     unidades,

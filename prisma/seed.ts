@@ -7,6 +7,7 @@ import { PrismaClient, type Prioridade, type StatusDemanda, type TipoTramite } f
 import { importarCatalogo } from "../src/lib/catalogos/importar";
 import { salvarArquivo } from "../src/lib/armazenamento";
 import { autoavaliacaoDeExemplo } from "./seed-autoavaliacao";
+import { criarModelosBase } from "../src/lib/auditorias-modelos";
 
 if (process.env.NODE_ENV === "production") {
   console.error("Seed de demonstração não pode rodar em produção.");
@@ -314,6 +315,8 @@ async function main() {
 
   const sead = await prisma.unidade.findFirstOrThrow({ where: { clienteId: pm.id, sigla: "SEAD" } });
   await autoavaliacaoDeExemplo(prisma, { pm: pm.id, controlador, sead: sead.id, diasAPartirDeHoje });
+
+  for (const c of [pm, cm]) await criarModelosBase(prisma, c.id);
 
   console.log(`
 Seed concluído. Senha de todos os usuários de demonstração: ${SENHA_DEMO}

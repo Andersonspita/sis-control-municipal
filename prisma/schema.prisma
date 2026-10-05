@@ -67,6 +67,10 @@ model Cliente {
   tramites  TramitacaoDemanda[]
   documentos Documento[]
   escopos   EscopoSatelite[]
+  situacoes Situacao[]
+  planosAuditoria  PlanoAnualAuditoria[]
+  auditorias       Auditoria[]
+  modelosChecklist ModeloChecklist[]
   logs      LogAuditoria[]
 
   @@map("clientes")
@@ -143,6 +147,10 @@ model Unidade {
   demandas Demanda[]
   acoes    Acao[]
   ciclos   CicloAvaliacao[]
+  situacoes Situacao[]
+  itensPlanoAuditoria ItemPlanoAuditoria[]
+  auditorias          Auditoria[]
+  recomendacoes       Recomendacao[]
 
   @@index([clienteId])
   @@map("unidades")
@@ -333,6 +341,10 @@ model PlanoAcao {
   id          String      @id @default(uuid(7)) @db.Uuid
   clienteId   String      @map("cliente_id") @db.Uuid
   cicloId     String?     @map("ciclo_id") @db.Uuid
+  /// Situação (Medidas) que originou o plano; no máximo um plano por situação.
+  situacaoId  String?     @unique @map("situacao_id") @db.Uuid
+  /// Auditoria que originou o plano (recomendações viram ações); no máximo um plano por auditoria.
+  auditoriaId String?     @unique @map("auditoria_id") @db.Uuid
   titulo      String
   descricao   String?
   origem      OrigemPlano
@@ -342,6 +354,8 @@ model PlanoAcao {
 
   cliente Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   ciclo   CicloAvaliacao? @relation(fields: [cicloId], references: [id], onDelete: SetNull)
+  situacao Situacao?      @relation(fields: [situacaoId], references: [id], onDelete: SetNull)
+  auditoria Auditoria?    @relation(fields: [auditoriaId], references: [id], onDelete: SetNull)
   acoes   Acao[]
 
   @@index([clienteId])
@@ -353,6 +367,8 @@ model Acao {
   clienteId            String     @map("cliente_id") @db.Uuid
   planoId              String     @map("plano_id") @db.Uuid
   respostaRequisitoId  String?    @map("resposta_requisito_id") @db.Uuid
+  /// Recomendação de auditoria que originou a ação (no máximo uma ação por recomendação).
+  recomendacaoId       String?    @unique @map("recomendacao_id") @db.Uuid
   unidadeResponsavelId String?    @map("unidade_responsavel_id") @db.Uuid
   oQue                 String     @map("o_que")
   porQue               String?    @map("por_que")
@@ -377,6 +393,7 @@ model Acao {
   demandas           Demanda[]
   documentos         Documento[]
   marcos             MarcoAcao[]
+  recomendacao       Recomendacao?      @relation(fields: [recomendacaoId], references: [id], onDelete: SetNull)
 
   @@index([clienteId])
   @@index([planoId])
@@ -445,6 +462,8 @@ model Demanda {
   acaoId           String?       @map("acao_id") @db.Uuid
   /// Requisito da autoavaliação que originou a demanda; a resposta aceita vira evidência dele.
   respostaRequisitoId String?    @map("resposta_requisito_id") @db.Uuid
+  /// Solicitação de auditoria: a auditoria que a originou (o satélite não lê a auditoria, só a demanda).
+  auditoriaId      String?       @map("auditoria_id") @db.Uuid
   prazo            DateTime      @db.Date
   prioridade       Prioridade    @default(MEDIA)
   status           StatusDemanda @default(ENVIADA)
@@ -456,6 +475,7 @@ model Demanda {
   unidadeDestino Unidade             @relation(fields: [unidadeDestinoId], references: [id], onDelete: Restrict)
   acao           Acao?               @relation(fields: [acaoId], references: [id], onDelete: SetNull)
   respostaRequisito RespostaRequisito? @relation(fields: [respostaRequisitoId], references: [id], onDelete: SetNull)
+  auditoria      Auditoria?          @relation(fields: [auditoriaId], references: [id], onDelete: SetNull)
   tramites       TramitacaoDemanda[]
   documentos     Documento[]
 
@@ -464,6 +484,7 @@ model Demanda {
   @@index([unidadeDestinoId])
   @@index([respostaRequisitoId])
   @@index([acaoId])
+  @@index([auditoriaId])
   @@map("demandas")
 }
 
@@ -492,6 +513,317 @@ model TramitacaoDemanda {
   @@map("tramitacoes_demanda")
 }
 
+// ───────────────────────── Medidas ─────────────────────────
+
+enum OrigemSituacao {
+  CONSTATACAO
+  DENUNCIA
+  ALERTA
+  ANALISE_IA
+  DEMANDA_EXTERNA
+}
+
+enum StatusSituacao {
+  ABERTA
+  EM_TRATAMENTO
+  RESOLVIDA
+  ARQUIVADA
+}
+
+// Situação que precisa de intervenção, fora da conformidade normativa. Nunca visível ao satélite (RLS).
+model Situacao {
+  id                       String         @id @default(uuid(7)) @db.Uuid
+  clienteId                String         @map("cliente_id") @db.Uuid
+  numero                   Int
+  ano                      Int
+  titulo                   String
+  descricao                String
+  origem                   OrigemSituacao
+  unidadeId                String?        @map("unidade_id") @db.Uuid
+  /// 1 a 5 (CHECK no banco); gravidade = probabilidade × impacto (ver src/lib/risco.ts).
+  probabilidade            Int
+  impacto                  Int
+  status                   StatusSituacao @default(ABERTA)
+  /// Só para denúncia: quando sigilosa, o denunciante fica oculto a quem não é controlador.
+  sigilosa                 Boolean        @default(false)
+  denunciante              String?
+  criadoPorId              String         @map("criado_por_id") @db.Uuid
+  criadoEm                 DateTime       @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm             DateTime       @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+  encerradoPorId           String?        @map("encerrado_por_id") @db.Uuid
+  encerradoEm              DateTime?      @map("encerrado_em") @db.Timestamptz(3)
+  justificativaEncerramento String?       @map("justificativa_encerramento")
+
+  cliente    Cliente     @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  unidade    Unidade?    @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
+  plano      PlanoAcao?
+  documentos Documento[]
+
+  @@unique([clienteId, ano, numero])
+  @@index([clienteId, status])
+  @@index([unidadeId])
+  @@map("situacoes")
+}
+
+// ───────────────────────── Auditorias ─────────────────────────
+// Papéis de trabalho: nunca visíveis ao satélite (RLS). Ele só recebe as solicitações, que são demandas.
+
+enum TipoAuditoria {
+  CONFORMIDADE
+  OPERACIONAL
+  FINANCEIRA
+  GESTAO
+  ESPECIAL
+}
+
+enum StatusPlanoAuditoria {
+  RASCUNHO
+  APROVADO
+}
+
+/// Transições validadas no banco (auditoria_transicao_valida) e em src/lib/auditorias.ts.
+enum StatusAuditoria {
+  PLANEJAMENTO
+  EXECUCAO
+  RELATORIO_PRELIMINAR
+  MANIFESTACAO
+  RELATORIO_FINAL
+  MONITORAMENTO
+  ENCERRADA
+  CANCELADA
+}
+
+enum ResultadoItemChecklist {
+  CONFORME
+  NAO_CONFORME
+  PARCIAL
+  NAO_APLICAVEL
+}
+
+/// Plano Anual de Auditoria Interna (PAAI): um por cliente e ano.
+model PlanoAnualAuditoria {
+  id            String               @id @default(uuid(7)) @db.Uuid
+  clienteId     String               @map("cliente_id") @db.Uuid
+  ano           Int
+  status        StatusPlanoAuditoria @default(RASCUNHO)
+  observacoes   String?
+  criadoPorId   String               @map("criado_por_id") @db.Uuid
+  criadoEm      DateTime             @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm  DateTime             @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+  aprovadoPorId String?              @map("aprovado_por_id") @db.Uuid
+  aprovadoEm    DateTime?            @map("aprovado_em") @db.Timestamptz(3)
+
+  cliente Cliente              @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  itens   ItemPlanoAuditoria[]
+
+  @@unique([clienteId, ano])
+  @@map("planos_anuais_auditoria")
+}
+
+/// Auditoria prevista no PAAI. cliente_id sem FK própria: a integridade vem do plano (RLS isola).
+model ItemPlanoAuditoria {
+  id            String        @id @default(uuid(7)) @db.Uuid
+  clienteId     String        @map("cliente_id") @db.Uuid
+  planoId       String        @map("plano_id") @db.Uuid
+  titulo        String
+  tipo          TipoAuditoria
+  unidadeId     String?       @map("unidade_id") @db.Uuid
+  objetivo      String?
+  /// 1 a 5 (CHECK no banco); risco = probabilidade × impacto (ver src/lib/risco.ts).
+  probabilidade Int
+  impacto       Int
+  /// Período previsto, em meses do ano (1 a 12).
+  mesInicio     Int           @map("mes_inicio")
+  mesFim        Int           @map("mes_fim")
+  criadoEm      DateTime      @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  plano     PlanoAnualAuditoria @relation(fields: [planoId], references: [id], onDelete: Cascade)
+  unidade   Unidade?            @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
+  auditoria Auditoria?
+
+  @@index([clienteId])
+  @@index([planoId])
+  @@map("itens_plano_auditoria")
+}
+
+model Auditoria {
+  id                        String          @id @default(uuid(7)) @db.Uuid
+  clienteId                 String          @map("cliente_id") @db.Uuid
+  numero                    Int
+  ano                       Int
+  titulo                    String
+  tipo                      TipoAuditoria
+  objetivo                  String
+  escopo                    String?
+  /// Alcance: nulo = a entidade inteira; preenchido = só a unidade.
+  unidadeId                 String?         @map("unidade_id") @db.Uuid
+  criterios                 String?
+  /// Usuários da controladoria (Controlador ou Equipe) que compõem a equipe.
+  equipeIds                 String[]        @default([]) @map("equipe_ids") @db.Uuid
+  itemPlanoId               String?         @unique @map("item_plano_id") @db.Uuid
+  inicioPrevisto            DateTime?       @map("inicio_previsto") @db.Date
+  fimPrevisto               DateTime?       @map("fim_previsto") @db.Date
+  status                    StatusAuditoria @default(PLANEJAMENTO)
+  justificativaCancelamento String?         @map("justificativa_cancelamento")
+  criadoPorId               String          @map("criado_por_id") @db.Uuid
+  criadoEm                  DateTime        @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm              DateTime        @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  cliente    Cliente              @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  unidade    Unidade?             @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
+  itemPlano  ItemPlanoAuditoria?  @relation(fields: [itemPlanoId], references: [id], onDelete: SetNull)
+  questoes   QuestaoAuditoria[]
+  checklists ChecklistAuditoria[]
+  achados    Achado[]
+  plano      PlanoAcao?
+  demandas   Demanda[]
+  documentos Documento[]
+
+  @@unique([clienteId, ano, numero])
+  @@index([clienteId, status])
+  @@index([unidadeId])
+  @@map("auditorias")
+}
+
+/// Matriz de planejamento: uma linha por questão de auditoria.
+model QuestaoAuditoria {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  clienteId     String   @map("cliente_id") @db.Uuid
+  auditoriaId   String   @map("auditoria_id") @db.Uuid
+  ordem         Int      @default(0)
+  questao       String
+  informacoes   String?
+  fontes        String?
+  procedimentos String?
+  criadoEm      DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  auditoria Auditoria @relation(fields: [auditoriaId], references: [id], onDelete: Cascade)
+
+  @@index([auditoriaId])
+  @@map("questoes_auditoria")
+}
+
+/// Modelo reutilizável de checklist, por cliente.
+model ModeloChecklist {
+  id           String         @id @default(uuid(7)) @db.Uuid
+  clienteId    String         @map("cliente_id") @db.Uuid
+  nome         String
+  descricao    String?
+  tipo         TipoAuditoria?
+  ativo        Boolean        @default(true)
+  criadoEm     DateTime       @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm DateTime       @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  cliente    Cliente              @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  itens      ItemChecklist[]
+  aplicacoes ChecklistAuditoria[]
+
+  @@unique([clienteId, nome])
+  @@map("modelos_checklist")
+}
+
+model ItemChecklist {
+  id         String  @id @default(uuid(7)) @db.Uuid
+  clienteId  String  @map("cliente_id") @db.Uuid
+  modeloId   String  @map("modelo_id") @db.Uuid
+  ordem      Int     @default(0)
+  texto      String
+  orientacao String?
+
+  modelo ModeloChecklist @relation(fields: [modeloId], references: [id], onDelete: Cascade)
+
+  @@index([modeloId])
+  @@map("itens_checklist")
+}
+
+/// Modelo aplicado a uma auditoria: os itens são copiados (auditoria_aplicar_checklist) e avaliados na execução.
+model ChecklistAuditoria {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  clienteId   String   @map("cliente_id") @db.Uuid
+  auditoriaId String   @map("auditoria_id") @db.Uuid
+  modeloId    String?  @map("modelo_id") @db.Uuid
+  nome        String
+  criadoPorId String   @map("criado_por_id") @db.Uuid
+  criadoEm    DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  auditoria Auditoria                @relation(fields: [auditoriaId], references: [id], onDelete: Cascade)
+  modelo    ModeloChecklist?         @relation(fields: [modeloId], references: [id], onDelete: SetNull)
+  itens     ItemChecklistAuditoria[]
+
+  @@unique([auditoriaId, modeloId])
+  @@index([clienteId])
+  @@map("checklists_auditoria")
+}
+
+model ItemChecklistAuditoria {
+  id            String                  @id @default(uuid(7)) @db.Uuid
+  clienteId     String                  @map("cliente_id") @db.Uuid
+  checklistId   String                  @map("checklist_id") @db.Uuid
+  ordem         Int                     @default(0)
+  texto         String
+  orientacao    String?
+  resultado     ResultadoItemChecklist?
+  observacao    String?
+  avaliadoPorId String?                 @map("avaliado_por_id") @db.Uuid
+  avaliadoEm    DateTime?               @map("avaliado_em") @db.Timestamptz(3)
+
+  checklist  ChecklistAuditoria @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  achados    Achado[]
+  documentos Documento[]
+
+  @@index([checklistId])
+  @@map("itens_checklist_auditoria")
+}
+
+/// Achado no padrão do TCU: condição, critério, causa e efeito; gravidade = probabilidade × impacto.
+model Achado {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  clienteId       String   @map("cliente_id") @db.Uuid
+  auditoriaId     String   @map("auditoria_id") @db.Uuid
+  numero          Int
+  titulo          String
+  condicao        String
+  criterio        String
+  causa           String
+  efeito          String
+  probabilidade   Int
+  impacto         Int
+  itemChecklistId String?  @map("item_checklist_id") @db.Uuid
+  criadoPorId     String   @map("criado_por_id") @db.Uuid
+  criadoEm        DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm    DateTime @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  auditoria     Auditoria               @relation(fields: [auditoriaId], references: [id], onDelete: Cascade)
+  itemChecklist ItemChecklistAuditoria? @relation(fields: [itemChecklistId], references: [id], onDelete: SetNull)
+  recomendacoes Recomendacao[]
+  documentos    Documento[]
+
+  @@unique([auditoriaId, numero])
+  @@index([clienteId])
+  @@map("achados")
+}
+
+/// Recomendação de um achado; pode virar ação no plano da auditoria (recomendacao_gerar_acao).
+model Recomendacao {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  clienteId   String    @map("cliente_id") @db.Uuid
+  achadoId    String    @map("achado_id") @db.Uuid
+  numero      Int
+  texto       String
+  unidadeId   String?   @map("unidade_id") @db.Uuid
+  prazo       DateTime? @db.Date
+  criadoPorId String    @map("criado_por_id") @db.Uuid
+  criadoEm    DateTime  @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  achado  Achado   @relation(fields: [achadoId], references: [id], onDelete: Cascade)
+  unidade Unidade? @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
+  acao    Acao?
+
+  @@unique([achadoId, numero])
+  @@index([clienteId])
+  @@map("recomendacoes")
+}
+
 // ───────────────────────── Documentos ─────────────────────────
 
 model Documento {
@@ -507,6 +839,10 @@ model Documento {
   tramiteId           String?  @map("tramite_id") @db.Uuid
   respostaRequisitoId String?  @map("resposta_requisito_id") @db.Uuid
   acaoId              String?  @map("acao_id") @db.Uuid
+  situacaoId          String?  @map("situacao_id") @db.Uuid
+  auditoriaId         String?  @map("auditoria_id") @db.Uuid
+  itemAuditoriaId     String?  @map("item_auditoria_id") @db.Uuid
+  achadoId            String?  @map("achado_id") @db.Uuid
   criadoEm            DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
 
   cliente           Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
@@ -514,10 +850,18 @@ model Documento {
   tramite           TramitacaoDemanda? @relation(fields: [tramiteId], references: [id], onDelete: SetNull)
   respostaRequisito RespostaRequisito? @relation(fields: [respostaRequisitoId], references: [id], onDelete: SetNull)
   acao              Acao?              @relation(fields: [acaoId], references: [id], onDelete: SetNull)
+  situacao          Situacao?          @relation(fields: [situacaoId], references: [id], onDelete: SetNull)
+  auditoria         Auditoria?         @relation(fields: [auditoriaId], references: [id], onDelete: SetNull)
+  itemAuditoria     ItemChecklistAuditoria? @relation(fields: [itemAuditoriaId], references: [id], onDelete: SetNull)
+  achado            Achado?            @relation(fields: [achadoId], references: [id], onDelete: SetNull)
 
   @@index([clienteId])
   @@index([demandaId])
   @@index([tramiteId])
+  @@index([situacaoId])
+  @@index([auditoriaId])
+  @@index([itemAuditoriaId])
+  @@index([achadoId])
   @@map("documentos")
 }
 
@@ -539,4 +883,20 @@ model LogAuditoria {
 
   @@index([clienteId, criadoEm])
   @@map("log_auditoria")
+}
+
+/// Configuração global da IA (OpenAI), em linha única (id = 1). A chave da API fica cifrada
+/// com AES-256-GCM (ver src/lib/cripto.ts); só os 4 últimos caracteres ficam em claro, para exibição.
+model ConfiguracaoIA {
+  id               Int      @id @default(1) @db.SmallInt
+  habilitada       Boolean  @default(false)
+  chaveCifrada     String?  @map("chave_cifrada")
+  chaveFinal       String?  @map("chave_final") @db.VarChar(4)
+  modeloTexto      String   @default("gpt-4.1-mini") @map("modelo_texto") @db.VarChar(100)
+  modeloEmbeddings String   @default("text-embedding-3-small") @map("modelo_embeddings") @db.VarChar(100)
+  limiteMensalUsd  Decimal? @map("limite_mensal_usd") @db.Decimal(12, 2)
+  alteradoPorId    String?  @map("alterado_por_id") @db.Uuid
+  atualizadoEm     DateTime @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  @@map("configuracoes_ia")
 }

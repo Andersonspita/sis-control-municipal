@@ -44,6 +44,7 @@ export default async function Documentos(props: PageProps<"/documentos">) {
           tramite: { select: { interno: true } },
           respostaRequisito: { select: { requisito: { select: { codigo: true, titulo: true } } } },
           acao: { select: { oQue: true, unidadeResponsavel: { select: { nome: true, sigla: true } } } },
+          situacao: { select: { id: true, numero: true, ano: true, titulo: true } },
         },
       }),
     ]),
@@ -172,6 +173,10 @@ export default async function Documentos(props: PageProps<"/documentos">) {
                               <span className="line-clamp-1" title={d.acao.oQue}>
                                 Ação: {d.acao.oQue}
                               </span>
+                            ) : d.situacao ? (
+                              <Link href={`/medidas/${d.situacao.id}`} className="underline-offset-4 hover:underline" title={d.situacao.titulo}>
+                                Medida <span className="font-mono text-xs font-semibold">{numeroDemanda(d.situacao.numero, d.situacao.ano)}</span>
+                              </Link>
                             ) : (
                               <span className="text-muted-foreground">Avulso</span>
                             )}

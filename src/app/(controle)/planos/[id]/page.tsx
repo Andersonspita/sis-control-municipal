@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlarmClock, ArrowLeft, CircleCheck, ClipboardCheck, Hourglass, ListTodo } from "lucide-react";
+import { AlarmClock, ArrowLeft, CircleCheck, ClipboardCheck, Hourglass, ListTodo, Siren } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { carregarPlano } from "@/lib/dados/planos";
+import { numeroSituacao } from "@/lib/dados/medidas";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -75,13 +76,20 @@ export default async function DetalhePlano({ params }: PageProps<"/planos/[id]">
         acoes={ctx.perfil === "CONTROLADOR" ? <StatusPlano planoId={plano.id} status={plano.status} /> : <SeloStatusPlano status={plano.status} />}
       />
 
-      {(plano.descricao || plano.ciclo) && (
+      {(plano.descricao || plano.ciclo || plano.situacao) && (
         <div className="mb-6 space-y-2 text-sm">
           {plano.descricao && <p className="max-w-3xl text-muted-foreground">{plano.descricao}</p>}
           {plano.ciclo && (
             <Link href={`/autoavaliacao/${plano.ciclo.id}`} className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline">
               <ClipboardCheck aria-hidden="true" className="size-4" />
               Ciclo de origem: {plano.ciclo.nome} · <span className="font-mono">{plano.ciclo.norma.codigo}</span>
+            </Link>
+          )}
+          {plano.situacao && (
+            <Link href={`/medidas/${plano.situacao.id}`} className="flex w-fit items-center gap-1.5 font-medium text-primary hover:underline">
+              <Siren aria-hidden="true" className="size-4" />
+              Situação de origem: <span className="font-mono">{numeroSituacao(plano.situacao.numero, plano.situacao.ano)}</span> ·{" "}
+              {plano.situacao.titulo}
             </Link>
           )}
         </div>

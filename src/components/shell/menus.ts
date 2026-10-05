@@ -47,8 +47,8 @@ export const MENUS: Record<VarianteMenu, GrupoMenu[]> = {
       icone: Briefcase,
       itens: [
         { href: "/demandas", rotulo: "Demandas", icone: Send },
-        { href: "/auditorias", rotulo: "Auditorias", icone: FileSearch, emBreve: true },
-        { href: "/medidas", rotulo: "Medidas", icone: Siren, emBreve: true },
+        { href: "/auditorias", rotulo: "Auditorias", icone: FileSearch },
+        { href: "/medidas", rotulo: "Medidas", icone: Siren },
       ],
     },
     {

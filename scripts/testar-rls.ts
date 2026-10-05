@@ -272,10 +272,177 @@ async function main() {
     conferir("histórico de tramitação é imutável", bloqueado);
   });
 
+  await testarMedidas(pm, cm, controlador, satelite);
+  await testarAuditorias(pm, cm, controlador, satelite);
+
   await app.end();
   await dono.end();
   console.log(falhas ? `\n${falhas} verificação(ões) falharam.` : "\nTodas as verificações passaram.");
   process.exit(falhas ? 1 : 0);
+}
+
+/** Tenta executar o comando dentro de um savepoint; devolve true se o banco recusou. */
+async function recusado(sql: string, params: unknown[] = []) {
+  await app.query("SAVEPOINT s");
+  try {
+    await app.query(sql, params);
+    await app.query("RELEASE SAVEPOINT s");
+    return false;
+  } catch {
+    await app.query("ROLLBACK TO SAVEPOINT s");
+    return true;
+  }
+}
+
+// Medidas: situações são internas da controladoria (o satélite não as vê, nem mesmo as da sua unidade).
+async function testarMedidas(pm: string, cm: string, controlador: string, satelite: string) {
+  const { rows: un } = await dono.query("SELECT id FROM unidades WHERE cliente_id = $1 AND sigla = 'SESAU' LIMIT 1", [pm]);
+  const sesau = un[0]?.id as string | undefined;
+  const inserir = `INSERT INTO situacoes (id, cliente_id, numero, ano, titulo, descricao, origem, unidade_id, probabilidade, impacto, status, criado_por_id, atualizado_em)
+    VALUES (gen_random_uuid(), $1, $2, 1999, 'Teste RLS', 'Situação criada pelo teste de RLS', 'CONSTATACAO', $3, $4, $5, 'ABERTA', $6, now()) RETURNING id`;
+  const { rows: sPm } = await dono.query(inserir, [pm, 990001, sesau ?? null, 4, 4, controlador]);
+  const { rows: sCm } = await dono.query(inserir, [cm, 990001, null, 2, 2, controlador]);
+  const idPm = sPm[0].id as string;
+  const idCm = sCm[0].id as string;
+  const { rows: doc } = await dono.query(
+    `INSERT INTO documentos (id, cliente_id, nome, mime_type, tamanho, sha256, storage_key, enviado_por_id, situacao_id)
+     VALUES (gen_random_uuid(), $1, 'teste-rls.pdf', 'application/pdf', 1, repeat('0', 64), 'teste-rls/' || gen_random_uuid(), $2, $3) RETURNING id`,
+    [pm, controlador, idPm],
+  );
+  const idDoc = doc[0].id as string;
+
+  try {
+    const { rows: tot } = await dono.query("SELECT count(*)::int AS n FROM situacoes WHERE cliente_id = $1", [pm]);
+
+    await comContexto(pm, controlador, "CONTROLADOR", async () => {
+      conferir("controlador na PM vê as situações da PM", (await contar("SELECT * FROM situacoes")) === tot[0].n);
+      conferir("controlador na PM vê a situação de teste", (await contar("SELECT * FROM situacoes WHERE id = $1", [idPm])) === 1);
+      conferir("controlador na PM não vê situações da Câmara", (await contar("SELECT * FROM situacoes WHERE id = $1", [idCm])) === 0);
+      conferir("controlador lê anexos de situação", (await contar("SELECT * FROM documentos WHERE id = $1", [idDoc])) === 1);
+      conferir(
+        "controlador não grava situação em outro cliente",
+        await recusado(inserir.replace("RETURNING id", ""), [cm, 990002, null, 1, 1, controlador]),
+      );
+      conferir("CHECK recusa probabilidade 6", await recusado(inserir, [pm, 990003, null, 6, 3, controlador]));
+      conferir("CHECK recusa impacto 0", await recusado(inserir, [pm, 990004, null, 3, 0, controlador]));
+      conferir("aceita probabilidade e impacto de 1 a 5", !(await recusado(inserir, [pm, 990005, null, 5, 1, controlador])));
+      conferir(
+        "CHECK exige justificativa para resolver a situação",
+        await recusado("UPDATE situacoes SET status = 'RESOLVIDA', encerrado_em = now() WHERE id = $1", [idPm]),
+      );
+      conferir(
+        "CHECK recusa sigilo fora de denúncia",
+        await recusado("UPDATE situacoes SET sigilosa = true WHERE id = $1", [idPm]),
+      );
+      conferir(
+        "CHECK exige origem Medida no plano vinculado à situação",
+        await recusado(
+          "INSERT INTO planos_acao (id, cliente_id, situacao_id, titulo, origem, status, criado_por_id) VALUES (gen_random_uuid(), $1, $2, 'x', 'OUTRA', 'EM_EXECUCAO', $3)",
+          [pm, idPm, controlador],
+        ),
+      );
+    });
+
+    await comContexto(pm, satelite, "SATELITE", async () => {
+      conferir("satélite não vê situações (nem as da sua unidade)", (await contar("SELECT * FROM situacoes")) === 0);
+      conferir("satélite não lê anexos de situação", (await contar("SELECT * FROM documentos WHERE id = $1", [idDoc])) === 0);
+      conferir("satélite não registra situações", await recusado(inserir, [pm, 990006, sesau ?? null, 1, 1, satelite]));
+      const { rowCount } = await app.query("UPDATE situacoes SET titulo = 'alterado' WHERE id = $1", [idPm]);
+      conferir("satélite não altera situações", rowCount === 0);
+    });
+  } finally {
+    await dono.query("DELETE FROM documentos WHERE id = $1", [idDoc]);
+    await dono.query("DELETE FROM situacoes WHERE id = ANY($1)", [[idPm, idCm]]);
+  }
+}
+
+// Auditorias: papéis de trabalho são da controladoria; o satélite só vê as solicitações (demandas) enviadas à sua unidade.
+async function testarAuditorias(pm: string, cm: string, controlador: string, satelite: string) {
+  const { rows: un } = await dono.query("SELECT id FROM unidades WHERE cliente_id = $1 AND sigla = 'SESAU' LIMIT 1", [pm]);
+  const sesau = un[0].id as string;
+  const inserir = `INSERT INTO auditorias (id, cliente_id, numero, ano, titulo, tipo, objetivo, unidade_id, status, criado_por_id, atualizado_em)
+    VALUES (gen_random_uuid(), $1, $2, 1999, 'Teste RLS', 'CONFORMIDADE', 'Auditoria criada pelo teste de RLS', $3, $4, $5, now()) RETURNING id`;
+  const { rows: aPm } = await dono.query(inserir, [pm, 990001, sesau, "PLANEJAMENTO", controlador]);
+  const { rows: aCm } = await dono.query(inserir, [cm, 990001, null, "PLANEJAMENTO", controlador]);
+  const idPm = aPm[0].id as string;
+  const idCm = aCm[0].id as string;
+  const { rows: ach } = await dono.query(
+    `INSERT INTO achados (id, cliente_id, auditoria_id, numero, titulo, condicao, criterio, causa, efeito, probabilidade, impacto, criado_por_id, atualizado_em)
+     VALUES (gen_random_uuid(), $1, $2, 1, 'Achado RLS', 'c', 'c', 'c', 'e', 3, 3, $3, now()) RETURNING id`,
+    [pm, idPm, controlador],
+  );
+  const idAchado = ach[0].id as string;
+  const { rows: doc } = await dono.query(
+    `INSERT INTO documentos (id, cliente_id, nome, mime_type, tamanho, sha256, storage_key, enviado_por_id, auditoria_id)
+     VALUES (gen_random_uuid(), $1, 'teste-rls.pdf', 'application/pdf', 1, repeat('0', 64), 'teste-rls/' || gen_random_uuid(), $2, $3) RETURNING id`,
+    [pm, controlador, idPm],
+  );
+  const idDoc = doc[0].id as string;
+  const { rows: dem } = await dono.query(
+    `INSERT INTO demandas (id, cliente_id, numero, ano, assunto, descricao, unidade_destino_id, auditoria_id, prazo, criado_por_id, atualizado_em)
+     VALUES (gen_random_uuid(), $1, 990001, 1999, 'Solicitação de auditoria (teste RLS)', 'Teste', $2, $3, current_date + 10, $4, now()) RETURNING id`,
+    [pm, sesau, idPm, controlador],
+  );
+  const idDemanda = dem[0].id as string;
+
+  try {
+    await comContexto(pm, controlador, "CONTROLADOR", async () => {
+      conferir("controlador na PM vê a auditoria de teste", (await contar("SELECT * FROM auditorias WHERE id = $1", [idPm])) === 1);
+      conferir("controlador na PM não vê auditorias da Câmara", (await contar("SELECT * FROM auditorias WHERE id = $1", [idCm])) === 0);
+      conferir("controlador lê achados e documentos da auditoria", (await contar("SELECT * FROM achados WHERE id = $1", [idAchado])) === 1 && (await contar("SELECT * FROM documentos WHERE id = $1", [idDoc])) === 1);
+      conferir("controlador não grava auditoria em outro cliente", await recusado(inserir, [cm, 990002, null, "PLANEJAMENTO", controlador]));
+      conferir(
+        "controlador não grava modelo de checklist em outro cliente",
+        await recusado("INSERT INTO modelos_checklist (id, cliente_id, nome, atualizado_em) VALUES (gen_random_uuid(), $1, 'Intruso', now())", [cm]),
+      );
+      conferir(
+        "CHECK recusa probabilidade 6 no achado",
+        await recusado(
+          `INSERT INTO achados (id, cliente_id, auditoria_id, numero, titulo, condicao, criterio, causa, efeito, probabilidade, impacto, criado_por_id, atualizado_em)
+           VALUES (gen_random_uuid(), $1, $2, 2, 'x', 'c', 'c', 'c', 'e', 6, 3, $3, now())`,
+          [pm, idPm, controlador],
+        ),
+      );
+      conferir(
+        "CHECK recusa mês 13 no item do PAAI",
+        await recusado(
+          `WITH p AS (INSERT INTO planos_anuais_auditoria (id, cliente_id, ano, criado_por_id, atualizado_em) VALUES (gen_random_uuid(), $1, 1999, $2, now()) RETURNING id)
+           INSERT INTO itens_plano_auditoria (id, cliente_id, plano_id, titulo, tipo, mes_inicio, mes_fim, probabilidade, impacto)
+           SELECT gen_random_uuid(), $1, p.id, 'x', 'OPERACIONAL', 12, 13, 3, 3 FROM p`,
+          [pm, controlador],
+        ),
+      );
+      conferir("CHECK exige justificativa para cancelar a auditoria", await recusado("UPDATE auditorias SET status = 'CANCELADA' WHERE id = $1", [idPm]));
+      conferir("trigger recusa auditoria que não começa no planejamento", await recusado(inserir, [pm, 990003, null, "EXECUCAO", controlador]));
+      conferir(
+        "CHECK exige origem Auditoria no plano vinculado à auditoria",
+        await recusado(
+          "INSERT INTO planos_acao (id, cliente_id, auditoria_id, titulo, origem, status, criado_por_id) VALUES (gen_random_uuid(), $1, $2, 'x', 'OUTRA', 'EM_EXECUCAO', $3)",
+          [pm, idPm, controlador],
+        ),
+      );
+    });
+
+    await comContexto(pm, satelite, "SATELITE", async () => {
+      conferir("satélite não vê auditorias (nem as da sua unidade)", (await contar("SELECT * FROM auditorias")) === 0);
+      conferir("satélite não vê achados nem recomendações", (await contar("SELECT * FROM achados")) === 0 && (await contar("SELECT * FROM recomendacoes")) === 0);
+      conferir(
+        "satélite não vê PAAI, checklists nem matriz",
+        (await contar("SELECT * FROM planos_anuais_auditoria")) === 0 &&
+          (await contar("SELECT * FROM modelos_checklist")) === 0 &&
+          (await contar("SELECT * FROM itens_checklist_auditoria")) === 0 &&
+          (await contar("SELECT * FROM questoes_auditoria")) === 0,
+      );
+      conferir("satélite não lê documentos da auditoria", (await contar("SELECT * FROM documentos WHERE id = $1", [idDoc])) === 0);
+      conferir("satélite vê a solicitação da auditoria enviada à sua unidade", (await contar("SELECT * FROM demandas WHERE id = $1", [idDemanda])) === 1);
+      conferir("satélite não desvincula a solicitação da auditoria", await recusado("UPDATE demandas SET auditoria_id = NULL WHERE id = $1", [idDemanda]));
+      conferir("satélite não registra auditorias", await recusado(inserir, [pm, 990004, sesau, "PLANEJAMENTO", satelite]));
+    });
+  } finally {
+    await dono.query("DELETE FROM demandas WHERE id = $1", [idDemanda]);
+    await dono.query("DELETE FROM documentos WHERE id = $1", [idDoc]);
+    await dono.query("DELETE FROM auditorias WHERE id = ANY($1)", [[idPm, idCm]]);
+  }
 }
 
 main().catch(async (err) => {

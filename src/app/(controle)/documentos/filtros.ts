@@ -4,6 +4,7 @@ export const ORIGENS = {
   demanda: "Demanda",
   requisito: "Requisito (autoavaliação)",
   acao: "Ação de plano",
+  situacao: "Medida",
   avulso: "Envio avulso",
 } as const;
 
@@ -34,9 +35,16 @@ export function whereDocumentos(f: ReturnType<typeof filtrosDocumentos>): Prisma
   if (f.origem === "demanda") e.push({ demandaId: { not: null } });
   if (f.origem === "requisito") e.push({ respostaRequisitoId: { not: null } });
   if (f.origem === "acao") e.push({ acaoId: { not: null } });
-  if (f.origem === "avulso") e.push({ demandaId: null, respostaRequisitoId: null, acaoId: null });
+  if (f.origem === "situacao") e.push({ situacaoId: { not: null } });
+  if (f.origem === "avulso") e.push({ demandaId: null, respostaRequisitoId: null, acaoId: null, situacaoId: null });
   if (f.unidade) {
-    e.push({ OR: [{ demanda: { unidadeDestinoId: f.unidade } }, { acao: { unidadeResponsavelId: f.unidade } }] });
+    e.push({
+      OR: [
+        { demanda: { unidadeDestinoId: f.unidade } },
+        { acao: { unidadeResponsavelId: f.unidade } },
+        { situacao: { unidadeId: f.unidade } },
+      ],
+    });
   }
   if (f.busca) e.push({ nome: { contains: f.busca, mode: "insensitive" } });
   return e.length ? { AND: e } : {};
