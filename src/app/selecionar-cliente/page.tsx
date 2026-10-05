@@ -1,27 +1,39 @@
 import type { Metadata } from "next";
-import { Building2, ChevronRight, Landmark, LogOut } from "lucide-react";
+import Link from "next/link";
+import { Building2, ChevronRight, Landmark, LogOut, ShieldUser } from "lucide-react";
 import { exigirUsuario, listarVinculos } from "@/lib/auth/dal";
 import { selecionarCliente, sair } from "@/app/actions/sessao";
 import { Marca } from "@/components/marca";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { PERFIL, TIPO_CLIENTE } from "@/lib/rotulos";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Selecionar cliente" };
+
+const estiloCabecalho = "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
 
 export default async function SelecionarCliente() {
   const sessao = await exigirUsuario();
   const vinculos = await listarVinculos(sessao.usuario.id);
+  const admin = sessao.usuario.adminHorizon;
 
   return (
     <div className="min-h-screen bg-muted/40">
       <header className="bg-sidebar text-sidebar-foreground">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Marca />
-          <form action={sair}>
-            <Button type="submit" variant="ghost" className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-              <LogOut aria-hidden="true" /> Sair
-            </Button>
-          </form>
+          <div className="flex items-center gap-1">
+            {admin && (
+              <Link href="/admin" className={cn(buttonVariants({ variant: "ghost" }), estiloCabecalho)}>
+                <ShieldUser aria-hidden="true" /> Administração
+              </Link>
+            )}
+            <form action={sair}>
+              <Button type="submit" variant="ghost" className={estiloCabecalho}>
+                <LogOut aria-hidden="true" /> Sair
+              </Button>
+            </form>
+          </div>
         </div>
       </header>
 
@@ -63,6 +75,22 @@ export default async function SelecionarCliente() {
               );
             })}
           </ul>
+        )}
+
+        {admin && (
+          <Link
+            href="/admin"
+            className="group flex w-full items-center gap-4 rounded-lg border border-dashed bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <ShieldUser aria-hidden="true" className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium">Administração HorizonAJ</span>
+              <span className="block text-sm text-muted-foreground">Clientes, usuários e IA</span>
+            </span>
+            <ChevronRight aria-hidden="true" className="size-5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </Link>
         )}
       </main>
     </div>

@@ -17,12 +17,13 @@ import {
   Send,
   Settings,
   ShieldCheck,
+  ShieldUser,
   Siren,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
-export type ItemMenu = { href: string; rotulo: string; icone: LucideIcon; emBreve?: boolean };
+export type ItemMenu = { href: string; rotulo: string; icone: LucideIcon; emBreve?: boolean; somenteAdmin?: boolean };
 export type GrupoMenu = { id: string; titulo: string; icone: LucideIcon; itens: ItemMenu[] };
 export type VarianteMenu = "controle" | "satelite";
 
@@ -69,6 +70,7 @@ export const MENUS: Record<VarianteMenu, GrupoMenu[]> = {
         { href: "/trilha", rotulo: "Trilha de auditoria", icone: History },
         { href: "/aparencia", rotulo: "Aparência", icone: Palette },
         { href: "/configuracoes", rotulo: "Configurações", icone: Settings },
+        { href: "/admin", rotulo: "Administração", icone: ShieldUser, somenteAdmin: true },
       ],
     },
   ],
@@ -84,6 +86,13 @@ export const MENUS: Record<VarianteMenu, GrupoMenu[]> = {
     },
   ],
 };
+
+export function menusPara(variante: VarianteMenu, admin = false): GrupoMenu[] {
+  if (admin) return MENUS[variante];
+  return MENUS[variante]
+    .map((grupo) => ({ ...grupo, itens: grupo.itens.filter((i) => !i.somenteAdmin) }))
+    .filter((grupo) => grupo.itens.length > 0);
+}
 
 /** Item ativo = o de href mais longo que casa com o caminho atual. */
 export function localizarAtivo(grupos: GrupoMenu[], caminho: string) {

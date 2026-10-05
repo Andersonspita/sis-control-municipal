@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Palette, Settings } from "lucide-react";
+import { LogOut, Palette, Settings, ShieldUser } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,12 +25,14 @@ export function MenuUsuario({
   papel,
   tom = "claro",
   linkAparencia = false,
+  admin = false,
 }: {
   nome: string;
   email: string;
   papel: string;
   tom?: "claro" | "escuro";
   linkAparencia?: boolean;
+  admin?: boolean;
 }) {
   const escuro = tom === "escuro";
   return (
@@ -65,6 +67,11 @@ export function MenuUsuario({
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        {admin && (
+          <DropdownMenuItem render={<Link href="/admin" />}>
+            <ShieldUser aria-hidden="true" /> Administração
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem render={<Link href="/configuracoes" />}>
           <Settings aria-hidden="true" /> Configurações
         </DropdownMenuItem>

@@ -30,6 +30,7 @@ export async function AppShell({
   const opcoes = vinculos.map((v) => v.cliente);
   const cargo = vinculos.find((v) => v.cliente.id === ctx.clienteId)?.cargo;
   const { navegacao } = obterTema(ctx.cliente.tema);
+  const admin = ctx.usuario.adminHorizon;
 
   const usuario = (tom: "claro" | "escuro") => (
     <MenuUsuario
@@ -38,6 +39,7 @@ export async function AppShell({
       papel={cargo ?? PERFIL[ctx.perfil]}
       tom={tom}
       linkAparencia={variante === "controle"}
+      admin={admin}
     />
   );
   const conteudo = (
@@ -52,12 +54,12 @@ export async function AppShell({
         <PularParaConteudo />
         <header className="sticky top-0 z-30 shadow-sm">
           <div className="flex h-14 items-center gap-4 bg-sidebar px-3 text-sidebar-foreground sm:px-5">
-            <MenuMovel variante={variante} className="text-sidebar-foreground hover:bg-sidebar-accent lg:hidden" />
+            <MenuMovel variante={variante} admin={admin} className="text-sidebar-foreground hover:bg-sidebar-accent lg:hidden" />
             <Marca compacta className="lg:hidden" />
             <Marca className="hidden shrink-0 lg:inline-flex" />
             {navegacao === "topo" && (
               <nav aria-label="Grupos do menu" className="hidden h-full lg:block">
-                <NavTopoGrupos variante={variante} />
+                <NavTopoGrupos variante={variante} admin={admin} />
               </nav>
             )}
             <div className="ml-auto flex min-w-0 items-center gap-2">
@@ -70,10 +72,10 @@ export async function AppShell({
           <div className="hidden border-b bg-card px-3 sm:px-5 lg:block">
             {navegacao === "topo" ? (
               <nav aria-label="Menu do grupo">
-                <NavTopoItens variante={variante} />
+                <NavTopoItens variante={variante} admin={admin} />
               </nav>
             ) : (
-              <NavFaixas variante={variante} />
+              <NavFaixas variante={variante} admin={admin} />
             )}
           </div>
           <div className="border-b bg-card px-3 py-1.5 md:hidden">
@@ -88,7 +90,7 @@ export async function AppShell({
   const cabecalho = (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-2 border-b bg-card/95 px-3 backdrop-blur sm:gap-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-1">
-        <MenuMovel variante={variante} className="lg:hidden" />
+        <MenuMovel variante={variante} admin={admin} className="lg:hidden" />
         <TrocaCliente atual={ctx.cliente} opcoes={opcoes} />
       </div>
       {usuario("claro")}
@@ -104,7 +106,7 @@ export async function AppShell({
             <Marca compacta />
           </div>
           <div className="min-h-0 flex-1">
-            <NavTrilho variante={variante} />
+            <NavTrilho variante={variante} admin={admin} />
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -123,7 +125,7 @@ export async function AppShell({
           <Marca />
         </div>
         <div className="flex-1 overflow-y-auto px-3 pb-6">
-          <NavLateral variante={variante} />
+          <NavLateral variante={variante} admin={admin} />
         </div>
         <p className="border-t border-sidebar-border px-5 py-3 text-[0.7rem] text-sidebar-foreground/60">HorizonAJ</p>
       </aside>

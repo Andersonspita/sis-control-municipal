@@ -7,11 +7,13 @@ import { Menu } from "lucide-react";
 import { Marca } from "@/components/marca";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { localizarAtivo, MENUS, primeiroDisponivel, type ItemMenu, type VarianteMenu } from "./menus";
+import { localizarAtivo, menusPara, primeiroDisponivel, type ItemMenu, type VarianteMenu } from "./menus";
 
-function useMenu(variante: VarianteMenu) {
+type PropsNav = { variante: VarianteMenu; admin?: boolean };
+
+function useMenu(variante: VarianteMenu, admin?: boolean) {
   const caminho = usePathname();
-  const grupos = MENUS[variante];
+  const grupos = menusPara(variante, admin);
   return { grupos, ...localizarAtivo(grupos, caminho) };
 }
 
@@ -28,8 +30,8 @@ function EmBreve({ item, className }: { item: ItemMenu; className?: string }) {
 
 // ─── Menu lateral (temas 1–3) e conteúdo do menu móvel ───
 
-export function NavLateral({ variante, aoNavegar }: { variante: VarianteMenu; aoNavegar?: () => void }) {
-  const { grupos, ativoHref } = useMenu(variante);
+export function NavLateral({ variante, admin, aoNavegar }: PropsNav & { aoNavegar?: () => void }) {
+  const { grupos, ativoHref } = useMenu(variante, admin);
   const multiplosGrupos = grupos.length > 1;
 
   return (
@@ -81,7 +83,7 @@ export function NavLateral({ variante, aoNavegar }: { variante: VarianteMenu; ao
   );
 }
 
-export function MenuMovel({ variante, className }: { variante: VarianteMenu; className?: string }) {
+export function MenuMovel({ variante, admin, className }: PropsNav & { className?: string }) {
   const [aberto, setAberto] = useState(false);
   return (
     <Sheet open={aberto} onOpenChange={setAberto}>
@@ -100,7 +102,7 @@ export function MenuMovel({ variante, className }: { variante: VarianteMenu; cla
           <Marca />
         </div>
         <div className="flex-1 overflow-y-auto px-3 pb-6">
-          <NavLateral variante={variante} aoNavegar={() => setAberto(false)} />
+          <NavLateral variante={variante} admin={admin} aoNavegar={() => setAberto(false)} />
         </div>
       </SheetContent>
     </Sheet>
@@ -109,8 +111,8 @@ export function MenuMovel({ variante, className }: { variante: VarianteMenu; cla
 
 // ─── Trilho de ícones + painel do grupo (tema 5) ───
 
-export function NavTrilho({ variante }: { variante: VarianteMenu }) {
-  const { grupos, ativoHref, grupoAtivo } = useMenu(variante);
+export function NavTrilho({ variante, admin }: PropsNav) {
+  const { grupos, ativoHref, grupoAtivo } = useMenu(variante, admin);
   const mostrarPainel = grupoAtivo && grupoAtivo.itens.length > 1;
 
   return (
@@ -197,8 +199,8 @@ export function NavTrilho({ variante }: { variante: VarianteMenu }) {
 
 // ─── Topo em dois níveis (tema 4) ───
 
-export function NavTopoGrupos({ variante }: { variante: VarianteMenu }) {
-  const { grupos, grupoAtivo } = useMenu(variante);
+export function NavTopoGrupos({ variante, admin }: PropsNav) {
+  const { grupos, grupoAtivo } = useMenu(variante, admin);
   return (
     <ul className="flex h-full items-stretch gap-1">
       {grupos.map((grupo) => {
@@ -234,8 +236,8 @@ export function NavTopoGrupos({ variante }: { variante: VarianteMenu }) {
   );
 }
 
-export function NavTopoItens({ variante }: { variante: VarianteMenu }) {
-  const { grupoAtivo, ativoHref } = useMenu(variante);
+export function NavTopoItens({ variante, admin }: PropsNav) {
+  const { grupoAtivo, ativoHref } = useMenu(variante, admin);
   if (!grupoAtivo) return null;
   return (
     <ul className="flex h-11 items-stretch gap-1 overflow-x-auto">
@@ -273,8 +275,8 @@ export function NavTopoItens({ variante }: { variante: VarianteMenu }) {
 
 // ─── Duas faixas com todos os grupos visíveis (tema 6) ───
 
-export function NavFaixas({ variante }: { variante: VarianteMenu }) {
-  const { grupos, ativoHref } = useMenu(variante);
+export function NavFaixas({ variante, admin }: PropsNav) {
+  const { grupos, ativoHref } = useMenu(variante, admin);
   return (
     <nav aria-label="Menu principal" className="flex items-stretch gap-0 overflow-x-auto">
       {grupos.map((grupo, i) => (
