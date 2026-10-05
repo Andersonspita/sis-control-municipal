@@ -16,12 +16,15 @@
     "db:seed": "tsx prisma/seed.ts",
     "catalogos:importar": "tsx scripts/importar-catalogos.ts",
     "test:rls": "tsx scripts/testar-rls.ts",
+    "test:autoavaliacao": "tsx scripts/testar-autoavaliacao.ts",
     "usuario:criar": "tsx scripts/criar-usuario.ts",
     "docs:propostas": "tsx scripts/gerar-pdf-propostas.ts",
     "test:e2e": "tsx scripts/e2e-smoke.ts",
+    "test:e2e:demandas": "tsx scripts/e2e-demandas.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1146.0",
     "@base-ui/react": "^1.8.0",
     "@node-rs/argon2": "^2.2.1",
     "@prisma/adapter-pg": "7.10.0",

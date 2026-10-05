@@ -1,10 +1,14 @@
 import type {
+  OrigemPlano,
   Perfil,
   Prioridade,
   SituacaoRequisito,
   StatusAcao,
+  StatusCiclo,
   StatusDemanda,
+  StatusPlano,
   TipoCliente,
+  TipoTramite,
   TipoUnidade,
 } from "@/generated/prisma/browser";
 
@@ -43,6 +47,20 @@ export const STATUS_DEMANDA: Record<StatusDemanda, string> = {
   CANCELADA: "Cancelada",
 };
 
+export const TIPO_TRAMITE: Record<TipoTramite, string> = {
+  ENVIO: "Demanda enviada",
+  VISUALIZACAO: "Demanda visualizada pela unidade",
+  RESPOSTA: "Resposta enviada",
+  ANALISE: "Resposta em análise",
+  DEVOLUCAO: "Devolvida para complementação",
+  CONCLUSAO: "Resposta aceita e demanda concluída",
+  CANCELAMENTO: "Demanda cancelada",
+  PRORROGACAO_SOLICITADA: "Prorrogação de prazo solicitada",
+  PRORROGACAO_DEFERIDA: "Prorrogação deferida",
+  PRORROGACAO_INDEFERIDA: "Prorrogação indeferida",
+  COMENTARIO: "Comentário",
+};
+
 export const PRIORIDADE: Record<Prioridade, string> = {
   BAIXA: "Baixa",
   MEDIA: "Média",
@@ -64,4 +82,33 @@ export const STATUS_ACAO: Record<StatusAcao, string> = {
   AGUARDANDO_VALIDACAO: "Aguardando validação",
   CONCLUIDA: "Concluída",
   CANCELADA: "Cancelada",
+};
+
+/** Rótulos curtos usados na marcação da resposta. */
+export const RESPOSTA_REQUISITO: Record<Exclude<SituacaoRequisito, "NAO_AVALIADO">, string> = {
+  ATENDIDO: "Atende",
+  PARCIALMENTE_ATENDIDO: "Atende parcialmente",
+  NAO_ATENDIDO: "Não atende",
+  NAO_APLICAVEL: "Não se aplica",
+};
+
+export const STATUS_CICLO: Record<StatusCiclo, string> = {
+  EM_ANDAMENTO: "Em andamento",
+  CONCLUIDO: "Concluído",
+  ARQUIVADO: "Arquivado",
+};
+
+export const ORIGEM_PLANO: Record<OrigemPlano, string> = {
+  REQUISITO: "Autoavaliação",
+  AUDITORIA: "Auditoria",
+  MEDIDA: "Medida",
+  DETERMINACAO_TC: "Determinação do TC",
+  OUTRA: "Outra",
+};
+
+export const STATUS_PLANO: Record<StatusPlano, string> = {
+  RASCUNHO: "Rascunho",
+  EM_EXECUCAO: "Em execução",
+  CONCLUIDO: "Concluído",
+  CANCELADO: "Cancelado",
 };

@@ -50,6 +50,8 @@ model Cliente {
   codigoIbge   String?     @map("codigo_ibge") @db.VarChar(7)
   populacao    Int?
   brasaoKey    String?     @map("brasao_key")
+  /// Identidade visual escolhida pelo controlador (ver src/lib/temas.ts).
+  tema         String      @default("mata") @db.VarChar(20)
   ativo        Boolean     @default(true)
   criadoEm     DateTime    @default(now()) @map("criado_em") @db.Timestamptz(3)
   atualizadoEm DateTime    @updatedAt @map("atualizado_em") @db.Timestamptz(3)
@@ -233,6 +235,9 @@ model CicloAvaliacao {
   status      StatusCiclo @default(EM_ANDAMENTO)
   criadoPorId String      @map("criado_por_id") @db.Uuid
   criadoEm    DateTime    @default(now()) @map("criado_em") @db.Timestamptz(3)
+  /// Ao concluir, as respostas ficam congeladas (trigger em respostas_requisito).
+  concluidoEm    DateTime? @map("concluido_em") @db.Timestamptz(3)
+  concluidoPorId String?   @map("concluido_por_id") @db.Uuid
 
   cliente   Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   norma     Norma               @relation(fields: [normaId], references: [id], onDelete: Restrict)
@@ -324,6 +329,7 @@ model Acao {
   como                 String?
   custoEstimado        Decimal?   @map("custo_estimado") @db.Decimal(14, 2)
   status               StatusAcao @default(PENDENTE)
+  prioridade           Prioridade @default(MEDIA)
   percentual           Int        @default(0)
   validadoPorId        String?    @map("validado_por_id") @db.Uuid
   validadoEm           DateTime?  @map("validado_em") @db.Timestamptz(3)
@@ -337,10 +343,29 @@ model Acao {
   unidadeResponsavel Unidade?           @relation(fields: [unidadeResponsavelId], references: [id], onDelete: SetNull)
   demandas           Demanda[]
   documentos         Documento[]
+  marcos             MarcoAcao[]
 
   @@index([clienteId])
   @@index([planoId])
   @@map("acoes")
+}
+
+// Etapas intermediárias de uma ação. cliente_id sem FK própria: a integridade vem da ação (RLS isola).
+model MarcoAcao {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  clienteId   String    @map("cliente_id") @db.Uuid
+  acaoId      String    @map("acao_id") @db.Uuid
+  descricao   String
+  prazo       DateTime? @db.Date
+  concluidoEm DateTime? @map("concluido_em") @db.Timestamptz(3)
+  ordem       Int       @default(0)
+  criadoEm    DateTime  @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  acao Acao @relation(fields: [acaoId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId])
+  @@index([acaoId])
+  @@map("marcos_acao")
 }
 
 // ───────────────────────── Demandas e tramitação ─────────────────────────
@@ -414,6 +439,8 @@ model TramitacaoDemanda {
   statusNovo     StatusDemanda? @map("status_novo")
   texto          String?
   novoPrazo      DateTime?      @map("novo_prazo") @db.Date
+  /// Comentário interno da controladoria: nunca visível ao satélite (RLS).
+  interno        Boolean        @default(false)
   usuarioId      String         @map("usuario_id") @db.Uuid
   usuarioNome    String         @map("usuario_nome")
   criadoEm       DateTime       @default(now()) @map("criado_em") @db.Timestamptz(3)
@@ -452,6 +479,7 @@ model Documento {
 
   @@index([clienteId])
   @@index([demandaId])
+  @@index([tramiteId])
   @@map("documentos")
 }
 

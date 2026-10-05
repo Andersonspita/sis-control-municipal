@@ -1,18 +1,10 @@
 import type { Metadata } from "next";
-import { Public_Sans, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { obterContexto } from "@/lib/auth/dal";
+import { classesFontes } from "@/lib/fontes";
+import { obterTema } from "@/lib/temas";
 import "./globals.css";
-
-const publicSans = Public_Sans({
-  variable: "--font-public-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -25,9 +17,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // O tema fica no <html> para valer também em diálogos, menus e avisos, que são renderizados fora do layout.
+  const ctx = await obterContexto();
+  const tema = obterTema(ctx?.cliente.tema);
+
   return (
-    <html lang="pt-BR" className={`${publicSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="pt-BR" data-tema={tema.id} className={`${classesFontes} h-full antialiased`}>
       <body className="min-h-full">
         <TooltipProvider>{children}</TooltipProvider>
         <Toaster richColors position="top-right" />

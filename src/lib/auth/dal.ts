@@ -14,7 +14,7 @@ export type UsuarioLogado = {
 
 export type Contexto = ContextoCliente & {
   usuario: UsuarioLogado;
-  cliente: { id: string; nome: string; tipo: TipoCliente; municipio: string; uf: string };
+  cliente: { id: string; nome: string; tipo: TipoCliente; municipio: string; uf: string; tema: string };
   vinculoId: string;
 };
 
@@ -65,12 +65,12 @@ export const obterContexto = cache(async (): Promise<Contexto | null> => {
       id: true,
       perfil: true,
       ativo: true,
-      cliente: { select: { id: true, nome: true, tipo: true, municipio: true, uf: true, ativo: true } },
+      cliente: { select: { id: true, nome: true, tipo: true, municipio: true, uf: true, tema: true, ativo: true } },
     },
   });
   if (!vinculo?.ativo || !vinculo.cliente.ativo) return null;
-  const { id, nome, tipo, municipio, uf } = vinculo.cliente;
-  const cliente = { id, nome, tipo, municipio, uf };
+  const { id, nome, tipo, municipio, uf, tema } = vinculo.cliente;
+  const cliente = { id, nome, tipo, municipio, uf, tema };
   return {
     clienteId: cliente.id,
     usuarioId: sessao.usuario.id,

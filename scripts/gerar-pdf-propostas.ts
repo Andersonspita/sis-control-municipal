@@ -53,7 +53,66 @@ const PROPOSTAS = [
     navegacao: "Barra superior em dois níveis",
     indicada: "Quem quer legibilidade máxima e telas largas para tabelas e textos de norma.",
   },
+  {
+    tema: "mata",
+    nome: "Mata e Cobre",
+    numero: 5,
+    resumo:
+      "Verde-mata profundo sobre papel quente, com cobre como sinal de foco e destaque. A interface usa Libre Franklin, compacta e firme; o texto da norma é lido em Literata, serifa feita para leitura longa. Navegação em trilho de ícones com painel do grupo, recolhível em telas menores.",
+    fontes: "Libre Franklin (textos e títulos), Literata (texto normativo) e JetBrains Mono (códigos)",
+    cantos: "Retos (3 px)",
+    navegacao: "Trilho de ícones + painel do grupo, recolhível",
+    indicada: "Quem lê muito texto normativo e quer densidade máxima em tabelas e formulários.",
+  },
+  {
+    tema: "bordo",
+    nome: "Bordô e Anil",
+    numero: 6,
+    resumo:
+      "Bordô de capa de processo e anil como cor de foco: a sobriedade de cartório com a clareza de um sistema atual. Família Red Hat em três cortes, cantos suaves de 10 px e cartões sem bordas, só com sombra. Menu superior em duas faixas, com todos os grupos visíveis a um clique.",
+    fontes: "Red Hat Text (textos), Red Hat Display (títulos) e Red Hat Mono (códigos)",
+    cantos: "Suaves (10 px)",
+    navegacao: "Barra superior em duas faixas, grupos sempre visíveis",
+    indicada: "Quem quer um visual institucional caloroso e navegação sem menus escondidos.",
+  },
 ] as const;
+
+// Propostas 5 e 6: telas exportadas do protótipo para docs/design/ (proposta-N-tela-*.png, -componentes.png, -tokens.png).
+const TELAS_NOVAS = [
+  { arquivo: "tela-login", titulo: "1 · Login" },
+  { arquivo: "tela-painel", titulo: "2 · Painel do controlador" },
+  { arquivo: "tela-norma", titulo: "3 · Norma e árvore de requisitos" },
+  { arquivo: "tela-autoavaliacao", titulo: "4 · Autoavaliação de um requisito" },
+  { arquivo: "tela-plano", titulo: "5 · Plano de ação (5W2H)" },
+  { arquivo: "tela-demanda", titulo: "6 · Demanda e tramitação" },
+  { arquivo: "tela-satelite", titulo: "7 · Área do satélite — computador e celular" },
+  { arquivo: "componentes", titulo: "Componentes base" },
+  { arquivo: "tokens", titulo: "Tabela de tokens" },
+] as const;
+const TEXTOS_NOVOS: Record<5 | 6, string[]> = {
+  5: [
+    "Painel institucional em verde-mata com as normas carregadas; formulário com erro genérico, foco em cobre e aviso de registro.",
+    "Trilho recolhido (Painel não tem subitens). Indicadores numa faixa contínua, aderência em barra segmentada por situação, tramitações e prazos em tabela.",
+    "Sumário em árvore à esquerda e leitura do artigo em Literata. Itens que não se aplicam à Câmara ficam riscados, esmaecidos e com ícone de bloqueio.",
+    "Quatro situações grandes com ícone e texto; condições da OT 05 no painel do grupo. Sugestão da IA à direita, marcada como pendente de revisão.",
+    "Tabela de 36 px por linha com origem, prazo, prioridade e execução; detalhe 5W2H em painel lateral com marcos de execução.",
+    "Pedido, documentos solicitados e resposta à esquerda; tramitação imutável em linha do tempo vertical à direita.",
+    "Desktop com lista e pedido lado a lado; no celular, botões de 48 px e navegação inferior com dois itens.",
+    "Botões, campos, seleção, etiquetas de situação com ícone, cartão de indicador, menu em trilho, tabela e linha do tempo.",
+    "Valores para aplicar no sistema (Tailwind CSS v4 + shadcn/ui), com o contraste de cada par.",
+  ],
+  6: [
+    "Cartão centralizado sobre faixa bordô; erro genérico, foco em anil e normas carregadas no rodapé.",
+    "Menu em duas faixas com rótulo de grupo. Filtro de unidade em pílulas, aderência em anéis com detalhamento e agenda dos próximos 7 dias.",
+    "Leitura em sanfona: cada artigo abre no lugar. Itens do Executivo aparecem riscados sobre fundo hachurado, com etiqueta \"Não se aplica a câmara municipal\".",
+    "Trilha com os 24 requisitos do ciclo no topo. Situação em quatro cartões grandes; sugestão da IA em anil, pendente de revisão.",
+    "O 5W2H abre dentro da própria linha da tabela, sem perder o contexto da lista. Marcos de execução em pílulas.",
+    "Etapas na horizontal com autor e data; pedido e resposta lado a lado, com o parecer da controladoria.",
+    "Passos numerados no desktop; no celular, lista com prazo em linguagem simples e resposta com anexo por foto.",
+    "Botões, campos, seleção segmentada, etiquetas em pílula, cartão de indicador, menu superior, tabela zebrada e etapas.",
+    "Valores para aplicar no sistema (Tailwind CSS v4 + shadcn/ui), com o contraste de cada par.",
+  ],
+};
 
 const TELAS_AMEIXA = [
   { id: "tela-login", titulo: "1 · Login", texto: "Área institucional com os três benefícios do sistema e formulário com erro genérico, foco visível e aviso de acesso registrado." },
@@ -131,7 +190,7 @@ async function main() {
   const paginasPropostas = PROPOSTAS.map(
     (p, i) => `
     <section class="pagina" data-tema="${p.tema}">
-      ${topo(`Proposta ${p.numero} de ${PROPOSTAS.length}${p.tema === "ameixa" ? " · nova" : ""}`)}
+      ${topo(`Proposta ${p.numero} de ${PROPOSTAS.length}${p.numero >= 4 ? " · nova" : ""}`)}
       <div class="corpo">
         <div class="lado">
           <h2>${p.numero} · ${p.nome}</h2>
@@ -144,7 +203,7 @@ async function main() {
           </dl>
           <h3>Paleta</h3>
           <div class="paleta">${paleta(dados[i].cores)}</div>
-          ${p.tema === "ameixa" ? `<p class="aviso">As 7 telas, os componentes e a tabela de tokens desta proposta estão nas próximas páginas.</p>` : ""}
+          ${p.numero >= 4 ? `<p class="aviso">As 7 telas, os componentes e a tabela de tokens desta proposta estão nas próximas páginas.</p>` : ""}
         </div>
         <img src="data:image/png;base64,${dados[i].imagem}" alt="Tela de exemplo na proposta ${p.nome}" />
       </div>
@@ -159,6 +218,22 @@ async function main() {
       <div class="tela"><img src="data:image/png;base64,${imagensTelas[i]}" alt="${t.titulo}" /></div>
     </section>`,
   ).join("");
+
+  const paginasNovas = ([5, 6] as const)
+    .map((n) => {
+      const p = PROPOSTAS.find((x) => x.numero === n)!;
+      return TELAS_NOVAS.map((t, i) => {
+        const arquivo = path.join(IMAGENS, `proposta-${n}-${t.arquivo}.png`);
+        if (!fs.existsSync(arquivo)) return "";
+        return `
+    <section class="pagina" data-tema="${p.tema}">
+      ${topo(`Proposta ${n} · ${p.nome} · ${i < 7 ? `tela ${i + 1} de 7` : t.arquivo}`)}
+      <div class="titulo-tela"><h2>${t.titulo}</h2><p>${TEXTOS_NOVOS[n][i]}</p></div>
+      <div class="tela"><img src="data:image/png;base64,${b64(arquivo)}" alt="${t.titulo}" /></div>
+    </section>`;
+      }).join("");
+    })
+    .join("");
 
   const linhasTokens = TOKENS_AMEIXA.map(
     (t) => `<tr><td class="cod">${t.token}</td><td><span class="amostra" style="background:${t.hex}"></span><span class="cod">${t.hex}</span></td><td>${t.uso}</td></tr>`,
@@ -216,7 +291,7 @@ async function main() {
           <p class="sobre">HorizonAJ</p>
           <h1>Sistema de Controladoria Municipal</h1>
           <p class="sub">Propostas de identidade visual</p>
-          <p class="texto">Quatro direções visuais para o sistema. A mesma tela de painel aparece em cada proposta; a escolhida será aplicada a todas as telas. A proposta 4 traz também as sete telas principais, os componentes e a tabela de tokens. Todas usam modo claro e atendem ao contraste mínimo de acessibilidade (WCAG 2.1 AA / eMAG).</p>
+          <p class="texto">Seis direções visuais para o sistema. A mesma tela de painel aparece em cada proposta; a escolhida será aplicada a todas as telas. As propostas 4, 5 e 6 trazem também as sete telas principais, os componentes e a tabela de tokens. Todas usam modo claro e atendem ao contraste mínimo de acessibilidade (WCAG 2.1 AA / eMAG).</p>
         </div>
         <div class="miniaturas">${dados.map((d) => `<img src="data:image/png;base64,${d.imagem}" alt="" />`).join("")}</div>
         <p class="data">${hoje[0].toUpperCase() + hoje.slice(1)}</p>
@@ -224,6 +299,7 @@ async function main() {
       ${paginasPropostas}
       ${paginasTelas}
       ${paginaTokens}
+      ${paginasNovas}
       <section class="pagina" data-tema="institucional">
         ${topo("Comparativo")}
         <h2>Lado a lado</h2>
@@ -260,7 +336,7 @@ html, body { background: #fff !important; margin: 0; }
 .capa .sub { font-size: 17pt; color: var(--sidebar-primary); margin: 3mm 0 8mm; }
 .capa .texto { max-width: 190mm; font-size: 11pt; line-height: 1.6; opacity: .9; margin: 0; }
 .capa .data { font-size: 10pt; opacity: .75; margin: 0; }
-.miniaturas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm; }
+.miniaturas { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4mm; }
 .miniaturas img { width: 100%; border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
 .corpo { flex: 1; display: grid; grid-template-columns: 82mm 1fr; gap: 9mm; min-height: 0; }
 .lado h2 { font-size: 20pt; margin-bottom: 3mm; }
@@ -287,7 +363,8 @@ html, body { background: #fff !important; margin: 0; }
 .tokens .amostra { display: inline-block; width: 4mm; height: 4mm; border-radius: 2px; border: 1px solid rgba(0,0,0,.15); vertical-align: middle; margin-right: 2mm; }
 .tokens.outros { margin-top: 3mm; } .tokens small { display: inline; margin-left: 2mm; color: var(--muted-foreground); }
 .pagina > h2 { font-size: 20pt; }
-.grade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm; }
+.grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+.grade .cartao img { max-height: 46mm; object-fit: cover; object-position: top; }
 .cartao { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 3.5mm; font-family: var(--fonte-texto); color: var(--foreground); }
 .cartao img { width: 100%; border-radius: calc(var(--radius) * .6); border: 1px solid var(--border); }
 .cartao h3 { font-size: 11pt; margin: 3mm 0 1mm; }

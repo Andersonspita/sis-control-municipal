@@ -72,14 +72,165 @@ async function main() {
     conferir("inserção com cliente_id de outro cliente é bloqueada", bloqueado);
   });
 
+  const { rows: escopo } = await dono.query(
+    `SELECT
+       (SELECT count(*) FROM demandas d JOIN unidades u ON u.id = d.unidade_destino_id
+         WHERE d.cliente_id = $1 AND u.sigla IN ('SESAU', 'REG'))::int AS dem_saude,
+       (SELECT count(*) FROM demandas d JOIN unidades u ON u.id = d.unidade_destino_id
+         WHERE d.cliente_id = $1 AND u.sigla NOT IN ('SESAU', 'REG'))::int AS dem_outras,
+       (SELECT array_agg(doc.id) FROM documentos doc JOIN demandas d ON d.id = doc.demanda_id
+          JOIN unidades u ON u.id = d.unidade_destino_id
+         WHERE doc.cliente_id = $1 AND u.sigla NOT IN ('SESAU', 'REG')) AS docs_outras,
+       (SELECT array_agg(id) FROM documentos WHERE cliente_id = $1 AND demanda_id IS NULL) AS docs_avulsos,
+       (SELECT array_agg(doc.id) FROM documentos doc JOIN tramitacoes_demanda t ON t.id = doc.tramite_id
+         WHERE doc.cliente_id = $1 AND t.interno) AS docs_internos,
+       (SELECT array_agg(doc.id) FROM documentos doc JOIN tramitacoes_demanda t ON t.id = doc.tramite_id
+          JOIN demandas d ON d.id = t.demanda_id JOIN unidades u ON u.id = d.unidade_destino_id
+         WHERE doc.cliente_id = $1 AND NOT t.interno AND u.sigla IN ('SESAU', 'REG')) AS docs_saude,
+       (SELECT count(*) FROM tramitacoes_demanda WHERE cliente_id = $1 AND interno)::int AS tramites_internos,
+       (SELECT d.id FROM demandas d JOIN unidades u ON u.id = d.unidade_destino_id
+         WHERE d.cliente_id = $1 AND u.sigla IN ('SESAU', 'REG') AND d.status IN ('ENVIADA', 'VISUALIZADA', 'DEVOLVIDA')
+         ORDER BY d.numero LIMIT 1) AS dem_saude_aberta,
+       (SELECT d.id FROM demandas d JOIN unidades u ON u.id = d.unidade_destino_id
+         WHERE d.cliente_id = $1 AND u.sigla NOT IN ('SESAU', 'REG') LIMIT 1) AS dem_outra`,
+    [pm],
+  );
+  const e = escopo[0];
+
   await comContexto(pm, satelite, "SATELITE", async () => {
     const { rows } = await app.query("SELECT sigla FROM unidades ORDER BY sigla");
     const siglas = rows.map((r) => r.sigla).join(",");
     conferir(`satélite vê só a Saúde e subordinadas (${siglas})`, siglas === "REG,SESAU");
-    const { rows: dem } = await app.query("SELECT assunto FROM demandas");
-    conferir("satélite vê só a demanda destinada à Saúde", dem.length === 1 && dem[0].assunto.includes("regulação"));
+    const vistas = await contar("SELECT * FROM demandas");
+    conferir(
+      `satélite vê só as demandas da Saúde e subordinadas (${vistas} de ${e.dem_saude + e.dem_outras})`,
+      vistas === e.dem_saude && e.dem_outras > 0,
+    );
     conferir("satélite não vê ciclos de avaliação", (await contar("SELECT * FROM ciclos_avaliacao")) === 0);
     conferir("satélite não lê a trilha de auditoria", (await contar("SELECT * FROM log_auditoria")) === 0);
+  });
+
+  await comContexto(pm, satelite, "SATELITE", async () => {
+    conferir(
+      "satélite não lê documento de demanda de outra unidade",
+      e.docs_outras?.length > 0 && (await contar("SELECT * FROM documentos WHERE id = ANY($1)", [e.docs_outras])) === 0,
+    );
+    conferir(
+      "satélite não lê documentos avulsos da controladoria",
+      e.docs_avulsos?.length > 0 && (await contar("SELECT * FROM documentos WHERE id = ANY($1)", [e.docs_avulsos])) === 0,
+    );
+    conferir(
+      "satélite não vê comentários internos da controladoria",
+      e.tramites_internos > 0 && (await contar("SELECT * FROM tramitacoes_demanda WHERE interno")) === 0,
+    );
+    conferir(
+      "satélite não lê anexo de comentário interno",
+      e.docs_internos?.length > 0 && (await contar("SELECT * FROM documentos WHERE id = ANY($1)", [e.docs_internos])) === 0,
+    );
+    conferir(
+      "satélite lê os anexos das demandas da sua unidade",
+      e.docs_saude?.length > 0 && (await contar("SELECT * FROM documentos WHERE id = ANY($1)", [e.docs_saude])) === e.docs_saude.length,
+    );
+  });
+
+  // Tentativas de escrita proibidas ao satélite (cada uma num savepoint).
+  async function bloqueado(sql: string, params: unknown[] = []) {
+    await app.query("SAVEPOINT s");
+    try {
+      const r = await app.query(sql, params);
+      await app.query("ROLLBACK TO SAVEPOINT s");
+      return r.rowCount === 0;
+    } catch {
+      await app.query("ROLLBACK TO SAVEPOINT s");
+      return true;
+    }
+  }
+
+  await comContexto(pm, satelite, "SATELITE", async () => {
+    const id = e.dem_saude_aberta;
+    conferir(
+      "satélite não registra conclusão (trâmite exclusivo da controladoria)",
+      await bloqueado(
+        "INSERT INTO tramitacoes_demanda (id, cliente_id, demanda_id, tipo, usuario_id, usuario_nome) VALUES (gen_random_uuid(), $1, $2, 'CONCLUSAO', $3, 'x')",
+        [pm, id, satelite],
+      ),
+    );
+    conferir(
+      "satélite não registra trâmite em nome de outro usuário",
+      await bloqueado(
+        "INSERT INTO tramitacoes_demanda (id, cliente_id, demanda_id, tipo, usuario_id, usuario_nome) VALUES (gen_random_uuid(), $1, $2, 'RESPOSTA', $3, 'x')",
+        [pm, id, controlador],
+      ),
+    );
+    conferir(
+      "satélite não insere trâmite interno",
+      await bloqueado(
+        "INSERT INTO tramitacoes_demanda (id, cliente_id, demanda_id, tipo, usuario_id, usuario_nome, interno) VALUES (gen_random_uuid(), $1, $2, 'RESPOSTA', $3, 'x', true)",
+        [pm, id, satelite],
+      ),
+    );
+    conferir(
+      "satélite não insere trâmite em demanda de outra unidade",
+      await bloqueado(
+        "INSERT INTO tramitacoes_demanda (id, cliente_id, demanda_id, tipo, usuario_id, usuario_nome) VALUES (gen_random_uuid(), $1, $2, 'RESPOSTA', $3, 'x')",
+        [pm, e.dem_outra, satelite],
+      ),
+    );
+    conferir("satélite não altera o prazo da demanda", await bloqueado("UPDATE demandas SET prazo = prazo + 30 WHERE id = $1", [id]));
+    conferir("satélite não conclui a demanda", await bloqueado("UPDATE demandas SET status = 'CONCLUIDA' WHERE id = $1", [id]));
+    conferir("satélite não altera demanda de outra unidade", await bloqueado("UPDATE demandas SET status = 'RESPONDIDA' WHERE id = $1", [e.dem_outra]));
+    conferir(
+      "satélite não cria demandas",
+      await bloqueado(
+        "INSERT INTO demandas (id, cliente_id, numero, ano, assunto, descricao, unidade_destino_id, prazo, criado_por_id, atualizado_em) SELECT gen_random_uuid(), $1, 999, 2000, 'x', 'x', unidade_destino_id, prazo, $2, now() FROM demandas WHERE id = $3",
+        [pm, satelite, id],
+      ),
+    );
+    conferir("satélite não exclui demandas", await bloqueado("DELETE FROM demandas WHERE id = $1", [id]));
+    conferir(
+      "satélite não registra documento sem trâmite",
+      await bloqueado(
+        "INSERT INTO documentos (id, cliente_id, nome, mime_type, tamanho, sha256, storage_key, enviado_por_id, demanda_id) VALUES (gen_random_uuid(), $1, 'x.txt', 'text/plain', 1, repeat('0', 64), gen_random_uuid()::text, $2, $3)",
+        [pm, satelite, id],
+      ),
+    );
+    conferir("satélite não exclui documentos", await bloqueado("DELETE FROM documentos WHERE id = ANY($1)", [e.docs_saude]));
+
+    await app.query("SAVEPOINT s");
+    let respondeu = false;
+    try {
+      const { rows: atual } = await app.query("SELECT status FROM demandas WHERE id = $1", [id]);
+      if (atual[0].status === "ENVIADA" || atual[0].status === "VISUALIZADA" || atual[0].status === "DEVOLVIDA") {
+        await app.query("UPDATE demandas SET status = 'RESPONDIDA', atualizado_em = now() WHERE id = $1", [id]);
+        const { rows: t } = await app.query(
+          "INSERT INTO tramitacoes_demanda (id, cliente_id, demanda_id, tipo, status_anterior, status_novo, usuario_id, usuario_nome) VALUES (gen_random_uuid(), $1, $2, 'RESPOSTA', $3, 'RESPONDIDA', $4, 'x') RETURNING id",
+          [pm, id, atual[0].status, satelite],
+        );
+        await app.query(
+          "INSERT INTO documentos (id, cliente_id, nome, mime_type, tamanho, sha256, storage_key, enviado_por_id, demanda_id, tramite_id) VALUES (gen_random_uuid(), $1, 'x.txt', 'text/plain', 1, repeat('0', 64), gen_random_uuid()::text, $2, $3, $4)",
+          [pm, satelite, id, t[0].id],
+        );
+        respondeu = true;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    await app.query("ROLLBACK TO SAVEPOINT s");
+    conferir("satélite consegue responder demanda da sua unidade com anexo", respondeu);
+  });
+
+  await comContexto(cm, controlador, "CONTROLADOR", async () => {
+    conferir("controlador na Câmara não lê documentos da Prefeitura", (await contar("SELECT * FROM documentos WHERE cliente_id = $1", [pm])) === 0);
+    conferir("controlador na Câmara não lê trâmites da Prefeitura", (await contar("SELECT * FROM tramitacoes_demanda WHERE cliente_id = $1", [pm])) === 0);
+  });
+
+  await comContexto(pm, controlador, "CONTROLADOR", async () => {
+    conferir("controlador vê comentários internos", (await contar("SELECT * FROM tramitacoes_demanda WHERE interno")) === e.tramites_internos);
+    conferir(
+      "controlador lê documentos avulsos e internos",
+      (await contar("SELECT * FROM documentos WHERE id = ANY($1)", [[...(e.docs_avulsos ?? []), ...(e.docs_internos ?? [])]])) ===
+        (e.docs_avulsos?.length ?? 0) + (e.docs_internos?.length ?? 0),
+    );
   });
 
   await comContexto(cm, satelite, "SATELITE", async () => {

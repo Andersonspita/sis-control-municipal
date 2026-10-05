@@ -12,13 +12,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { selecionarCliente } from "@/app/actions/sessao";
 import { TIPO_CLIENTE } from "@/lib/rotulos";
+import { cn } from "@/lib/utils";
 import type { TipoCliente } from "@/generated/prisma/browser";
 
 type Opcao = { id: string; nome: string; tipo: TipoCliente; municipio: string; uf: string };
 
-export function TrocaCliente({ atual, opcoes }: { atual: Opcao; opcoes: Opcao[] }) {
+export function TrocaCliente({
+  atual,
+  opcoes,
+  tom = "claro",
+}: {
+  atual: Opcao;
+  opcoes: Opcao[];
+  /** "escuro" quando fica sobre a barra colorida (bg-sidebar) dos temas com menu no topo. */
+  tom?: "claro" | "escuro";
+}) {
   const [pendente, iniciar] = useTransition();
   const IconeAtual = atual.tipo === "CAMARA" ? Landmark : Building2;
+  const escuro = tom === "escuro";
 
   function trocar(id: string) {
     if (id === atual.id) return;
@@ -31,19 +42,34 @@ export function TrocaCliente({ atual, opcoes }: { atual: Opcao; opcoes: Opcao[] 
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={opcoes.length < 2 || pendente}
-        className="flex min-w-0 items-center gap-3 rounded-md px-2 py-1.5 text-left outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 disabled:hover:bg-transparent"
+        className={cn(
+          "flex min-w-0 items-center gap-3 rounded-md px-2 py-1.5 text-left outline-none disabled:hover:bg-transparent",
+          escuro
+            ? "hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+            : "hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
+        )}
         aria-label={`Entidade atual: ${atual.nome}. Trocar entidade`}
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-md",
+            escuro ? "bg-sidebar-accent text-sidebar-primary" : "bg-primary/10 text-primary",
+          )}
+        >
           <IconeAtual aria-hidden="true" className="size-4.5" />
         </span>
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">{atual.nome}</span>
-          <span className="block truncate text-xs text-muted-foreground">
+          <span className={cn("block truncate text-xs", escuro ? "text-sidebar-foreground/75" : "text-muted-foreground")}>
             {TIPO_CLIENTE[atual.tipo]} · {atual.municipio}/{atual.uf}
           </span>
         </span>
-        {opcoes.length > 1 && <ChevronsUpDown aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
+        {opcoes.length > 1 && (
+          <ChevronsUpDown
+            aria-hidden="true"
+            className={cn("size-4 shrink-0", escuro ? "text-sidebar-foreground/75" : "text-muted-foreground")}
+          />
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80">
         <DropdownMenuGroup>

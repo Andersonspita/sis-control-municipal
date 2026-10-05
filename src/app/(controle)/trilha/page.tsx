@@ -13,7 +13,17 @@ const ACOES: Record<string, string> = {
   "unidade.criada": "Cadastrou unidade",
   "demanda.criada": "Criou demanda",
   "demanda.respondida": "Respondeu demanda",
+  "demanda.visualizada": "Visualizou demanda",
+  "demanda.em_analise": "Iniciou análise da resposta",
+  "demanda.concluida": "Concluiu demanda",
+  "demanda.devolvida": "Devolveu demanda para complementação",
+  "demanda.cancelada": "Cancelou demanda",
+  "demanda.comentada": "Comentou demanda",
+  "demanda.prorrogacao_solicitada": "Pediu prorrogação de prazo",
+  "demanda.prorrogacao_deferida": "Deferiu prorrogação de prazo",
+  "demanda.prorrogacao_indeferida": "Indeferiu prorrogação de prazo",
   "documento.enviado": "Enviou documento",
+  "documento.baixado": "Baixou documento",
 };
 
 export default async function Trilha() {

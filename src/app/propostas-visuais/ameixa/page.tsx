@@ -4,7 +4,6 @@ import Link from "next/link";
 import { AlarmClock, ArrowLeft, ChevronDown, CircleAlert, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { atkinson, atkinsonMono } from "../fontes";
 import { Barra, Cartao, codigo, MarcaAmeixa, Prioridade, Risco, SeloAmeixa, Situacao, type ChaveSituacao } from "./kit";
 import { TelaAutoavaliacao, TelaDemanda, TelaLogin, TelaNorma, TelaPainel, TelaPlano, TelaSatelite } from "./telas";
 import { OUTROS_TOKENS_AMEIXA, TOKENS_AMEIXA } from "./tokens";
@@ -138,7 +137,7 @@ function Componentes() {
 
 export default function PropostaAmeixa() {
   return (
-    <main id="conteudo" data-tema="ameixa" className={cn(atkinson.variable, atkinsonMono.variable, "min-h-screen bg-background font-sans text-foreground")}>
+    <main id="conteudo" data-tema="ameixa" className="min-h-screen bg-background font-sans text-foreground">
       <div className="mx-auto w-[1360px] space-y-12 px-10 py-10">
         <header className="space-y-3">
           <Link href="/propostas-visuais" className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline underline-offset-2">

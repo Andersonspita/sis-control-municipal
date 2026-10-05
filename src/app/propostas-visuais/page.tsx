@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import Link from "next/link";
 import { AlarmClock, ArrowRight, BookOpenCheck, ClipboardCheck, Inbox, LayoutDashboard, ListChecks, Send } from "lucide-react";
 import { Marca } from "@/components/marca";
@@ -7,14 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { atkinson, atkinsonMono } from "./fontes";
 import { SeloAmeixa, Situacao } from "./ameixa/kit";
 
 export const metadata: Metadata = { title: "Propostas de identidade visual" };
-
-const plex = IBM_Plex_Sans({ variable: "--font-ibm-plex", subsets: ["latin"], weight: ["400", "500", "600"] });
-const sourceSans = Source_Sans_3({ variable: "--font-source-sans", subsets: ["latin"] });
-const sourceSerif = Source_Serif_4({ variable: "--font-source-serif", subsets: ["latin"] });
 
 const PROPOSTAS = [
   {
@@ -40,6 +34,18 @@ const PROPOSTAS = [
     nome: "4 · Ameixa e ciano",
     resumo:
       "Ameixa profundo com detalhes em ciano e tipografia Atkinson Hyperlegible, feita para máxima legibilidade. Navegação no topo em dois níveis, que libera toda a largura da tela para tabelas e textos normativos.",
+  },
+  {
+    tema: "mata",
+    nome: "5 · Mata e Cobre",
+    resumo:
+      "Verde-mata profundo sobre papel quente, com cobre como sinal de foco e destaque. Interface em Libre Franklin e texto da norma em Literata, serifa feita para leitura longa. Trilho de ícones com painel do grupo, recolhível em telas menores.",
+  },
+  {
+    tema: "bordo",
+    nome: "6 · Bordô e Anil",
+    resumo:
+      "Bordô de capa de processo e anil como cor de foco: sobriedade de cartório com clareza de sistema atual. Família Red Hat (Display, Text e Mono), cantos de 10 px e cartões só com sombra. Menu superior em duas faixas, com todos os grupos visíveis.",
   },
 ] as const;
 
@@ -199,21 +205,11 @@ function MiniApp() {
 
 export default function PropostasVisuais() {
   return (
-    <main
-      id="conteudo"
-      className={cn(
-        plex.variable,
-        sourceSans.variable,
-        sourceSerif.variable,
-        atkinson.variable,
-        atkinsonMono.variable,
-        "mx-auto max-w-7xl space-y-10 px-6 py-10",
-      )}
-    >
+    <main id="conteudo" className="mx-auto max-w-7xl space-y-10 px-6 py-10">
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold">Propostas de identidade visual</h1>
         <p className="max-w-3xl text-muted-foreground">
-          Quatro direções para o Sistema de Controladoria Municipal. A mesma tela aparece em cada proposta; a escolhida
+          Seis direções para o Sistema de Controladoria Municipal. A mesma tela aparece em cada proposta; a escolhida
           será aplicada a todo o sistema. Todas atendem ao contraste mínimo de acessibilidade (WCAG 2.1 AA / eMAG).
         </p>
       </div>
@@ -233,7 +229,7 @@ export default function PropostasVisuais() {
               </Link>
             )}
           </div>
-          {p.tema === "ameixa" ? <MiniAppTopo /> : <MiniApp />}
+          {p.tema === "ameixa" || p.tema === "bordo" ? <MiniAppTopo /> : <MiniApp />}
         </section>
       ))}
     </main>
