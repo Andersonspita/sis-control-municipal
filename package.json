@@ -24,6 +24,7 @@
     "test:auditorias": "tsx scripts/testar-auditorias.ts",
     "test:relatorios": "tsx --conditions=react-server scripts/testar-relatorios.ts",
     "usuario:criar": "tsx scripts/criar-usuario.ts",
+    "demo:popular": "tsx scripts/popular-demo.ts",
     "docs:propostas": "tsx scripts/gerar-pdf-propostas.ts",
     "test:e2e": "tsx scripts/e2e-smoke.ts",
     "test:e2e:demandas": "tsx scripts/e2e-demandas.ts",
