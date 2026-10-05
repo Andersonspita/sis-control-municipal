@@ -35,7 +35,7 @@ async function main() {
   await app.connect();
   await dono.connect();
 
-  const { rows: clientes } = await dono.query("SELECT id, tipo FROM clientes ORDER BY tipo");
+  const { rows: clientes } = await dono.query("SELECT id, tipo FROM clientes ORDER BY criado_em");
   const pm = clientes.find((c) => c.tipo === "PREFEITURA")!.id as string;
   const cm = clientes.find((c) => c.tipo === "CAMARA")!.id as string;
   const { rows: us } = await dono.query("SELECT id, email FROM usuarios");
@@ -275,6 +275,7 @@ async function main() {
   await testarMedidas(pm, cm, controlador, satelite);
   await testarAuditorias(pm, cm, controlador, satelite);
   await testarIA(pm, cm, controlador, satelite);
+  await testarIntegracoes(pm, cm, controlador, satelite);
 
   await app.end();
   await dono.end();
@@ -292,6 +293,48 @@ async function recusado(sql: string, params: unknown[] = []) {
   } catch {
     await app.query("ROLLBACK TO SAVEPOINT s");
     return true;
+  }
+}
+
+// Dados externos: coletas das APIs públicas são da controladoria de cada cliente; o satélite não as vê.
+async function testarIntegracoes(pm: string, cm: string, controlador: string, satelite: string) {
+  const { rows: antes } = await dono.query(
+    "SELECT cliente_id FROM coletas_integracao WHERE cliente_id = ANY($1) AND fonte = 'SICONFI'",
+    [[pm, cm]],
+  );
+  const preexistentes = new Set(antes.map((r) => r.cliente_id as string));
+  const inserir = `INSERT INTO coletas_integracao (id, cliente_id, fonte, status, dados, atualizado_em)
+    VALUES (gen_random_uuid(), $1, 'SICONFI', 'SUCESSO', '{"teste": true}', now()) RETURNING id`;
+  const criados: string[] = [];
+  for (const c of [pm, cm]) {
+    if (preexistentes.has(c)) continue;
+    const { rows } = await dono.query(inserir, [c]);
+    criados.push(rows[0].id);
+  }
+
+  try {
+    await comContexto(pm, controlador, "CONTROLADOR", async () => {
+      conferir("controlador na PM vê as coletas da PM", (await contar("SELECT * FROM coletas_integracao WHERE cliente_id = $1", [pm])) >= 1);
+      conferir("controlador na PM não vê coletas da Câmara", (await contar("SELECT * FROM coletas_integracao WHERE cliente_id = $1", [cm])) === 0);
+      conferir(
+        "controlador não grava coleta em outro cliente",
+        await recusado("INSERT INTO coletas_integracao (id, cliente_id, fonte, status, atualizado_em) VALUES (gen_random_uuid(), $1, 'IBGE', 'SUCESSO', now())", [cm]),
+      );
+      const { rowCount } = await app.query("UPDATE coletas_integracao SET erro = 'x' WHERE cliente_id = $1", [cm]);
+      conferir("controlador não altera coletas da Câmara", rowCount === 0);
+    });
+
+    await comContexto(pm, satelite, "SATELITE", async () => {
+      conferir("satélite não vê coletas de dados externos", (await contar("SELECT * FROM coletas_integracao")) === 0);
+      conferir(
+        "satélite não grava coletas",
+        await recusado("INSERT INTO coletas_integracao (id, cliente_id, fonte, status, atualizado_em) VALUES (gen_random_uuid(), $1, 'IBGE', 'SUCESSO', now())", [pm]),
+      );
+      const { rowCount } = await app.query("UPDATE coletas_integracao SET erro = 'x' WHERE cliente_id = $1", [pm]);
+      conferir("satélite não altera coletas", rowCount === 0);
+    });
+  } finally {
+    if (criados.length) await dono.query("DELETE FROM coletas_integracao WHERE id = ANY($1)", [criados]);
   }
 }
 

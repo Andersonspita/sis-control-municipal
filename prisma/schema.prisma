@@ -77,6 +77,7 @@ model Cliente {
   analisesIA         AnaliseIA[]
   sugestoesIA        SugestaoIA[]
   relatoriosAnuais RelatorioAnual[]
+  coletasIntegracao ColetaIntegracao[]
 
   @@map("clientes")
 }
@@ -938,6 +939,45 @@ model RelatorioAnual {
 
   @@unique([clienteId, ano])
   @@map("relatorios_anuais")
+}
+
+// ───────────────────────── Integrações com APIs públicas ─────────────────────────
+
+enum FonteIntegracao {
+  IBGE
+  SICONFI
+  PORTAL_TRANSPARENCIA
+}
+
+enum StatusColeta {
+  PROCESSANDO
+  SUCESSO
+  SEM_DADOS
+  DESABILITADA
+  ERRO
+}
+
+/// Última coleta de cada fonte pública por cliente (src/lib/integracoes). Nunca visível ao satélite (RLS).
+/// O histórico das sincronizações fica na trilha (ação "integracoes.sincronizadas").
+model ColetaIntegracao {
+  id              String          @id @default(uuid(7)) @db.Uuid
+  clienteId       String          @map("cliente_id") @db.Uuid
+  fonte           FonteIntegracao
+  /// Período ou recorte coletado (ex.: "2026", "RGF 2º quadrimestre/2026").
+  referencia      String?         @db.VarChar(60)
+  status          StatusColeta    @default(PROCESSANDO)
+  /// Resultado já interpretado (formato em src/lib/integracoes/tipos.ts).
+  dados           Json?
+  erro            String?
+  solicitadoPorId String?         @map("solicitado_por_id") @db.Uuid
+  iniciadoEm      DateTime        @default(now()) @map("iniciado_em") @db.Timestamptz(3)
+  coletadoEm      DateTime?       @map("coletado_em") @db.Timestamptz(3)
+  atualizadoEm    DateTime        @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, fonte])
+  @@map("coletas_integracao")
 }
 
 // ───────────────────────── IA: análise de documentos ─────────────────────────

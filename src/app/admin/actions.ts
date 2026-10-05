@@ -7,6 +7,9 @@ import { db } from "@/lib/db";
 import { registrarLogGlobal } from "@/lib/auditoria";
 import { cnpjValido, normalizarCnpj, UFS } from "@/lib/documentos-br";
 import { ErroNegocio, mensagemDeErro } from "@/lib/erros";
+import { agendarSincronizacao } from "@/lib/dados/integracoes";
+import { mensagemIntegracao } from "@/lib/integracoes/http";
+import { listarMunicipios, obterPopulacao } from "@/lib/integracoes/ibge";
 import type { EstadoAcao } from "@/lib/acoes";
 
 const esquemaCliente = z.object({
@@ -38,11 +41,13 @@ export async function salvarCliente(_: EstadoAcao, formData: FormData): Promise<
   if (!dados.success) return { erro: dados.error.issues[0]?.message };
   const id = formData.get("id");
 
+  let sincronizar: string | null = null;
   try {
     if (typeof id === "string" && id) {
-      const anterior = await db.cliente.findUnique({ where: { id }, select: { id: true } });
+      const anterior = await db.cliente.findUnique({ where: { id }, select: { id: true, codigoIbge: true } });
       if (!anterior) throw new ErroNegocio("Cliente não encontrado.");
       await db.cliente.update({ where: { id }, data: dados.data });
+      if (dados.data.codigoIbge && dados.data.codigoIbge !== anterior.codigoIbge) sincronizar = id;
       await registrarLogGlobal({
         acao: "admin.cliente.alterado",
         usuarioId: sessao.usuario.id,
@@ -59,14 +64,48 @@ export async function salvarCliente(_: EstadoAcao, formData: FormData): Promise<
         entidadeId: cliente.id,
         dados: dados.data,
       });
+      if (dados.data.codigoIbge) sincronizar = cliente.id;
     }
   } catch (err) {
     if (violouUnicidade(err)) return { erro: "Já existe um cliente com este CNPJ." };
     return { erro: mensagemDeErro(err) };
   }
 
+  // Código IBGE novo ou alterado: coleta os dados externos (IBGE, SICONFI, Portal) depois da resposta.
+  if (sincronizar) {
+    await agendarSincronizacao({ clienteId: sincronizar, usuarioId: sessao.usuario.id, perfil: "CONTROLADOR" }, "CADASTRO").catch((err) =>
+      console.error("[integracoes] não foi possível agendar a sincronização", err),
+    );
+  }
+
   revalidatePath("/admin");
   return { ok: true, mensagem: id ? "Cliente atualizado." : "Cliente cadastrado." };
+}
+
+export type MunicipioOpcao = { codigo: string; nome: string };
+
+/** Municípios da UF segundo o IBGE, para o cadastro do cliente. */
+export async function buscarMunicipiosIbge(uf: string): Promise<{ municipios?: MunicipioOpcao[]; erro?: string }> {
+  await exigirAdmin();
+  try {
+    const lista = await listarMunicipios(uf);
+    return { municipios: lista.map((m) => ({ codigo: m.codigo, nome: m.nome })) };
+  } catch (err) {
+    return { erro: mensagemIntegracao(err) };
+  }
+}
+
+/** População mais recente do município (estimativa anual do IBGE ou, na falta, o Censo). */
+export async function buscarPopulacaoIbge(codigo: string): Promise<{ populacao?: number; descricao?: string; erro?: string }> {
+  await exigirAdmin();
+  if (!/^\d{7}$/.test(codigo)) return { erro: "O código IBGE tem 7 dígitos." };
+  try {
+    const r = await obterPopulacao(codigo);
+    if (!r) return { erro: "O IBGE não tem população para este código." };
+    return { populacao: r.populacao, descricao: `${r.tipo === "CENSO" ? "Censo" : "Estimativa"} IBGE ${r.ano}` };
+  } catch (err) {
+    return { erro: mensagemIntegracao(err) };
+  }
 }
 
 const esquemaSituacao = z.object({

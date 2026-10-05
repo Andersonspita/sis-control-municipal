@@ -8,6 +8,7 @@ import {
   FolderOpen,
   History,
   Inbox,
+  Landmark,
   LayoutDashboard,
   ListChecks,
   Network,
@@ -31,7 +32,10 @@ export const MENUS: Record<VarianteMenu, GrupoMenu[]> = {
       id: "painel",
       titulo: "Painel",
       icone: LayoutDashboard,
-      itens: [{ href: "/painel", rotulo: "Painel", icone: LayoutDashboard }],
+      itens: [
+        { href: "/painel", rotulo: "Painel", icone: LayoutDashboard },
+        { href: "/dados-externos", rotulo: "Dados externos", icone: Landmark },
+      ],
     },
     {
       id: "conformidade",

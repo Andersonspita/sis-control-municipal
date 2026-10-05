@@ -30,21 +30,26 @@ export type ValoresSituacao = {
   denuncianteOculto: boolean;
 };
 
-/** Cadastro (com anexos) ou edição de uma situação. */
+export type SugestaoSituacao = Partial<Pick<ValoresSituacao, "titulo" | "descricao" | "origem" | "probabilidade" | "impacto">>;
+
+/** Cadastro (com anexos, opcionalmente pré-preenchido por `sugestao`) ou edição de uma situação. */
 export function FormSituacao({
   unidades,
   iniciais,
+  sugestao,
   aoConcluir,
 }: {
   unidades: Unidade[];
   iniciais?: ValoresSituacao;
+  sugestao?: SugestaoSituacao;
   aoConcluir?: () => void;
 }) {
   const edicao = !!iniciais;
+  const valores = iniciais ?? sugestao;
   const { pendente, formRef, onSubmit } = useAcaoFormulario(edicao ? editarSituacao : criarSituacao, { aoConcluir });
-  const [origem, setOrigem] = useState<OrigemSituacao | "">(iniciais?.origem ?? "");
-  const [probabilidade, setProbabilidade] = useState(iniciais?.probabilidade ?? 3);
-  const [impacto, setImpacto] = useState(iniciais?.impacto ?? 3);
+  const [origem, setOrigem] = useState<OrigemSituacao | "">(valores?.origem ?? "");
+  const [probabilidade, setProbabilidade] = useState(valores?.probabilidade ?? 3);
+  const [impacto, setImpacto] = useState(valores?.impacto ?? 3);
   // Quem não pode ver o denunciante também não altera origem nem sigilo (a action preserva os valores).
   const sigiloTravado = !!iniciais?.denuncianteOculto;
   const p = edicao ? "editar-" : "";
@@ -62,7 +67,7 @@ export function FormSituacao({
           required
           minLength={5}
           maxLength={200}
-          defaultValue={iniciais?.titulo}
+          defaultValue={valores?.titulo}
           className="h-9"
           placeholder="Ex.: Pagamentos sem liquidação na Secretaria de Obras"
         />
@@ -78,7 +83,7 @@ export function FormSituacao({
           minLength={10}
           maxLength={10000}
           rows={6}
-          defaultValue={iniciais?.descricao}
+          defaultValue={valores?.descricao}
           placeholder="O que foi constatado, quando, onde e quais os possíveis efeitos."
         />
       </div>

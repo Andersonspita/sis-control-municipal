@@ -30,6 +30,8 @@
     "test:e2e:demandas": "tsx scripts/e2e-demandas.ts",
     "test:emails": "tsx scripts/testar-emails.ts",
     "lembretes:prazo": "tsx scripts/lembretes-prazo.ts",
+    "integracoes:sincronizar": "tsx scripts/sincronizar-integracoes.ts",
+    "test:integracoes": "tsx scripts/testar-integracoes.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

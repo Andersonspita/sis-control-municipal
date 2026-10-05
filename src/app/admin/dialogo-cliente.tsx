@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Loader2, Pencil, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ import { useAcaoFormulario } from "@/components/use-acao-formulario";
 import { mascararCnpj, UFS } from "@/lib/documentos-br";
 import { TIPO_CLIENTE } from "@/lib/rotulos";
 import type { TipoCliente } from "@/generated/prisma/enums";
-import { salvarCliente } from "./actions";
+import { buscarMunicipiosIbge, buscarPopulacaoIbge, salvarCliente, type MunicipioOpcao } from "./actions";
 import { CLASSE_SELECT } from "./comum";
 
 export type ClienteEditavel = {
@@ -33,16 +33,69 @@ export type ClienteEditavel = {
   populacao: number | null;
 };
 
+const normalizar = (nome: string) =>
+  nome
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+
 export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
   const [aberto, setAberto] = useState(false);
   const [cnpj, setCnpj] = useState(cliente ? mascararCnpj(cliente.cnpj) : "");
+  const [uf, setUf] = useState(cliente?.uf ?? "");
+  const [municipio, setMunicipio] = useState(cliente?.municipio ?? "");
+  const [codigoIbge, setCodigoIbge] = useState(cliente?.codigoIbge ?? "");
+  const [populacao, setPopulacao] = useState(cliente?.populacao?.toString() ?? "");
+  const [municipios, setMunicipios] = useState<MunicipioOpcao[]>([]);
+  const [infoIbge, setInfoIbge] = useState<string | null>(null);
+  const [buscando, iniciarBusca] = useTransition();
   const { pendente, formRef, onSubmit } = useAcaoFormulario(salvarCliente, {
     aoConcluir: () => {
       setAberto(false);
-      if (!cliente) setCnpj("");
+      if (!cliente) {
+        setCnpj("");
+        setMunicipio("");
+        setCodigoIbge("");
+        setPopulacao("");
+        setInfoIbge(null);
+      }
     },
   });
   const p = cliente ? `cli-${cliente.id}` : "cli-novo";
+
+  // Lista de municípios do IBGE para a UF escolhida (sugestões do campo Município).
+  useEffect(() => {
+    if (!aberto || !uf) return;
+    let ativo = true;
+    buscarMunicipiosIbge(uf).then((r) => {
+      if (!ativo) return;
+      setMunicipios(r.municipios ?? []);
+      if (r.erro) setInfoIbge(r.erro);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, [aberto, uf]);
+
+  function consultarPopulacao(codigo: string) {
+    iniciarBusca(async () => {
+      const r = await buscarPopulacaoIbge(codigo);
+      if (r.populacao) {
+        setPopulacao(String(r.populacao));
+        setInfoIbge(`${r.descricao}: ${r.populacao.toLocaleString("pt-BR")} habitantes.`);
+      } else setInfoIbge(r.erro ?? null);
+    });
+  }
+
+  function alterarMunicipio(valor: string) {
+    setMunicipio(valor);
+    const encontrado = municipios.find((m) => normalizar(m.nome) === normalizar(valor));
+    if (encontrado && encontrado.codigo !== codigoIbge) {
+      setCodigoIbge(encontrado.codigo);
+      consultarPopulacao(encontrado.codigo);
+    }
+  }
 
   return (
     <Dialog open={aberto} onOpenChange={setAberto}>
@@ -121,15 +174,33 @@ export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
                 required
                 minLength={2}
                 maxLength={120}
-                defaultValue={cliente?.municipio}
+                value={municipio}
+                onChange={(e) => alterarMunicipio(e.target.value)}
+                list={`${p}-municipios`}
+                autoComplete="off"
                 className="h-9"
               />
+              <datalist id={`${p}-municipios`}>
+                {municipios.map((m) => (
+                  <option key={m.codigo} value={m.nome} />
+                ))}
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={`${p}-uf`}>
                 UF <span aria-hidden="true">*</span>
               </Label>
-              <select id={`${p}-uf`} name="uf" required defaultValue={cliente?.uf ?? ""} className={CLASSE_SELECT}>
+              <select
+                id={`${p}-uf`}
+                name="uf"
+                required
+                value={uf}
+                onChange={(e) => {
+                  setUf(e.target.value);
+                  setMunicipios([]);
+                }}
+                className={CLASSE_SELECT}
+              >
                 <option value="" disabled>
                   —
                 </option>
@@ -144,15 +215,29 @@ export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor={`${p}-ibge`}>Código IBGE</Label>
-              <Input
-                id={`${p}-ibge`}
-                name="codigoIbge"
-                inputMode="numeric"
-                pattern="\d{7}"
-                maxLength={7}
-                defaultValue={cliente?.codigoIbge ?? ""}
-                className="h-9"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id={`${p}-ibge`}
+                  name="codigoIbge"
+                  inputMode="numeric"
+                  pattern="\d{7}"
+                  maxLength={7}
+                  value={codigoIbge}
+                  onChange={(e) => setCodigoIbge(e.target.value.replace(/\D/g, ""))}
+                  className="h-9"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9"
+                  disabled={buscando || codigoIbge.length !== 7}
+                  onClick={() => consultarPopulacao(codigoIbge)}
+                  aria-label="Buscar população no IBGE"
+                  title="Buscar população no IBGE"
+                >
+                  {buscando ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Search aria-hidden="true" />}
+                </Button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={`${p}-populacao`}>População</Label>
@@ -162,10 +247,14 @@ export function DialogoCliente({ cliente }: { cliente?: ClienteEditavel }) {
                 inputMode="numeric"
                 pattern="\d*"
                 maxLength={9}
-                defaultValue={cliente?.populacao ?? ""}
+                value={populacao}
+                onChange={(e) => setPopulacao(e.target.value.replace(/\D/g, ""))}
                 className="h-9"
               />
             </div>
+            <p className="text-xs text-muted-foreground sm:col-span-2" aria-live="polite">
+              {infoIbge ?? "Escolha o município na lista para preencher o código IBGE e a população oficial."}
+            </p>
           </div>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" size="lg" />}>Voltar</DialogClose>
