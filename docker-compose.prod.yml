@@ -1,0 +1,71 @@
+# Produção na VPS. Uso: docker compose -f docker-compose.prod.yml <comando>
+# Variáveis: copie deploy/env.producao.example para .env (na raiz) e preencha. Guia: docs/implantacao-vps.md
+name: controladoria-prod
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PG_SENHA_DONO:?defina PG_SENHA_DONO no .env}
+      POSTGRES_DB: controladoria
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d controladoria"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  silo:
+    image: pgsty/silo:latest
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?defina S3_ACCESS_KEY no .env}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?defina S3_SECRET_KEY no .env}
+    volumes:
+      - arquivos:/data
+
+  app:
+    build: .
+    image: controladoria-app:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:${PG_SENHA_DONO}@postgres:5432/controladoria
+      APP_DATABASE_URL: postgresql://${APP_DB_USER:-controladoria_app}:${APP_DB_PASSWORD:?defina APP_DB_PASSWORD no .env}@postgres:5432/controladoria
+      STORAGE_DRIVER: s3
+      S3_ENDPOINT: http://silo:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      silo:
+        condition: service_started
+    # O Chromium dos relatórios em PDF usa memória compartilhada.
+    shm_size: 512mb
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMINIO: ${DOMINIO:?defina DOMINIO no .env}
+      EMAIL_ACME: ${EMAIL_ACME:?defina EMAIL_ACME no .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  arquivos:
+  caddy_data:
+  caddy_config:

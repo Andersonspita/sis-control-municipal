@@ -1,0 +1,23 @@
+{
+	email {$EMAIL_ACME}
+}
+
+# HTTPS automático (Let's Encrypt) para o domínio do .env; o DNS precisa apontar para a VPS antes de subir.
+{$DOMINIO} {
+	encode zstd gzip
+
+	# Acompanha o limite de envio de anexos da aplicação (105 MB) com folga.
+	request_body {
+		max_size 110MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy app:3000
+}

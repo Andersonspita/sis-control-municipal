@@ -1,0 +1,14 @@
+.git
+.next
+node_modules
+src/generated
+storage
+tmp
+.env
+.env.*
+!.env.example
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+.cursor
+.vscode
