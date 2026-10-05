@@ -17,6 +17,7 @@
     "catalogos:importar": "tsx scripts/importar-catalogos.ts",
     "test:rls": "tsx scripts/testar-rls.ts",
     "test:config-ia": "tsx --conditions=react-server scripts/testar-config-ia.ts",
+    "test:senha": "tsx --conditions=react-server scripts/testar-senha.ts",
     "test:autoavaliacao": "tsx scripts/testar-autoavaliacao.ts",
     "test:ia": "tsx --conditions=react-server scripts/testar-ia.ts",
     "test:risco": "tsx scripts/testar-risco.ts",

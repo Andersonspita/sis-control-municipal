@@ -86,6 +86,8 @@ model Usuario {
   nome          String
   email         String    @unique
   cpf           String?   @unique @db.VarChar(11)
+  /// Só dígitos, com DDD (10 ou 11 dígitos).
+  telefone      String?   @db.VarChar(11)
   senhaHash     String    @map("senha_hash")
   adminHorizon  Boolean   @default(false) @map("admin_horizon")
   ativo         Boolean   @default(true)

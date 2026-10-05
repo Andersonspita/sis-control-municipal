@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Palette } from "lucide-react";
+import { LogOut, Palette, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +65,9 @@ export function MenuUsuario({
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        <DropdownMenuItem render={<Link href="/configuracoes" />}>
+          <Settings aria-hidden="true" /> Configurações
+        </DropdownMenuItem>
         {linkAparencia && (
           <DropdownMenuItem render={<Link href="/aparencia" />}>
             <Palette aria-hidden="true" /> Aparência do sistema

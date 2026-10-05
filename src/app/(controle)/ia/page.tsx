@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { after } from "next/server";
 import { Filter } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { comCliente } from "@/lib/db";
-import { obterEstadoIA } from "@/lib/ia/analises";
+import { obterEstadoIA, processarAnalise, retomarFilaIA } from "@/lib/ia/analises";
 import { listarAnalises, listarSugestoes } from "@/lib/ia/dados";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,14 @@ export default async function SugestoesIA(props: PageProps<"/ia">) {
   const sp = await props.searchParams;
   const cicloId = typeof sp.ciclo === "string" && /^[0-9a-f-]{36}$/i.test(sp.ciclo) ? sp.ciclo : undefined;
   const revisadas = sp.ver === "revisadas";
+
+  const contexto = { clienteId: ctx.clienteId, usuarioId: ctx.usuarioId, perfil: ctx.perfil };
+  const aRetomar = await retomarFilaIA(contexto);
+  if (aRetomar.length) {
+    after(async () => {
+      for (const id of aRetomar) await processarAnalise(contexto, id);
+    });
+  }
 
   const [estado, sugestoes, analises, ciclos] = await Promise.all([
     obterEstadoIA(),
@@ -109,7 +118,8 @@ export default async function SugestoesIA(props: PageProps<"/ia">) {
           <CardHeader>
             <CardTitle>Análises recentes</CardTitle>
             <CardDescription>
-              Quem pediu, modelo e custo estimado. As análises rodam em segundo plano; atualize a página para ver o andamento.
+              Quem pediu, modelo e custo estimado. Provedor: {estado.rotuloProvedor}. As análises rodam em segundo plano e a lista
+              se atualiza sozinha enquanto houver alguma em andamento.
               {ctx.usuario.adminHorizon &&
                 ` Gasto do mês (todos os clientes): ${usd.format(estado.gastoMesUsd)}${estado.limiteMensalUsd !== null ? ` de ${usd.format(estado.limiteMensalUsd)}` : ""}.`}
             </CardDescription>

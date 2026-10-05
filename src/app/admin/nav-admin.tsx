@@ -9,6 +9,7 @@ const ITENS = [
   { href: "/admin/usuarios", rotulo: "Usuários" },
   { href: "/admin/trilha", rotulo: "Trilha global" },
   { href: "/admin/ia", rotulo: "Inteligência artificial" },
+  { href: "/configuracoes", rotulo: "Minha conta" },
 ];
 
 export function NavAdmin() {

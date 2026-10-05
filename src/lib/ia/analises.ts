@@ -7,13 +7,17 @@ import type { Prisma, TipoAnaliseIA } from "@/generated/prisma/client";
 import { obterConfigIA, type ConfigIA } from "./config";
 import { criarProvedor, palavrasParaBusca, provedorFalsoAtivo, type ProvedorIA } from "./provedor";
 import { custoEmbeddingsUsd, custoTextoUsd, limiteAtingido } from "./precos";
+import { INFO_PROVEDOR, type TipoProvedor } from "./provedores";
 import { buscarTrechos, prepararDocumento } from "./documento";
 import { conferirCitacoes, evidenciaDasCitacoes, type CitacaoConferida, type TrechoRef } from "./citacoes";
 
 export type EstadoIA = {
   disponivel: boolean;
   motivo: string | null;
-  provedor: "openai" | "falso";
+  /** Código gravado em analises_ia.provedor. */
+  provedor: ProvedorIA["nome"];
+  /** Nome do provedor para exibição (ex.: "Anthropic (Claude)"). */
+  rotuloProvedor: string;
   gastoMesUsd: number;
   limiteMensalUsd: number | null;
 };
@@ -33,8 +37,13 @@ export async function obterEstadoIA(config?: ConfigIA): Promise<EstadoIA> {
   const cfg = config ?? (await obterConfigIA());
   const falso = provedorFalsoAtivo();
   const gastoMesUsd = await gastoDoMesUsd();
-  const base = { provedor: falso ? ("falso" as const) : ("openai" as const), gastoMesUsd, limiteMensalUsd: cfg.limiteMensalUsd };
-  if (!falso && !cfg.chave) return { ...base, disponivel: false, motivo: "Nenhuma chave da OpenAI foi configurada." };
+  const base = {
+    provedor: falso ? ("falso" as const) : (cfg.provedor.toLowerCase() as Lowercase<TipoProvedor>),
+    rotuloProvedor: falso ? "Simulação (provedor falso)" : INFO_PROVEDOR[cfg.provedor].rotulo,
+    gastoMesUsd,
+    limiteMensalUsd: cfg.limiteMensalUsd,
+  };
+  if (!falso && cfg.pendencia) return { ...base, disponivel: false, motivo: cfg.pendencia };
   if (!falso && !cfg.habilitada) return { ...base, disponivel: false, motivo: "A IA está desabilitada pelo administrador." };
   if (limiteAtingido(gastoMesUsd, cfg.limiteMensalUsd)) {
     return {
@@ -110,6 +119,45 @@ export async function solicitarAnalise(ctx: ContextoCliente, pedido: PedidoAnali
   });
 }
 
+const ESPERA_FILA_MS = 2 * 60_000;
+const LIMITE_PROCESSAMENTO_MS = 15 * 60_000;
+
+/**
+ * Recupera a fila depois de um reinício do servidor: encerra com erro as análises presas em PROCESSANDO
+ * e devolve as que ficaram PENDENTES (o `after()` não chegou a rodar) para serem reprocessadas.
+ */
+export async function retomarFilaIA(ctx: ContextoCliente): Promise<string[]> {
+  const agora = Date.now();
+  return comCliente(ctx, async (tx) => {
+    const interrompidas = await tx.analiseIA.findMany({
+      where: { status: "PROCESSANDO", iniciadoEm: { lt: new Date(agora - LIMITE_PROCESSAMENTO_MS) } },
+      select: { id: true, tipo: true, solicitadoPorId: true },
+    });
+    if (interrompidas.length) {
+      await tx.analiseIA.updateMany({
+        where: { id: { in: interrompidas.map((a) => a.id) }, status: "PROCESSANDO" },
+        data: { status: "ERRO", erro: "A análise foi interrompida antes de terminar. Solicite-a novamente.", concluidoEm: new Date() },
+      });
+      for (const a of interrompidas) {
+        await registrarLog(tx, ctx.clienteId, {
+          acao: "ia.analise.erro",
+          usuarioId: a.solicitadoPorId,
+          entidade: "AnaliseIA",
+          entidadeId: a.id,
+          dados: { tipo: a.tipo, erro: "interrompida" },
+        });
+      }
+    }
+    const pendentes = await tx.analiseIA.findMany({
+      where: { status: "PENDENTE", criadoEm: { lt: new Date(agora - ESPERA_FILA_MS) } },
+      orderBy: { criadoEm: "asc" },
+      take: 3,
+      select: { id: true },
+    });
+    return pendentes.map((a) => a.id);
+  });
+}
+
 type Consumo = { tokensEntrada: number; tokensSaida: number; tokensEmbeddings: number };
 type SugestaoNova = Omit<Prisma.SugestaoIACreateManyInput, "clienteId" | "analiseId">;
 type Resultado = { sugestoes: SugestaoNova[]; resumo: Record<string, unknown> };
@@ -130,7 +178,7 @@ export async function processarAnalise(ctx: ContextoCliente, analiseId: string) 
   const consumo: Consumo = { tokensEntrada: 0, tokensSaida: 0, tokensEmbeddings: 0 };
 
   try {
-    const provedor = criarProvedor(config.chave);
+    const provedor = criarProvedor(config);
     const documentos = [];
     for (const id of analise.documentoIds) {
       const r = await prepararDocumento(ctx, id, provedor, modeloEmb);

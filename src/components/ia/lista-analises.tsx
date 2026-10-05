@@ -1,6 +1,7 @@
 import { CircleAlert, CircleCheck, Clock, Loader2 } from "lucide-react";
 import type { StatusAnaliseIA, TipoAnaliseIA } from "@/generated/prisma/client";
 import type { listarAnalises } from "@/lib/ia/dados";
+import { AtualizarEnquanto } from "./atualizar-enquanto";
 
 export const TIPO_ANALISE: Record<TipoAnaliseIA, string> = {
   COMPARAR_NORMA: "Documento × norma",
@@ -19,8 +20,10 @@ const usd = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD",
 
 export function ListaAnalises({ analises }: { analises: Awaited<ReturnType<typeof listarAnalises>> }) {
   if (!analises.length) return <p className="text-sm text-muted-foreground">Nenhuma análise solicitada ainda.</p>;
+  const emAndamento = analises.some((a) => a.status === "PENDENTE" || a.status === "PROCESSANDO");
   return (
     <ul className="space-y-3 text-sm">
+      <AtualizarEnquanto ativo={emAndamento} />
       {analises.map((a) => {
         const s = STATUS[a.status];
         const Icone = s.icone;
