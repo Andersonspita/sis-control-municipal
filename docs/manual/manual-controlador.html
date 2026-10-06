@@ -1,0 +1,1353 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Manual do Controlador — Sistema de Controladoria Municipal</title>
+<style>
+  @page {
+    size: A4;
+    margin: 26mm 17mm 19mm 17mm;
+    @top-left { content: "Manual do Controlador · Sistema de Controladoria Municipal"; font: 600 7.5pt "Segoe UI", Arial, sans-serif; color: #7a1f2b; vertical-align: bottom; padding-bottom: 1.6mm; margin-bottom: 6mm; border-bottom: .8pt solid #7a1f2b; }
+    @top-center { content: ""; vertical-align: bottom; margin-bottom: 6mm; border-bottom: .8pt solid #7a1f2b; }
+    @top-right { content: "HorizonAJ"; font: 700 7.5pt "Segoe UI", Arial, sans-serif; color: #7a1f2b; vertical-align: bottom; padding-bottom: 1.6mm; margin-bottom: 6mm; border-bottom: .8pt solid #7a1f2b; }
+    @bottom-left { content: "Uso interno das controladorias municipais"; font: 7.5pt "Segoe UI", Arial, sans-serif; color: #6b6f75; vertical-align: top; padding-top: 2mm; }
+    @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 7.5pt "Segoe UI", Arial, sans-serif; color: #6b6f75; vertical-align: top; padding-top: 2mm; }
+  }
+  @page :first {
+    margin: 0;
+    @top-left { content: none; border: 0; }
+    @top-center { content: none; border: 0; }
+    @top-right { content: none; border: 0; }
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+  }
+
+  :root {
+    --bordo: #7a1f2b;
+    --bordo-escuro: #5c1620;
+    --bordo-claro: #f6ecee;
+    --texto: #1f2328;
+    --suave: #5b6168;
+    --linha: #d8d3d4;
+    --fundo: #f7f6f5;
+    --verde: #2e6b47; --verde-claro: #e7f2eb;
+    --ambar: #8a5a00; --ambar-claro: #fcf3e2;
+    --vermelho: #a3262a; --vermelho-claro: #fbeaea;
+    --azul: #2f4f7a; --azul-claro: #eaf0f7;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: "Segoe UI", "Source Sans 3", "Helvetica Neue", Arial, sans-serif; font-size: 10.4pt; line-height: 1.52; color: var(--texto); counter-reset: figura; }
+  p { margin: 0 0 7pt; orphans: 3; widows: 3; }
+  a { color: var(--bordo); text-decoration: none; }
+  strong { font-weight: 650; }
+  .ui { font-weight: 650; color: var(--bordo-escuro); }
+  .ui::before { content: "“"; color: var(--suave); font-weight: 400; }
+  .ui::after { content: "”"; color: var(--suave); font-weight: 400; }
+  code, .mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9.4pt; background: var(--fundo); border: 1px solid var(--linha); border-radius: 3px; padding: 0 3px; }
+
+  /* Capa */
+  .capa { width: 210mm; height: 297mm; position: relative; overflow: hidden; background: #fff; break-after: page; }
+  .capa .faixa { background: var(--bordo); color: #fff; padding: 34mm 22mm 18mm; height: 150mm; position: relative; }
+  .capa .faixa::after { content: ""; position: absolute; right: -40mm; bottom: -40mm; width: 120mm; height: 120mm; border-radius: 50%; border: 14mm solid rgba(255,255,255,.07); }
+  .capa .sobretitulo { font-size: 10pt; letter-spacing: .18em; text-transform: uppercase; opacity: .85; }
+  .capa h1 { font-size: 36pt; line-height: 1.08; margin: 10mm 0 5mm; font-weight: 700; }
+  .capa .sub { font-size: 16pt; opacity: .92; max-width: 140mm; line-height: 1.3; }
+  .capa .corpo { padding: 16mm 22mm; }
+  .capa .corpo p { font-size: 11.5pt; color: var(--suave); max-width: 150mm; }
+  .capa .itens { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 10mm; margin: 8mm 0 0; padding: 0; list-style: none; font-size: 10.5pt; }
+  .capa .itens li { border-left: 3px solid var(--bordo); padding-left: 3mm; }
+  .capa .rodape { position: absolute; left: 22mm; right: 22mm; bottom: 18mm; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--linha); padding-top: 5mm; font-size: 10pt; color: var(--suave); }
+  .capa .marca { font-size: 18pt; font-weight: 700; color: var(--bordo); letter-spacing: .02em; }
+
+  /* Sumário */
+  .sumario h1 { font-size: 22pt; color: var(--bordo); margin: 0 0 4mm; }
+  .sumario ol { list-style: none; margin: 0; padding: 0; }
+  .sumario li { display: flex; align-items: baseline; gap: 2mm; padding: .9mm 0; margin: 0; border-bottom: 1px dotted var(--linha); font-size: 10.5pt; line-height: 1.3; }
+  .sumario li .n { width: 9mm; color: var(--bordo); font-weight: 700; }
+  .sumario li .t { flex: 1; }
+  .sumario li .t small { display: block; color: var(--suave); font-size: 8.6pt; }
+  .sumario li .pg { min-width: 8mm; text-align: right; font-weight: 650; }
+  .sumario .como-ler { margin-top: 5mm; background: var(--fundo); border-radius: 6px; padding: 3mm 4.5mm; font-size: 9.3pt; line-height: 1.45; }
+
+  /* Capítulos */
+  .capitulo { break-before: page; }
+  .cab-cap { border-bottom: 2px solid var(--bordo); padding-bottom: 3mm; margin-bottom: 5mm; }
+  .cab-cap .olho { font-size: 9pt; letter-spacing: .16em; color: var(--bordo); font-weight: 700; }
+  .cab-cap h1 { font-size: 21pt; line-height: 1.15; margin: 1mm 0 1.5mm; color: var(--texto); }
+  .cab-cap .resumo { color: var(--suave); font-size: 10.8pt; margin: 0; }
+  h2 { font-size: 13.5pt; color: var(--bordo-escuro); margin: 6mm 0 2.5mm; break-after: avoid; }
+  h3 { font-size: 11.2pt; margin: 4.5mm 0 1.5mm; break-after: avoid; }
+  ul, ol { margin: 0 0 7pt; padding-left: 6mm; }
+  li { margin-bottom: 2pt; }
+
+  .quadro-uso { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin: 0 0 4mm; }
+  .quadro-uso > div { background: var(--fundo); border-radius: 6px; padding: 3mm 4mm; font-size: 9.8pt; }
+  .quadro-uso h4 { margin: 0 0 1mm; font-size: 9pt; letter-spacing: .08em; text-transform: uppercase; color: var(--bordo); }
+  .quadro-uso p:last-child, .quadro-uso ul:last-child { margin-bottom: 0; }
+
+  ol.passos { list-style: none; counter-reset: passo; padding-left: 0; }
+  ol.passos > li { counter-increment: passo; position: relative; padding-left: 9mm; margin-bottom: 2.2mm; break-inside: avoid; }
+  ol.passos > li::before { content: counter(passo); position: absolute; left: 0; top: .2mm; width: 6mm; height: 6mm; border-radius: 50%; background: var(--bordo); color: #fff; font-size: 8.6pt; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+  .caixa { border-radius: 6px; padding: 3mm 4mm; margin: 3mm 0 4mm; border-left: 4px solid; break-inside: avoid; font-size: 9.9pt; }
+  .caixa > strong:first-child { display: block; margin-bottom: 1mm; font-size: 9pt; letter-spacing: .06em; text-transform: uppercase; }
+  .caixa p:last-child, .caixa ul:last-child { margin-bottom: 0; }
+  .dica { background: var(--verde-claro); border-color: var(--verde); }
+  .dica > strong:first-child { color: var(--verde); }
+  .atencao { background: var(--ambar-claro); border-color: var(--ambar); }
+  .atencao > strong:first-child { color: var(--ambar); }
+  .erro { background: var(--vermelho-claro); border-color: var(--vermelho); }
+  .erro > strong:first-child { color: var(--vermelho); }
+  .norma { background: var(--azul-claro); border-color: var(--azul); }
+  .norma > strong:first-child { color: var(--azul); }
+
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 5mm; font-size: 9.4pt; break-inside: auto; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  th { background: var(--bordo); color: #fff; text-align: left; font-weight: 600; padding: 1.8mm 2.5mm; }
+  td { border-bottom: 1px solid var(--linha); padding: 1.6mm 2.5mm; vertical-align: top; }
+  tbody tr:nth-child(even) td { background: #fbfafa; }
+  td.c, th.c { text-align: center; }
+  .sim { color: var(--verde); font-weight: 700; }
+  .nao { color: #9a9a9a; }
+
+  .selo { display: inline-block; font-size: 8.4pt; font-weight: 650; padding: .2mm 2mm; border-radius: 10px; border: 1px solid; white-space: nowrap; }
+  .s-azul { color: var(--azul); background: var(--azul-claro); border-color: #b9c8dc; }
+  .s-verde { color: var(--verde); background: var(--verde-claro); border-color: #b6d4c1; }
+  .s-ambar { color: var(--ambar); background: var(--ambar-claro); border-color: #e7cf9f; }
+  .s-vermelho { color: var(--vermelho); background: var(--vermelho-claro); border-color: #e5b3b5; }
+  .s-cinza { color: #555; background: #f0f0f0; border-color: #cfcfcf; }
+  .s-bordo { color: var(--bordo); background: var(--bordo-claro); border-color: #ddb9bf; }
+
+  figure { margin: 3mm 0 5mm; break-inside: avoid; counter-increment: figura; }
+  figure img { display: block; width: 92%; margin: 0 auto; border: 1px solid #cfcacb; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  figure.alta img { width: auto; max-width: 100%; max-height: 200mm; margin: 0 auto; }
+  figure.media img { width: 80%; }
+  figcaption { font-size: 8.9pt; color: var(--suave); margin-top: 1.6mm; text-align: center; }
+  figcaption::before { content: "Figura " counter(figura) " — "; font-weight: 650; color: var(--bordo); }
+  figure.fluxo { background: #fff; border: 1px solid var(--linha); border-radius: 6px; padding: 3mm; }
+  figure.fluxo svg { display: block; width: 100%; height: auto; }
+
+  .matriz td { text-align: center; font-weight: 650; border: 1px solid #fff; padding: 2mm; }
+  .matriz th { text-align: center; }
+  .m-b { background: #dcefe2; } .m-m { background: #fbeec9; } .m-a { background: #f6cfa8; } .m-c { background: #eaa0a0; }
+
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .glossario dt { font-weight: 700; color: var(--bordo-escuro); margin-top: 2mm; break-after: avoid; }
+  .glossario dd { margin: 0 0 1mm 0; }
+  .faq h3 { color: var(--bordo-escuro); }
+  .quebra { break-before: page; }
+  .sem-quebra { break-inside: avoid; }
+  .nota { font-size: 9pt; color: var(--suave); }
+</style>
+</head>
+<body>
+
+<!-- ============================ CAPA ============================ -->
+<section class="capa">
+  <div class="faixa">
+    <div class="sobretitulo">HorizonAJ · Controle interno municipal</div>
+    <h1>Manual do Controlador</h1>
+    <div class="sub">Sistema de Controladoria Municipal — guia prático de uso para controladores internos de Prefeituras, Câmaras e entidades da administração indireta</div>
+  </div>
+  <div class="corpo">
+    <p>Este manual explica, passo a passo e em linguagem direta, como usar o sistema no dia a dia da controladoria: enviar e acompanhar demandas às secretarias, fazer a autoavaliação do controle interno, montar planos de ação, conduzir auditorias, tratar situações de risco, emitir relatórios e acompanhar os indicadores fiscais do município.</p>
+    <ul class="itens">
+      <li>Comece em 5 minutos</li>
+      <li>Demandas e prazos</li>
+      <li>Autoavaliação (OT 05/2024 e Res. TCM-BA 1.120/2005)</li>
+      <li>Planos de ação 5W2H</li>
+      <li>Auditorias internas</li>
+      <li>Medidas e matriz de risco</li>
+      <li>Relatórios em PDF e indicadores fiscais</li>
+      <li>Rotinas, perguntas frequentes e glossário</li>
+    </ul>
+  </div>
+  <div class="rodape">
+    <div><span class="marca">HorizonAJ</span><br>Sistema de Controladoria Municipal</div>
+    <div style="text-align:right">Versão 1.0<br>Outubro de 2026</div>
+  </div>
+</section>
+
+<!-- ============================ SUMÁRIO ============================ -->
+<section class="sumario">
+  <h1>Sumário</h1>
+  <ol>
+    <li><span class="n">1</span><span class="t">Comece em 5 minutos<small>Acesso, escolha da entidade, painel e primeiros cadastros na ordem certa</small></span><span class="pg" data-cap="01"></span></li>
+    <li><span class="n">2</span><span class="t">Conceitos essenciais<small>Entidade, unidade, perfis de acesso e o que cada um vê</small></span><span class="pg" data-cap="02"></span></li>
+    <li><span class="n">3</span><span class="t">Navegação e Painel<small>Menus, indicadores, menu do usuário e troca de entidade</small></span><span class="pg" data-cap="03"></span></li>
+    <li><span class="n">4</span><span class="t">Unidades<small>Secretarias, departamentos e setores que recebem demandas</small></span><span class="pg" data-cap="04"></span></li>
+    <li><span class="n">5</span><span class="t">Demandas<small>Envio, resposta, devolução, prorrogação, prazos, lembretes e ofício</small></span><span class="pg" data-cap="05"></span></li>
+    <li><span class="n">6</span><span class="t">O que a unidade vê (acesso restrito)<small>Como as secretarias respondem e pedem prorrogação</small></span><span class="pg" data-cap="06"></span></li>
+    <li><span class="n">7</span><span class="t">Normas e Autoavaliação<small>Ciclos, respostas, pesos, macrofunções, evidências e evolução</small></span><span class="pg" data-cap="07"></span></li>
+    <li><span class="n">8</span><span class="t">Planos de ação (5W2H)<small>Ações, marcos, demandas a partir de ações e validação</small></span><span class="pg" data-cap="08"></span></li>
+    <li><span class="n">9</span><span class="t">Auditorias<small>PAAI, planejamento, checklist, solicitações, achados, recomendações e monitoramento</small></span><span class="pg" data-cap="09"></span></li>
+    <li><span class="n">10</span><span class="t">Medidas (situações de risco)<small>Probabilidade × impacto, plano de ação e encerramento justificado</small></span><span class="pg" data-cap="10"></span></li>
+    <li><span class="n">11</span><span class="t">Documentos e Sugestões da IA<small>Arquivos, comparação com a norma e revisão das sugestões</small></span><span class="pg" data-cap="11"></span></li>
+    <li><span class="n">12</span><span class="t">Relatórios em PDF<small>Relatório anual, autoavaliação, demandas, medidas, auditoria e ofício</small></span><span class="pg" data-cap="12"></span></li>
+    <li><span class="n">13</span><span class="t">Dados externos e indicadores fiscais<small>IBGE, SICONFI, Portal da Transparência e links do TCM-BA</small></span><span class="pg" data-cap="13"></span></li>
+    <li><span class="n">14</span><span class="t">Trilha de auditoria, Configurações e Aparência<small>Histórico permanente, dados da conta, senha e identidade visual</small></span><span class="pg" data-cap="14"></span></li>
+    <li><span class="n">15</span><span class="t">Rotinas recomendadas<small>O que fazer todo dia, toda semana, todo mês, a cada quadrimestre e no fim do ano</small></span><span class="pg" data-cap="15"></span></li>
+    <li><span class="n">16</span><span class="t">Perguntas frequentes<small>Senha, acesso das unidades, prazos vencidos, correções e mais</small></span><span class="pg" data-cap="16"></span></li>
+    <li><span class="n">17</span><span class="t">Glossário<small>Os termos usados no sistema, em poucas palavras</small></span><span class="pg" data-cap="17"></span></li>
+    <li><span class="n">18</span><span class="t">Suporte<small>A quem pedir ajuda e o que informar</small></span><span class="pg" data-cap="18"></span></li>
+  </ol>
+  <div class="como-ler">
+    <strong>Como ler este manual.</strong> Se você está começando, leia os capítulos 1 a 3 (cerca de 15 minutos) e depois vá direto ao módulo que precisa usar. Cada capítulo de módulo segue a mesma ordem: <em>para que serve</em>, <em>quando usar</em>, <em>passo a passo</em>, <em>status e campos importantes</em>, <em>dicas e erros comuns</em>. Os nomes de botões e telas aparecem <span class="ui">assim</span>, exatamente como estão no sistema. As telas de exemplo usam dados fictícios da Prefeitura Municipal de Catolândia (BA).
+  </div>
+</section>
+
+<!-- ============================ 1. COMECE EM 5 MINUTOS ============================ -->
+<section class="capitulo" id="cap-01">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 01</div>
+    <h1>Comece em 5 minutos</h1>
+    <p class="resumo">O mínimo para entrar no sistema, entender a tela inicial e deixar a controladoria pronta para trabalhar.</p>
+  </div>
+
+  <h2>1.1 Entrar pelo link do município</h2>
+  <p>Cada município tem um endereço próprio de acesso, no formato <code>endereço-do-sistema/m/nome-do-municipio</code> (por exemplo, <code>/m/catolandia-ba</code>). Esse link é fornecido pela HorizonAJ na implantação. A página mostra o nome do município e as entidades atendidas (Prefeitura, Câmara, autarquias). Salve-o nos favoritos do navegador.</p>
+  <ol class="passos">
+    <li>Abra o link do seu município no navegador (Chrome, Edge ou Firefox atualizados).</li>
+    <li>Digite o <strong>E-mail</strong> e a <strong>Senha</strong> que a HorizonAJ cadastrou para você.</li>
+    <li>Clique em <span class="ui">Entrar</span>.</li>
+    <li>Se você atende mais de uma entidade (por exemplo, Prefeitura e Câmara), o sistema mostra a tela <span class="ui">Selecionar cliente</span>: clique na entidade em que vai trabalhar agora. Se você tem uma só, vai direto ao <span class="ui">Painel</span>.</li>
+  </ol>
+  <figure class="media">
+    <img src="img/01-acesso-municipio.png" alt="Tela de acesso do município">
+    <figcaption>Página de acesso do município de Catolândia, com as entidades atendidas à esquerda e o formulário de entrada à direita.</figcaption>
+  </figure>
+  <div class="caixa atencao"><strong>Atenção</strong>
+    <p>Depois de várias tentativas com senha errada, o sistema mostra “Muitas tentativas. Aguarde alguns minutos e tente novamente.” Espere antes de tentar de novo. Se esqueceu a senha, veja o capítulo 16.</p>
+  </div>
+
+  <h2>1.2 Conhecer o Painel</h2>
+  <p>O <span class="ui">Painel</span> é a sua tela inicial. Em uma olhada você vê o que precisa de atenção: <strong>Demandas em aberto</strong>, <strong>Demandas vencidas</strong>, <strong>Respostas a analisar</strong> e <strong>Ações em execução</strong>, além da aderência às normas e das movimentações recentes. O capítulo 3 explica cada quadro.</p>
+
+  <h2>1.3 Primeiros cadastros, na ordem certa</h2>
+  <p>O sistema funciona melhor quando a estrutura básica é montada antes do trabalho do dia a dia. Siga esta ordem na primeira semana:</p>
+  <table>
+    <thead><tr><th style="width:6%">#</th><th style="width:28%">O que fazer</th><th>Onde e por quê</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>Conferir seus dados</strong></td><td>Menu do usuário (círculo com suas iniciais, no canto superior direito) → <span class="ui">Configurações</span>. Confira nome, cargo e troque a senha inicial.</td></tr>
+      <tr><td>2</td><td><strong>Cadastrar as unidades</strong></td><td><span class="ui">Gestão</span> → <span class="ui">Unidades</span>. Cadastre secretarias, departamentos e setores com o responsável e o e-mail. Sem unidades não é possível enviar demandas (capítulo 4).</td></tr>
+      <tr><td>3</td><td><strong>Pedir os acessos das unidades</strong></td><td>Solicite à HorizonAJ a criação dos usuários de cada secretaria (perfil “Acesso restrito”), informando nome, e-mail, cargo e unidade. Cada um só verá as demandas da própria unidade.</td></tr>
+      <tr><td>4</td><td><strong>Abrir o ciclo de autoavaliação</strong></td><td><span class="ui">Conformidade</span> → <span class="ui">Autoavaliação</span> → <span class="ui">Abrir ciclo</span>. Escolha a OT 05/2024 e/ou a Res. TCM-BA 1.120/2005 (capítulo 7).</td></tr>
+      <tr><td>5</td><td><strong>Enviar a primeira demanda</strong></td><td><span class="ui">Atuação</span> → <span class="ui">Demandas</span> → <span class="ui">Nova demanda</span>. Peça um documento a uma secretaria com prazo (capítulo 5).</td></tr>
+      <tr><td>6</td><td><strong>Montar o PAAI</strong></td><td><span class="ui">Atuação</span> → <span class="ui">Auditorias</span> → <span class="ui">Plano anual (PAAI)</span>. Inclua as auditorias do ano e aprove (capítulo 9).</td></tr>
+      <tr><td>7</td><td><strong>Atualizar os dados externos</strong></td><td><span class="ui">Painel</span> → <span class="ui">Dados externos</span> → <span class="ui">Atualizar dados</span>. Traz população, receita, despesa com pessoal e entregas ao SICONFI (capítulo 13).</td></tr>
+    </tbody>
+  </table>
+  <div class="caixa dica"><strong>Dica</strong>
+    <p>Tudo o que você faz fica registrado com data, hora e autor na <span class="ui">Trilha de auditoria</span>. Isso dá segurança para trabalhar: nada some e tudo pode ser comprovado depois.</p>
+  </div>
+</section>
+
+<!-- ============================ 2. CONCEITOS ============================ -->
+<section class="capitulo" id="cap-02">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 02</div>
+    <h1>Conceitos essenciais</h1>
+    <p class="resumo">Cinco ideias que explicam como o sistema está organizado e por que cada pessoa vê telas diferentes.</p>
+  </div>
+
+  <h2>2.1 Município e entidade</h2>
+  <p><strong>Entidade</strong> é o órgão que você controla: Prefeitura, Câmara Municipal, autarquia, fundação, consórcio ou empresa pública. O <strong>município</strong> agrupa as entidades de uma mesma cidade e define o link de acesso <code>/m/...</code>.</p>
+  <p><strong>Cada entidade só vê os próprios dados.</strong> As demandas, planos, auditorias e documentos da Prefeitura não aparecem para a Câmara, e vice-versa, mesmo que as duas usem o mesmo link de acesso. Se você controla duas entidades, troca de uma para outra pelo botão com o nome da entidade no topo da tela (capítulo 3).</p>
+
+  <h2>2.2 Unidade</h2>
+  <p><strong>Unidade</strong> é uma parte da estrutura da entidade: secretaria, departamento, divisão ou setor (por exemplo, Secretaria Municipal de Saúde ou Departamento de Contabilidade). As unidades são usadas para três coisas:</p>
+  <ul>
+    <li>ser o <strong>destino das demandas</strong> (quem deve responder);</li>
+    <li>ser a <strong>responsável por ações</strong> dos planos e por recomendações de auditoria;</li>
+    <li>definir o <strong>alcance do acesso restrito</strong>: o servidor da secretaria só vê as demandas da sua unidade.</li>
+  </ul>
+
+  <h2>2.3 Perfis de acesso</h2>
+  <p>Cada pessoa tem um perfil em cada entidade. O perfil é definido pela administração HorizonAJ no momento do cadastro.</p>
+  <table>
+    <thead><tr><th style="width:20%">Perfil</th><th style="width:22%">Quem costuma ser</th><th>O que vê e faz</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Controlador</strong></td><td>Controlador(a)-geral ou controlador(a) interno(a)</td><td>Vê todos os módulos da entidade e tem as decisões finais: cadastrar unidades, concluir ciclos de autoavaliação, validar ações, aprovar o PAAI, encerrar auditorias e medidas, atualizar dados externos e escolher a aparência.</td></tr>
+      <tr><td><strong>Equipe de controle</strong></td><td>Auditores, analistas e assistentes da controladoria</td><td>Vê todos os módulos e faz o trabalho operacional: envia e analisa demandas, responde a autoavaliação, registra achados, situações e ações. Não toma as decisões finais listadas acima.</td></tr>
+      <tr><td><strong>Acesso restrito</strong> (satélite)</td><td>Servidores das secretarias e setores</td><td>Vê <strong>somente</strong> as demandas da(s) unidade(s) a que está vinculado, responde com texto e anexos e pede prorrogação. Não vê autoavaliação, auditorias, medidas, planos nem dados de outras unidades.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Quem pode fazer o quê</h3>
+  <table>
+    <thead><tr><th>Atividade</th><th class="c" style="width:14%">Controlador</th><th class="c" style="width:14%">Equipe</th><th class="c" style="width:16%">Acesso restrito</th></tr></thead>
+    <tbody>
+      <tr><td>Ver o Painel e todos os módulos da entidade</td><td class="c sim">Sim</td><td class="c sim">Sim</td><td class="c nao">Não</td></tr>
+      <tr><td>Enviar, analisar, devolver, concluir e cancelar demandas; decidir prorrogações</td><td class="c sim">Sim</td><td class="c sim">Sim</td><td class="c nao">Não</td></tr>
+      <tr><td>Responder demandas da própria unidade e pedir prorrogação</td><td class="c nao">—</td><td class="c nao">—</td><td class="c sim">Sim</td></tr>
+      <tr><td>Cadastrar unidades</td><td class="c sim">Sim</td><td class="c nao">Não</td><td class="c nao">Não</td></tr>
+      <tr><td>Responder requisitos da autoavaliação e gerar plano de ação</td><td class="c sim">Sim</td><td class="c sim">Sim</td><td class="c nao">Não</td></tr>
+      <tr><td>Concluir (congelar) um ciclo de autoavaliação</td><td class="c sim">Sim</td><td class="c nao">Não</td><td class="c nao">Não</td></tr>
+      <tr><td>Validar a conclusão de ações e mudar a situação do plano</td><td class="c sim">Sim</td><td class="c nao">Não</td><td class="c nao">Não</td></tr>
+      <tr><td>Aprovar ou reabrir o PAAI; encerrar ou cancelar auditoria</td><td class="c sim">Sim</td><td class="c nao">Não</td><td class="c nao">Não</td></tr>
+      <tr><td>Encerrar ou reabrir medida; ver o nome de denunciante sigiloso</td><td class="c sim">Sim</td><td class="c nao">Não</td><td class="c nao">Não</td></tr>
+      <tr><td>Atualizar dados externos; escolher a aparência da entidade</td><td class="c sim">Sim</td><td class="c nao">Não</td><td class="c nao">Não</td></tr>
+      <tr><td>Criar usuários e vínculos, redefinir senhas, configurar a IA</td><td class="c" colspan="3">Administração HorizonAJ (peça pelo suporte)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2.4 Histórico que não se apaga</h2>
+  <p>Toda movimentação — envio, resposta, devolução, edição, emissão de relatório, download de documento — vai para a <strong>trilha de auditoria</strong>, que <strong>não pode ser alterada nem excluída</strong>, nem pela HorizonAJ. Corrigir algo significa registrar um novo ato (uma edição, um comentário, uma devolução), e o histórico mostra as duas coisas.</p>
+
+  <h2>2.5 Como os módulos se ligam</h2>
+  <p>Os módulos não são ilhas. A autoavaliação aponta lacunas, que viram ações em um plano; as ações podem ser enviadas às secretarias como demandas; a resposta aceita vira evidência do requisito. Auditorias e medidas também geram planos de ação. O desenho abaixo resume esse ciclo, que será detalhado nos capítulos 5, 7 e 8.</p>
+  <figure class="fluxo">
+    <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+      <defs><marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7a1f2b"/></marker></defs>
+      <g font-size="13">
+        <rect x="15" y="20" width="200" height="74" rx="9" fill="#f6ecee" stroke="#7a1f2b"/>
+        <text x="115" y="44" text-anchor="middle" font-weight="700" fill="#5c1620">1. Autoavaliação</text>
+        <text x="115" y="63" text-anchor="middle" font-size="11" fill="#333">Requisito “Não atende”</text>
+        <text x="115" y="79" text-anchor="middle" font-size="11" fill="#333">ou “Atende parcialmente”</text>
+
+        <rect x="250" y="20" width="200" height="74" rx="9" fill="#f6ecee" stroke="#7a1f2b"/>
+        <text x="350" y="44" text-anchor="middle" font-weight="700" fill="#5c1620">2. Plano de ação</text>
+        <text x="350" y="63" text-anchor="middle" font-size="11" fill="#333">“Gerar plano de ação” cria</text>
+        <text x="350" y="79" text-anchor="middle" font-size="11" fill="#333">uma ação 5W2H por lacuna</text>
+
+        <rect x="485" y="20" width="200" height="74" rx="9" fill="#f6ecee" stroke="#7a1f2b"/>
+        <text x="585" y="44" text-anchor="middle" font-weight="700" fill="#5c1620">3. Demanda</text>
+        <text x="585" y="63" text-anchor="middle" font-size="11" fill="#333">“Enviar como demanda”</text>
+        <text x="585" y="79" text-anchor="middle" font-size="11" fill="#333">para a unidade responsável</text>
+
+        <rect x="485" y="160" width="200" height="74" rx="9" fill="#e7f2eb" stroke="#2e6b47"/>
+        <text x="585" y="184" text-anchor="middle" font-weight="700" fill="#2e6b47">4. Resposta aceita</text>
+        <text x="585" y="203" text-anchor="middle" font-size="11" fill="#333">“Aceitar e concluir”: os anexos</text>
+        <text x="585" y="219" text-anchor="middle" font-size="11" fill="#333">viram evidência automaticamente</text>
+
+        <rect x="250" y="160" width="200" height="74" rx="9" fill="#e7f2eb" stroke="#2e6b47"/>
+        <text x="350" y="184" text-anchor="middle" font-weight="700" fill="#2e6b47">5. Validação</text>
+        <text x="350" y="203" text-anchor="middle" font-size="11" fill="#333">Controlador valida a ação e</text>
+        <text x="350" y="219" text-anchor="middle" font-size="11" fill="#333">reavalia o requisito</text>
+
+        <rect x="15" y="160" width="200" height="74" rx="9" fill="#eaf0f7" stroke="#2f4f7a"/>
+        <text x="115" y="184" text-anchor="middle" font-weight="700" fill="#2f4f7a">6. Próximo ciclo</text>
+        <text x="115" y="203" text-anchor="middle" font-size="11" fill="#333">Concluir o ciclo congela o</text>
+        <text x="115" y="219" text-anchor="middle" font-size="11" fill="#333">resultado e mostra a evolução</text>
+      </g>
+      <g stroke="#7a1f2b" stroke-width="2" fill="none" marker-end="url(#s1)">
+        <line x1="215" y1="57" x2="246" y2="57"/>
+        <line x1="450" y1="57" x2="481" y2="57"/>
+        <line x1="585" y1="94" x2="585" y2="156"/>
+        <line x1="485" y1="197" x2="454" y2="197"/>
+        <line x1="250" y1="197" x2="219" y2="197"/>
+        <line x1="115" y1="160" x2="115" y2="98"/>
+      </g>
+    </svg>
+    <figcaption>Ciclo autoavaliação → plano de ação → demanda → evidência → validação → novo ciclo.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================ 3. NAVEGAÇÃO E PAINEL ============================ -->
+<section class="capitulo" id="cap-03">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 03</div>
+    <h1>Navegação e Painel</h1>
+    <p class="resumo">Onde fica cada coisa, como ler os indicadores e como trocar de entidade.</p>
+  </div>
+
+  <h2>3.1 Os menus</h2>
+  <p>À esquerda há uma barra escura com quatro grupos. Ao clicar em um grupo, a segunda coluna mostra as telas daquele grupo:</p>
+  <table>
+    <thead><tr><th style="width:18%">Grupo</th><th style="width:34%">Telas</th><th>Para que servem</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Painel</strong></td><td>Painel · Dados externos</td><td>Visão geral do controle interno e indicadores fiscais vindos de fontes oficiais.</td></tr>
+      <tr><td><strong>Conformidade</strong></td><td>Normas · Autoavaliação · Planos de ação · Sugestões da IA</td><td>Verificar se a estrutura de controle interno atende às normas e corrigir as lacunas.</td></tr>
+      <tr><td><strong>Atuação</strong></td><td>Demandas · Auditorias · Medidas</td><td>O trabalho de campo da controladoria: pedir informações, auditar e tratar situações de risco.</td></tr>
+      <tr><td><strong>Gestão</strong></td><td>Documentos · Relatórios · Unidades · Trilha de auditoria · Aparência · Configurações</td><td>Arquivos, relatórios em PDF, estrutura organizacional, histórico e ajustes.</td></tr>
+    </tbody>
+  </table>
+  <p>No topo da tela ficam o <strong>nome da entidade atual</strong> (à esquerda) e o <strong>menu do usuário</strong> (à direita, com seu nome, perfil e iniciais).</p>
+
+  <h2>3.2 O Painel, quadro a quadro</h2>
+  <figure>
+    <img src="img/02-painel.png" alt="Painel do controlador">
+    <figcaption>Painel da Prefeitura de Catolândia: indicadores no topo, aderência às normas e movimentações recentes.</figcaption>
+  </figure>
+  <table>
+    <thead><tr><th style="width:26%">Quadro</th><th>O que mostra e o que fazer</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Demandas em aberto</strong></td><td>Total de demandas ainda não concluídas nem canceladas.</td></tr>
+      <tr><td><strong>Demandas vencidas</strong></td><td>Prazo expirado e ainda não concluídas. <em>Deve ser zero ou perto disso</em>: cobre as unidades (capítulo 5).</td></tr>
+      <tr><td><strong>Respostas a analisar</strong></td><td>Demandas respondidas pelas unidades que aguardam a sua análise. Analise em até poucos dias para não travar o fluxo.</td></tr>
+      <tr><td><strong>Ações em execução</strong></td><td>Ações dos planos 5W2H em andamento; o subtítulo avisa quantas estão atrasadas.</td></tr>
+      <tr><td><strong>Aderência às normas</strong></td><td>Percentual de conformidade do ciclo de autoavaliação mais recente de cada norma, com quantos requisitos foram avaliados e quantos estão “não atendidos” ou “parciais”. O link <span class="ui">Ir para a autoavaliação</span> leva ao ciclo.</td></tr>
+      <tr><td><strong>Movimentações recentes</strong></td><td>Últimos trâmites das demandas (quem enviou, respondeu, visualizou, comentou).</td></tr>
+      <tr><td><strong>Planos de ação</strong></td><td>Situação das ações de todos os planos: abertas, vencidas, aguardando validação e concluídas.</td></tr>
+      <tr><td><strong>Unidades</strong></td><td>Secretarias e setores cadastrados, com atalho para <span class="ui">Gerenciar unidades</span>.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3.3 Menu do usuário e troca de entidade</h2>
+  <p>Clique no círculo com suas iniciais (canto superior direito) para abrir o menu com <span class="ui">Configurações</span>, <span class="ui">Aparência do sistema</span> (só controlador) e <span class="ui">Sair</span>.</p>
+  <figure>
+    <img src="img/03-menu-usuario.png" alt="Menu do usuário aberto">
+    <figcaption>Menu do usuário, com nome, e-mail e os atalhos de Configurações e Sair.</figcaption>
+  </figure>
+  <p>Se você controla mais de uma entidade, o nome da entidade no topo vira um botão. Clique nele e escolha a outra entidade em <span class="ui">Trocar entidade</span>. Todas as telas passam a mostrar os dados da entidade escolhida.</p>
+  <div class="caixa atencao"><strong>Atenção</strong>
+    <p>Antes de enviar uma demanda ou registrar algo, confira no topo da tela em qual entidade você está. Um registro feito na Câmara não aparece na Prefeitura.</p>
+  </div>
+  <div class="caixa dica"><strong>Dica</strong>
+    <p>Sempre clique em <span class="ui">Sair</span> ao terminar, principalmente em computadores compartilhados.</p>
+  </div>
+</section>
+
+<!-- ============================ 4. UNIDADES ============================ -->
+<section class="capitulo" id="cap-04">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 04</div>
+    <h1>Unidades</h1>
+    <p class="resumo">A estrutura organizacional da entidade: quem recebe demandas e responde por ações.</p>
+  </div>
+  <div class="quadro-uso">
+    <div><h4>Para que serve</h4><p>Cadastrar secretarias, departamentos, divisões e setores, com responsável e e-mail. É a base para enviar demandas, atribuir ações e definir o que cada servidor de acesso restrito pode ver.</p></div>
+    <div><h4>Quando usar</h4><p>Na implantação (antes de tudo) e sempre que a estrutura mudar: nova secretaria, troca de secretário, fusão de setores.</p></div>
+  </div>
+
+  <h2>4.1 Cadastrar uma unidade</h2>
+  <p>Caminho: <span class="ui">Gestão</span> → <span class="ui">Unidades</span>. O quadro <span class="ui">Nova unidade</span> aparece à direita apenas para o perfil Controlador.</p>
+  <ol class="passos">
+    <li>Preencha <strong>Nome</strong> (ex.: Secretaria Municipal de Saúde) e <strong>Sigla</strong> (ex.: SESAU).</li>
+    <li>Escolha o <strong>Tipo</strong>: Órgão, Secretaria, Departamento, Divisão, Setor ou Outro.</li>
+    <li>Em <strong>Subordinada a</strong>, indique a unidade superior. Para uma secretaria, deixe “— Nenhuma (unidade principal) —”; para um departamento, escolha a secretaria a que ele pertence.</li>
+    <li>Informe o <strong>Responsável</strong> e o <strong>E-mail do responsável</strong>.</li>
+    <li>Clique em <span class="ui">Cadastrar unidade</span>. A unidade aparece na lista <span class="ui">Unidades cadastradas</span>, com o número de demandas recebidas.</li>
+  </ol>
+  <figure>
+    <img src="img/04-unidades.png" alt="Tela de unidades">
+    <figcaption>Unidades cadastradas da Prefeitura de Catolândia e o formulário de nova unidade.</figcaption>
+  </figure>
+  <div class="caixa dica"><strong>Dicas</strong>
+    <ul>
+      <li>Cadastre primeiro as secretarias e depois os departamentos subordinados.</li>
+      <li>Use siglas curtas e conhecidas na prefeitura: elas aparecem nas listas e relatórios.</li>
+      <li>Cadastrar a unidade <strong>não cria o acesso</strong> do servidor. Para que alguém da secretaria responda pelo sistema, peça o usuário de acesso restrito à HorizonAJ, informando a unidade.</li>
+    </ul>
+  </div>
+  <div class="caixa erro"><strong>Erros comuns</strong>
+    <ul>
+      <li>Criar a mesma secretaria duas vezes com nomes diferentes (“Sec. Saúde” e “Secretaria de Saúde”): as demandas ficam divididas e os relatórios por unidade perdem sentido.</li>
+      <li>Deixar o e-mail do responsável desatualizado depois de troca de gestor.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ 5. DEMANDAS ============================ -->
+<section class="capitulo" id="cap-05">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 05</div>
+    <h1>Demandas</h1>
+    <p class="resumo">Solicitações formais da controladoria às unidades, com prazo, resposta, anexos e histórico completo.</p>
+  </div>
+  <div class="quadro-uso">
+    <div><h4>Para que serve</h4><p>Substituir ofícios e e-mails soltos: pedir documentos e informações às secretarias, controlar prazos, receber respostas com anexos e guardar tudo com histórico permanente.</p></div>
+    <div><h4>Quando usar</h4><ul><li>Pedir documentos (contratos, folha, boletins de medição).</li><li>Pedir comprovação de requisito da autoavaliação ou de ação de plano.</li><li>Solicitações de auditoria.</li></ul></div>
+  </div>
+
+  <h2>5.1 O ciclo da demanda</h2>
+  <figure class="fluxo">
+    <svg viewBox="0 -24 700 324" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+      <defs>
+        <marker id="s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#444"/></marker>
+      </defs>
+      <g font-size="13">
+        <rect x="10" y="30" width="112" height="56" rx="8" fill="#eaf0f7" stroke="#2f4f7a"/>
+        <text x="66" y="54" text-anchor="middle" font-weight="700" fill="#2f4f7a">Enviada</text>
+        <text x="66" y="72" text-anchor="middle" font-size="10.5" fill="#333">controladoria envia</text>
+        <rect x="150" y="30" width="112" height="56" rx="8" fill="#eaf0f7" stroke="#2f4f7a"/>
+        <text x="206" y="54" text-anchor="middle" font-weight="700" fill="#2f4f7a">Visualizada</text>
+        <text x="206" y="72" text-anchor="middle" font-size="10.5" fill="#333">unidade abriu</text>
+        <rect x="290" y="30" width="112" height="56" rx="8" fill="#fcf3e2" stroke="#8a5a00"/>
+        <text x="346" y="54" text-anchor="middle" font-weight="700" fill="#8a5a00">Respondida</text>
+        <text x="346" y="72" text-anchor="middle" font-size="10.5" fill="#333">unidade respondeu</text>
+        <rect x="430" y="30" width="112" height="56" rx="8" fill="#fcf3e2" stroke="#8a5a00"/>
+        <text x="486" y="54" text-anchor="middle" font-weight="700" fill="#8a5a00">Em análise</text>
+        <text x="486" y="72" text-anchor="middle" font-size="10.5" fill="#333">controladoria analisa</text>
+        <rect x="575" y="30" width="112" height="56" rx="8" fill="#e7f2eb" stroke="#2e6b47"/>
+        <text x="631" y="54" text-anchor="middle" font-weight="700" fill="#2e6b47">Concluída</text>
+        <text x="631" y="72" text-anchor="middle" font-size="10.5" fill="#333">resposta aceita</text>
+
+        <rect x="430" y="180" width="112" height="56" rx="8" fill="#fbeaea" stroke="#a3262a"/>
+        <text x="486" y="204" text-anchor="middle" font-weight="700" fill="#a3262a">Devolvida</text>
+        <text x="486" y="222" text-anchor="middle" font-size="10.5" fill="#333">pede complemento</text>
+        <rect x="10" y="180" width="112" height="56" rx="8" fill="#f0f0f0" stroke="#888"/>
+        <text x="66" y="204" text-anchor="middle" font-weight="700" fill="#555">Cancelada</text>
+        <text x="66" y="222" text-anchor="middle" font-size="10.5" fill="#333">não exige resposta</text>
+        <rect x="150" y="180" width="200" height="56" rx="8" fill="#f6ecee" stroke="#7a1f2b" stroke-dasharray="4 3"/>
+        <text x="250" y="204" text-anchor="middle" font-weight="700" fill="#7a1f2b">Prorrogação</text>
+        <text x="250" y="222" text-anchor="middle" font-size="10.5" fill="#333">unidade pede · controladoria decide</text>
+      </g>
+      <g stroke="#444" stroke-width="1.8" fill="none" marker-end="url(#s2)">
+        <line x1="122" y1="58" x2="146" y2="58"/>
+        <line x1="262" y1="58" x2="286" y2="58"/>
+        <line x1="402" y1="58" x2="426" y2="58"/>
+        <line x1="542" y1="58" x2="571" y2="58"/>
+        <path d="M346,30 C346,4 631,4 631,26" stroke-dasharray="5 4"/>
+        <line x1="486" y1="86" x2="486" y2="176"/>
+        <path d="M430,208 L382,208 L382,90"/>
+        <line x1="66" y1="86" x2="66" y2="176" stroke="#888" stroke-dasharray="5 4"/>
+        <line x1="230" y1="86" x2="230" y2="176" stroke="#7a1f2b" stroke-dasharray="3 3"/>
+      </g>
+      <g font-size="10.5" fill="#444">
+        <text x="488" y="-8" text-anchor="middle">pode aceitar direto, sem “Iniciar análise”</text>
+        <text x="494" y="140">devolver</text>
+        <text x="388" y="140">unidade</text>
+        <text x="388" y="153">complementa</text>
+        <text x="72" y="130">cancelar (enquanto</text>
+        <text x="72" y="143">não concluída)</text>
+        <text x="236" y="130">enquanto aguarda</text>
+        <text x="236" y="143">resposta</text>
+        <text x="10" y="268" font-size="10.5">Cores: azul = aguardando a unidade abrir ou responder · âmbar = aguardando a controladoria ·</text>
+        <text x="10" y="284" font-size="10.5">verde = encerrada com sucesso · vermelho = voltou para a unidade · cinza = cancelada.</text>
+      </g>
+    </svg>
+    <figcaption>Ciclo de vida de uma demanda e quem age em cada etapa.</figcaption>
+  </figure>
+
+  <h3>Situações (status) da demanda</h3>
+  <table>
+    <thead><tr><th style="width:20%">Situação</th><th>Significado</th><th style="width:28%">Quem age agora</th></tr></thead>
+    <tbody>
+      <tr><td><span class="selo s-azul">Enviada</span></td><td>A demanda foi criada e a unidade recebeu e-mail de aviso.</td><td>Unidade (abrir e responder)</td></tr>
+      <tr><td><span class="selo s-azul">Visualizada</span></td><td>Alguém da unidade abriu a demanda. Prova de ciência.</td><td>Unidade (responder)</td></tr>
+      <tr><td><span class="selo s-ambar">Respondida</span></td><td>A unidade enviou a resposta, com ou sem anexos.</td><td>Controladoria (analisar)</td></tr>
+      <tr><td><span class="selo s-ambar">Em análise</span></td><td>A controladoria clicou em <span class="ui">Iniciar análise da resposta</span>; sinaliza à unidade que a resposta está sendo examinada.</td><td>Controladoria (aceitar ou devolver)</td></tr>
+      <tr><td><span class="selo s-vermelho">Devolvida</span></td><td>A resposta foi considerada insuficiente; a unidade recebe as orientações e, se informado, um novo prazo.</td><td>Unidade (complementar)</td></tr>
+      <tr><td><span class="selo s-verde">Concluída</span></td><td>Resposta aceita. Encerra a demanda; ainda é possível comentar.</td><td>Ninguém</td></tr>
+      <tr><td><span class="selo s-cinza">Cancelada</span></td><td>A demanda deixou de exigir resposta (com motivo registrado). Não pode ser desfeito.</td><td>Ninguém</td></tr>
+    </tbody>
+  </table>
+  <p>Além da situação, a demanda é marcada como <strong>vencida</strong> quando o prazo passa e ela ainda não foi concluída — isso alimenta o quadro <strong>Demandas vencidas</strong> do Painel e o filtro <span class="ui">Só vencidas</span>.</p>
+
+  <h2>5.2 Enviar uma nova demanda</h2>
+  <p>Caminho: <span class="ui">Atuação</span> → <span class="ui">Demandas</span> → <span class="ui">Nova demanda</span>.</p>
+  <ol class="passos">
+    <li><strong>Assunto</strong>: um título curto e claro (mínimo de 5 caracteres). Ex.: “Relação de contratos vigentes da Secretaria de Obras”.</li>
+    <li><strong>O que está sendo solicitado</strong>: descreva com precisão o período, o formato esperado e a fundamentação, se houver (mínimo de 10 caracteres).</li>
+    <li><strong>Unidade destinatária</strong>: a unidade que deve responder.</li>
+    <li><strong>Prazo</strong>: a data limite para resposta (não pode estar no passado).</li>
+    <li><strong>Prioridade</strong>: Baixa, Média, Alta ou Urgente.</li>
+    <li><strong>Anexos (opcional)</strong>: modelos, planilhas ou ofícios que ajudem a unidade a responder.</li>
+    <li>Clique em <span class="ui">Enviar demanda</span>. Ela recebe um número no formato <code>001/2026</code> e a unidade é avisada por e-mail.</li>
+  </ol>
+  <figure>
+    <img src="img/06-demanda-nova.png" alt="Formulário de nova demanda">
+    <figcaption>Formulário de nova demanda.</figcaption>
+  </figure>
+  <div class="caixa dica"><strong>Demandas que nascem de outros módulos</strong>
+    <p>Você também pode criar demandas já ligadas a uma origem, e o formulário vem preenchido com orientações para a unidade:</p>
+    <ul>
+      <li>de um <strong>requisito da autoavaliação</strong> (botão <span class="ui">Solicitar documento a uma unidade</span>, no cartão do requisito);</li>
+      <li>de uma <strong>ação de plano</strong> (botão <span class="ui">Enviar como demanda</span>, ao editar a ação);</li>
+      <li>de uma <strong>auditoria</strong> (aba <span class="ui">Solicitações</span> → <span class="ui">Nova solicitação</span>). A unidade vê só a solicitação, nunca os papéis de trabalho da auditoria.</li>
+    </ul>
+    <p>Quando a resposta dessas demandas é aceita, os documentos enviados pela unidade <strong>viram evidência</strong> do requisito ou da ação de origem, automaticamente.</p>
+  </div>
+
+  <h2>5.3 Acompanhar a lista de demandas</h2>
+  <figure>
+    <img src="img/05-demandas.png" alt="Lista de demandas">
+    <figcaption>Lista de demandas com busca e filtros.</figcaption>
+  </figure>
+  <p>Use a busca por <strong>assunto ou número</strong> (ex.: 001/2026) e os filtros <strong>Situação</strong> (Todas, Em aberto ou uma situação específica), <strong>Unidade</strong>, <strong>Prioridade</strong> e <span class="ui">Só vencidas</span>. Clique em <span class="ui">Filtrar</span> para aplicar e em <span class="ui">Limpar</span> para voltar à lista completa.</p>
+
+  <h2>5.4 Analisar a resposta: aceitar ou devolver</h2>
+  <p>Abra a demanda clicando no número ou no assunto. A tela mostra os dados da solicitação, a <strong>Tramitação</strong> (histórico permanente) e, à direita, as <strong>Ações da controladoria</strong>.</p>
+  <figure>
+    <img src="img/07-demanda-detalhe.png" alt="Detalhe de uma demanda">
+    <figcaption>Detalhe da demanda: solicitação, situação, prazo, tramitação e ações da controladoria.</figcaption>
+  </figure>
+  <ol class="passos">
+    <li>Leia a resposta e abra os anexos na tramitação.</li>
+    <li>(Opcional) Clique em <span class="ui">Iniciar análise da resposta</span> para sinalizar à unidade que você está examinando.</li>
+    <li>Se a resposta atende: clique em <span class="ui">Aceitar resposta e concluir</span>, escreva o <strong>Parecer</strong> e confirme em <span class="ui">Aceitar e concluir</span>.</li>
+    <li>Se falta algo: clique em <span class="ui">Devolver para complementação</span>, explique em <strong>O que precisa ser complementado</strong> e, se quiser, informe um <strong>Novo prazo (opcional)</strong> — em branco, mantém o prazo atual.</li>
+  </ol>
+
+  <h2>5.5 Prorrogação de prazo</h2>
+  <p>Enquanto a demanda aguarda resposta, a unidade pode pedir mais prazo, com justificativa. O pedido aparece na demanda como <strong>Pedido de prorrogação</strong> e você recebe e-mail. Até a decisão, vale o prazo atual.</p>
+  <ul>
+    <li><span class="ui">Deferir prorrogação</span>: informe o <strong>Novo prazo</strong> (posterior ao atual) e, se quiser, uma observação.</li>
+    <li><span class="ui">Indeferir prorrogação</span>: informe o <strong>Motivo do indeferimento</strong>. O prazo atual é mantido e a unidade vê o motivo.</li>
+  </ul>
+
+  <h2>5.6 Comentários, ofício e cancelamento</h2>
+  <ul>
+    <li><strong>Comentar</strong>: registra uma observação na tramitação. Por padrão o comentário é <strong>interno</strong> (só a controladoria vê). Marque <span class="ui">Visível para a unidade destinatária</span> para que a unidade leia — útil para cobrar uma resposta atrasada.</li>
+    <li><span class="ui">Emitir ofício (PDF)</span>: gera um ofício formal da demanda, com o brasão e o nome da entidade, para assinatura ou envio físico. A emissão fica na trilha.</li>
+    <li><span class="ui">Cancelar demanda</span>: use quando a solicitação perdeu o objeto (foi enviada em duplicidade, à unidade errada etc.). Exige o <strong>Motivo do cancelamento</strong> e <strong>não pode ser desfeito</strong>.</li>
+  </ul>
+
+  <h2>5.7 Avisos por e-mail e lembretes de prazo</h2>
+  <table>
+    <thead><tr><th style="width:38%">Quando</th><th>Quem recebe e-mail</th></tr></thead>
+    <tbody>
+      <tr><td>Nova demanda enviada</td><td>A unidade destinatária</td></tr>
+      <tr><td>Demanda respondida</td><td>A controladoria</td></tr>
+      <tr><td>Devolvida para complementação</td><td>A unidade</td></tr>
+      <tr><td>Pedido de prorrogação</td><td>A controladoria</td></tr>
+      <tr><td>Prorrogação deferida ou indeferida</td><td>A unidade</td></tr>
+      <tr><td>Demanda concluída</td><td>A unidade</td></tr>
+      <tr><td><strong>Lembrete automático diário</strong></td><td>As unidades recebem aviso das demandas que vencem em <strong>3 dias</strong> e em <strong>1 dia</strong>; a controladoria recebe um resumo das demandas abertas já <strong>vencidas</strong>.</td></tr>
+    </tbody>
+  </table>
+  <div class="caixa erro"><strong>Erros comuns</strong>
+    <ul>
+      <li>Prazo curto demais para pedidos volumosos: gera pedidos de prorrogação em série. Combine prazos realistas.</li>
+      <li>Descrição vaga (“enviar documentos da licitação”): a unidade responde errado e a demanda volta. Diga qual processo, período e formato.</li>
+      <li>Deixar respostas paradas em “Respondida”: o quadro <strong>Respostas a analisar</strong> do Painel deve ser verificado diariamente.</li>
+      <li>Escrever um comentário de cobrança sem marcar “Visível para a unidade”: a unidade não o verá.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ 6. VISÃO DA UNIDADE ============================ -->
+<section class="capitulo" id="cap-06">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 06</div>
+    <h1>O que a unidade vê (acesso restrito)</h1>
+    <p class="resumo">Conhecer a tela da secretaria ajuda a orientar os servidores e a tirar dúvidas por telefone.</p>
+  </div>
+  <p>O servidor com perfil <strong>Acesso restrito</strong> entra pelo mesmo link do município e cai direto em <span class="ui">Minhas demandas</span>. Ele só tem dois itens no menu: <span class="ui">Minhas demandas</span> e <span class="ui">Painel da unidade</span>. Não vê nada de outras unidades nem dos demais módulos.</p>
+  <figure class="media">
+    <img src="img/30-satelite-demandas.png" alt="Minhas demandas da unidade">
+    <figcaption>Tela “Minhas demandas” de um servidor da Contabilidade: aguardando resposta, em análise e encerradas.</figcaption>
+  </figure>
+  <h2>6.1 Como a unidade responde</h2>
+  <ol class="passos">
+    <li>Na seção <strong>Aguardando sua resposta</strong>, o servidor abre a demanda (nesse momento ela passa a “Visualizada”).</li>
+    <li>Lê <strong>O que a controladoria pediu</strong> e os <strong>Documentos enviados pela controladoria</strong>.</li>
+    <li>Escreve a resposta em <strong>Sua resposta</strong>, anexa os arquivos em <strong>Documentos</strong> e clica em <span class="ui">Enviar resposta</span>.</li>
+    <li>Se a demanda foi devolvida, o botão aparece como <span class="ui">Complementar resposta</span>, com as orientações da controladoria.</li>
+    <li>Se precisar de mais tempo, usa <span class="ui">Pedir prorrogação</span>, informa a <strong>Nova data</strong> e a <strong>Justificativa</strong> e clica em <span class="ui">Enviar pedido</span>.</li>
+  </ol>
+  <figure class="media">
+    <img src="img/31-satelite-demanda.png" alt="Demanda vista pela unidade">
+    <figcaption>Demanda aberta pela unidade, com o pedido da controladoria, o prazo e o formulário de resposta.</figcaption>
+  </figure>
+  <h2>6.2 Painel da unidade</h2>
+  <p>Mostra à secretaria os números dela: <strong>Em aberto</strong>, <strong>A vencer em 7 dias</strong>, <strong>Vencidas</strong>, <strong>Respondidas</strong> e <strong>Concluídas</strong>, além da lista de prazos da mais urgente para a menos urgente.</p>
+  <figure class="media">
+    <img src="img/32-satelite-painel.png" alt="Painel da unidade">
+    <figcaption>Painel da unidade, com indicadores e prazos das demandas em aberto.</figcaption>
+  </figure>
+  <div class="caixa dica"><strong>Dica para orientar as secretarias</strong>
+    <p>Envie aos servidores um resumo de três linhas: (1) entre pelo link do município; (2) abra a demanda em “Aguardando sua resposta”, escreva e anexe; (3) se não der tempo, peça prorrogação na própria demanda antes do vencimento.</p>
+  </div>
+</section>
+
+<!-- ============================ 7. AUTOAVALIAÇÃO ============================ -->
+<section class="capitulo" id="cap-07">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 07</div>
+    <h1>Normas e Autoavaliação</h1>
+    <p class="resumo">Verificar, requisito por requisito, se o sistema de controle interno atende às normas — e medir a evolução de um ano para o outro.</p>
+  </div>
+  <div class="quadro-uso">
+    <div><h4>Para que serve</h4><p>Avaliar a estrutura e o funcionamento do controle interno frente aos catálogos de requisitos já carregados no sistema, calcular o percentual de conformidade e transformar as lacunas em plano de ação.</p></div>
+    <div><h4>Quando usar</h4><p>Ao menos uma vez por ano (um ciclo por exercício), e sempre que quiser medir o efeito das ações corretivas. O resultado alimenta o Relatório Anual e o Painel.</p></div>
+  </div>
+  <div class="caixa norma"><strong>Base normativa</strong>
+    <p>O sistema traz dois catálogos prontos: a <strong>Orientação Técnica nº 05/2024</strong> da Rede de Controle da Gestão Pública no Estado da Bahia, que organiza o controle interno nas macrofunções de <em>controladoria, auditoria interna, corregedoria e ouvidoria</em>; e a <strong>Resolução TCM-BA nº 1.120/2005</strong>, que dispõe sobre o sistema de controle interno municipal. Os catálogos são mantidos pela HorizonAJ.</p>
+  </div>
+
+  <h2>7.1 Consultar as normas</h2>
+  <p>Em <span class="ui">Conformidade</span> → <span class="ui">Normas</span> estão os catálogos. <span class="ui">Ver requisitos</span> mostra todos os itens da norma organizados por capítulo, com a indicação de quais são avaliáveis, e o link para o <span class="ui">Texto oficial</span>.</p>
+  <figure>
+    <img src="img/09-norma-detalhe.png" alt="Requisitos de uma norma">
+    <figcaption>Requisitos de uma norma, organizados pela estrutura do texto oficial.</figcaption>
+  </figure>
+
+  <h2>7.2 Abrir um ciclo de autoavaliação</h2>
+  <ol class="passos">
+    <li>Vá a <span class="ui">Conformidade</span> → <span class="ui">Autoavaliação</span> e clique em <span class="ui">Abrir ciclo</span>.</li>
+    <li>Dê um <strong>Nome do ciclo</strong> (ex.: “Autoavaliação 2026”).</li>
+    <li>Marque as <strong>Normas</strong>. Cada norma marcada gera um ciclo próprio, com o mesmo nome e alcance.</li>
+    <li>Escolha o <strong>Alcance</strong>: <em>Entidade inteira</em> (o normal) ou uma unidade específica.</li>
+    <li>Informe a <strong>Data de início</strong> e confirme em <span class="ui">Abrir ciclo</span>.</li>
+  </ol>
+  <p>Só entram no ciclo os requisitos avaliáveis que se aplicam ao tipo da sua entidade (por exemplo, itens exclusivos de Câmara não aparecem para a Prefeitura).</p>
+  <figure>
+    <img src="img/10-autoavaliacao.png" alt="Lista de ciclos de autoavaliação">
+    <figcaption>Ciclos de autoavaliação, com norma, situação, conformidade e progresso.</figcaption>
+  </figure>
+
+  <h2>7.3 Responder os requisitos</h2>
+  <p>Abra o ciclo. No topo, o <strong>Resumo do ciclo</strong> mostra a conformidade geral, o progresso e as respostas por situação. Abaixo há quatro abas: <span class="ui">Requisitos</span>, <span class="ui">Resultado por capítulo</span>, <span class="ui">Por macrofunção</span> e <span class="ui">Evolução</span>.</p>
+  <figure>
+    <img src="img/11-ciclo.png" alt="Resumo do ciclo">
+    <figcaption>Resumo de um ciclo em andamento: conformidade geral, progresso e respostas por situação.</figcaption>
+  </figure>
+  <p>Na aba <span class="ui">Requisitos</span>, cada requisito aparece em um cartão com o código, o texto, a <strong>classificação</strong> (tipo, peso e macrofunções) e o quadro <strong>Evidências esperadas e orientação</strong>. Para responder:</p>
+  <ol class="passos">
+    <li>Escolha a <strong>Avaliação</strong>: <span class="selo s-verde">Atende</span> <span class="selo s-ambar">Atende parcialmente</span> <span class="selo s-vermelho">Não atende</span> <span class="selo s-cinza">Não se aplica</span>.</li>
+    <li>Em <strong>Evidência</strong>, descreva os atos, documentos, links ou locais que comprovam (ex.: “Lei Municipal nº 123/2021, art. 4º; Portaria 45/2026”).</li>
+    <li>Para “Atende parcialmente”, “Não atende” e “Não se aplica”, a <strong>justificativa é obrigatória</strong>: explique o motivo da avaliação.</li>
+    <li>Use <span class="ui">Anexar evidências</span> para juntar arquivos (PDFs de leis, portarias, relatórios).</li>
+    <li>Clique em <span class="ui">Salvar</span>. O cartão avisa “Alterações não salvas” enquanto houver mudança pendente; <span class="ui">Desfazer</span> volta ao que estava salvo.</li>
+    <li>Se o documento está com uma secretaria, use <span class="ui">Solicitar documento a uma unidade</span>: o sistema cria uma demanda ligada ao requisito, e a resposta aceita vira evidência.</li>
+  </ol>
+  <figure class="alta">
+    <img src="img/12-ciclo-requisitos.png" alt="Cartões de requisitos">
+    <figcaption>Aba “Requisitos”: cartões com classificação, orientação, avaliação, evidência e anexos.</figcaption>
+  </figure>
+
+  <h2>7.4 Como o percentual de conformidade é calculado</h2>
+  <p>Cada resposta vale pontos, multiplicados pelo <strong>peso</strong> do requisito (padrão 1; requisitos mais importantes têm peso maior):</p>
+  <table>
+    <thead><tr><th>Avaliação</th><th class="c">Pontos</th><th>Entra no cálculo?</th></tr></thead>
+    <tbody>
+      <tr><td>Atende</td><td class="c">1</td><td>Sim</td></tr>
+      <tr><td>Atende parcialmente</td><td class="c">0,5</td><td>Sim</td></tr>
+      <tr><td>Não atende</td><td class="c">0</td><td>Sim</td></tr>
+      <tr><td>Não se aplica</td><td class="c">—</td><td>Não (sai do cálculo)</td></tr>
+      <tr><td>Não avaliado</td><td class="c">—</td><td>Não (ainda pendente)</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Conformidade = soma dos (pontos × peso) ÷ soma dos pesos avaliados.</strong> Exemplo: três requisitos de peso 1 — um “Atende” (1), um “Parcial” (0,5) e um “Não atende” (0) — dão 1,5 ÷ 3 = <strong>50%</strong>. O mesmo cálculo é feito por capítulo da norma e por macrofunção (um requisito ligado a duas macrofunções conta, com peso inteiro, nas duas).</p>
+  <div class="caixa atencao"><strong>Atenção ao “Não se aplica”</strong>
+    <p>Como ele sai do cálculo, usar “Não se aplica” sem motivo real infla o percentual. Justifique sempre com clareza — o TCM-BA e auditores externos podem questionar.</p>
+  </div>
+
+  <h2>7.5 Gerar o plano de ação e concluir o ciclo</h2>
+  <ul>
+    <li><span class="ui">Gerar plano de ação</span>: cria um plano 5W2H com uma ação para cada requisito “Não atende” ou “Atende parcialmente”. Se o plano já existe, o botão vira <span class="ui">Atualizar plano de ação</span> e só acrescenta as lacunas novas. <span class="ui">Ver plano</span> abre o plano (capítulo 8).</li>
+    <li><span class="ui">Concluir ciclo</span> (só controlador): <strong>congela</strong> o ciclo — nenhuma resposta poderá mais ser alterada. Ele passa a servir de base para a aba <span class="ui">Evolução</span> do próximo ciclo da mesma norma e alcance, que mostra a variação por capítulo.</li>
+    <li><span class="ui">Relatório (PDF)</span>: emite o relatório da autoavaliação com plano de ação (capítulo 12).</li>
+    <li><span class="ui">Analisar documento com IA</span>: a IA compara um documento com cada requisito e sugere respostas para a sua revisão (capítulo 11).</li>
+  </ul>
+  <div class="caixa erro"><strong>Erros comuns</strong>
+    <ul>
+      <li>Concluir o ciclo antes de terminar as respostas: o resultado fica congelado incompleto. Confira o progresso no resumo antes.</li>
+      <li>Marcar “Atende” sem evidência: a resposta não se sustenta numa fiscalização. Sempre cite o ato ou anexe o documento.</li>
+      <li>Abrir um ciclo novo para “corrigir” respostas de um ciclo em andamento: basta editar e salvar enquanto ele não estiver concluído.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ 8. PLANOS DE AÇÃO ============================ -->
+<section class="capitulo" id="cap-08">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 08</div>
+    <h1>Planos de ação (5W2H)</h1>
+    <p class="resumo">Um só lugar para acompanhar todas as providências: da autoavaliação, de auditorias, de medidas e de determinações do Tribunal de Contas.</p>
+  </div>
+  <div class="quadro-uso">
+    <div><h4>Para que serve</h4><p>Organizar o que precisa ser feito, por quem, até quando e como, acompanhar a execução e validar a conclusão com evidências.</p></div>
+    <div><h4>Origens possíveis</h4><ul><li>Autoavaliação (gerado pelo ciclo)</li><li>Auditoria (recomendações)</li><li>Medida (situação de risco)</li><li>Determinação do TC · Outra (plano avulso)</li></ul></div>
+  </div>
+  <figure>
+    <img src="img/13-planos.png" alt="Lista de planos de ação">
+    <figcaption>Planos de ação com origem, situação, número de ações, percentual executado e ações vencidas.</figcaption>
+  </figure>
+
+  <h2>8.1 Criar um plano avulso</h2>
+  <p>Planos da autoavaliação, de auditorias e de medidas são criados a partir desses módulos. Para uma <strong>determinação do Tribunal de Contas</strong> ou outra necessidade:</p>
+  <ol class="passos">
+    <li>Em <span class="ui">Conformidade</span> → <span class="ui">Planos de ação</span>, clique em <span class="ui">Novo plano</span>.</li>
+    <li>Informe <strong>Título</strong>, <strong>Origem</strong> e a <strong>Descrição</strong> (contexto, número do processo ou da determinação).</li>
+    <li>Clique em <span class="ui">Criar plano</span>.</li>
+  </ol>
+
+  <h2>8.2 Cadastrar e editar ações (5W2H)</h2>
+  <p>Dentro do plano, clique em <span class="ui">Nova ação</span> (ou em <span class="ui">Editar</span> numa ação existente) e preencha:</p>
+  <table>
+    <thead><tr><th style="width:26%">Campo</th><th>O que escrever</th></tr></thead>
+    <tbody>
+      <tr><td><strong>O quê</strong></td><td>A providência, começando por um verbo. Ex.: “Elaborar e publicar o regimento interno da controladoria”.</td></tr>
+      <tr><td><strong>Por quê</strong></td><td>O motivo (o requisito não atendido, o achado, a determinação).</td></tr>
+      <tr><td><strong>Onde</strong></td><td>O local ou processo envolvido.</td></tr>
+      <tr><td><strong>Quem</strong> / <strong>Responsável</strong> / <strong>Unidade responsável</strong></td><td>A pessoa e a unidade que executam.</td></tr>
+      <tr><td><strong>Quando (prazo)</strong></td><td>Data limite. Ações sem prazo não aparecem como vencidas.</td></tr>
+      <tr><td><strong>Como</strong></td><td>As etapas ou o método.</td></tr>
+      <tr><td><strong>Quanto (custo estimado, R$)</strong></td><td>Se houver custo. Ex.: 1.500,00.</td></tr>
+      <tr><td><strong>Prioridade</strong>, <strong>Status</strong>, <strong>Execução (%)</strong></td><td>Acompanhamento da ação (veja os status abaixo).</td></tr>
+    </tbody>
+  </table>
+  <p>Clique em <span class="ui">Adicionar ação</span> (nova) ou <span class="ui">Salvar ação</span> (edição). Depois de salva, a ação ganha a seção <strong>Marcos</strong> (etapas com prazo — use <span class="ui">Novo marco</span>), as <strong>Evidências</strong> e o botão <span class="ui">Enviar como demanda</span>, que pede a execução ou a comprovação à unidade.</p>
+  <figure class="alta">
+    <img src="img/14-plano-detalhe.png" alt="Detalhe do plano de ação">
+    <figcaption>Plano de ação: resumo da execução e tabela de ações 5W2H com filtros.</figcaption>
+  </figure>
+
+  <h3>Status da ação</h3>
+  <table>
+    <thead><tr><th style="width:26%">Status</th><th>Significado</th></tr></thead>
+    <tbody>
+      <tr><td><span class="selo s-cinza">Pendente</span></td><td>Ainda não começou.</td></tr>
+      <tr><td><span class="selo s-azul">Em andamento</span></td><td>Em execução; atualize a <strong>Execução (%)</strong>.</td></tr>
+      <tr><td><span class="selo s-ambar">Aguardando validação</span></td><td>A equipe considera a ação feita (a execução vai a 100%) e pede a validação do controlador.</td></tr>
+      <tr><td><span class="selo s-verde">Concluída</span></td><td>Somente o controlador atribui, ao <strong>validar</strong> a ação.</td></tr>
+      <tr><td><span class="selo s-cinza">Cancelada</span></td><td>A ação não será executada.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8.3 Validar a conclusão (controlador)</h2>
+  <ol class="passos">
+    <li>No plano, filtre por <span class="ui">Aguardando validação</span> e clique em <span class="ui">Validar</span> na ação.</li>
+    <li>Confira as evidências anexadas.</li>
+    <li>Em <strong>Decisão</strong>, escolha <span class="ui">Aprovar e concluir</span> (a ação passa a “Concluída”, com 100%) ou <span class="ui">Devolver para ajustes</span> (volta a “Em andamento”; escreva no parecer o que falta).</li>
+    <li>Clique em <span class="ui">Registrar validação</span>.</li>
+  </ol>
+  <p>O controlador também altera a <strong>Situação do plano</strong> no topo da tela: <span class="selo s-cinza">Rascunho</span> <span class="selo s-azul">Em execução</span> <span class="selo s-verde">Concluído</span> <span class="selo s-cinza">Cancelado</span>. Em plano encerrado não se acrescentam ações.</p>
+  <div class="caixa dica"><strong>Dicas</strong>
+    <ul>
+      <li>Divida ações grandes em marcos com prazo: fica mais fácil cobrar e mostrar evolução.</li>
+      <li>Depois de validar uma ação que veio da autoavaliação, volte ao requisito e reavalie-o (por exemplo, de “Não atende” para “Atende”), citando a evidência.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ 9. AUDITORIAS ============================ -->
+<section class="capitulo" id="cap-09">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 09</div>
+    <h1>Auditorias</h1>
+    <p class="resumo">Do Plano Anual de Auditoria Interna (PAAI) ao monitoramento das recomendações, com papéis de trabalho organizados.</p>
+  </div>
+  <div class="quadro-uso">
+    <div><h4>Para que serve</h4><p>Planejar as auditorias do ano por risco, registrar a matriz de planejamento, aplicar checklists, pedir documentos às unidades, registrar achados e recomendações e acompanhar a correção.</p></div>
+    <div><h4>Quando usar</h4><p>No início do exercício (PAAI) e durante todo o ano. Auditorias fora do plano (especiais ou não previstas) também podem ser registradas.</p></div>
+  </div>
+
+  <h2>9.1 O ciclo da auditoria</h2>
+  <figure class="fluxo">
+    <svg viewBox="0 0 700 215" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+      <defs><marker id="s3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7a1f2b"/></marker></defs>
+      <g font-size="12.5">
+        <rect x="10" y="15" width="150" height="62" rx="8" fill="#eaf0f7" stroke="#2f4f7a"/>
+        <text x="85" y="40" text-anchor="middle" font-weight="700" fill="#2f4f7a">PAAI aprovado</text>
+        <text x="85" y="58" text-anchor="middle" font-size="10.5" fill="#333">“Iniciar” cada auditoria</text>
+        <rect x="185" y="15" width="150" height="62" rx="8" fill="#f6ecee" stroke="#7a1f2b"/>
+        <text x="260" y="40" text-anchor="middle" font-weight="700" fill="#5c1620">Planejamento</text>
+        <text x="260" y="58" text-anchor="middle" font-size="10.5" fill="#333">equipe e matriz</text>
+        <rect x="360" y="15" width="150" height="62" rx="8" fill="#f6ecee" stroke="#7a1f2b"/>
+        <text x="435" y="40" text-anchor="middle" font-weight="700" fill="#5c1620">Execução</text>
+        <text x="435" y="58" text-anchor="middle" font-size="10.5" fill="#333">checklist, solicitações, achados</text>
+        <rect x="535" y="15" width="155" height="62" rx="8" fill="#f6ecee" stroke="#7a1f2b"/>
+        <text x="612" y="40" text-anchor="middle" font-weight="700" fill="#5c1620">Relatório preliminar</text>
+        <text x="612" y="58" text-anchor="middle" font-size="10.5" fill="#333">PDF versão preliminar</text>
+
+        <rect x="535" y="130" width="155" height="62" rx="8" fill="#fcf3e2" stroke="#8a5a00"/>
+        <text x="612" y="155" text-anchor="middle" font-weight="700" fill="#8a5a00">Manifestação do gestor</text>
+        <text x="612" y="173" text-anchor="middle" font-size="10.5" fill="#333">gestor se manifesta</text>
+        <rect x="360" y="130" width="150" height="62" rx="8" fill="#f6ecee" stroke="#7a1f2b"/>
+        <text x="435" y="155" text-anchor="middle" font-weight="700" fill="#5c1620">Relatório final</text>
+        <text x="435" y="173" text-anchor="middle" font-size="10.5" fill="#333">PDF versão final</text>
+        <rect x="185" y="130" width="150" height="62" rx="8" fill="#eaf0f7" stroke="#2f4f7a"/>
+        <text x="260" y="155" text-anchor="middle" font-weight="700" fill="#2f4f7a">Monitoramento</text>
+        <text x="260" y="173" text-anchor="middle" font-size="10.5" fill="#333">ações das recomendações</text>
+        <rect x="10" y="130" width="150" height="62" rx="8" fill="#e7f2eb" stroke="#2e6b47"/>
+        <text x="85" y="155" text-anchor="middle" font-weight="700" fill="#2e6b47">Encerrada</text>
+        <text x="85" y="173" text-anchor="middle" font-size="10.5" fill="#333">só o controlador encerra</text>
+      </g>
+      <g stroke="#7a1f2b" stroke-width="2" fill="none" marker-end="url(#s3)">
+        <line x1="160" y1="46" x2="181" y2="46"/>
+        <line x1="335" y1="46" x2="356" y2="46"/>
+        <line x1="510" y1="46" x2="531" y2="46"/>
+        <line x1="612" y1="77" x2="612" y2="126"/>
+        <line x1="535" y1="161" x2="514" y2="161"/>
+        <line x1="360" y1="161" x2="339" y2="161"/>
+        <line x1="185" y1="161" x2="164" y2="161"/>
+      </g>
+    </svg>
+    <figcaption>Etapas da auditoria no sistema. A qualquer momento o controlador pode cancelar, com justificativa.</figcaption>
+  </figure>
+
+  <h2>9.2 Plano Anual de Auditoria Interna (PAAI)</h2>
+  <p>Caminho: <span class="ui">Atuação</span> → <span class="ui">Auditorias</span> → <span class="ui">Plano anual (PAAI)</span>.</p>
+  <ol class="passos">
+    <li>Clique em <span class="ui">Incluir auditoria</span> e preencha: <strong>Objeto da auditoria</strong>, <strong>Tipo</strong> (Conformidade, Operacional, Financeira/contábil, De gestão ou Especial), <strong>Unidade auditada</strong> (ou Entidade inteira), <strong>Objetivo e justificativa</strong>, <strong>Início previsto</strong> e <strong>Término previsto</strong> (meses).</li>
+    <li>Informe o <strong>Risco (probabilidade × impacto)</strong>, de 1 a 5 cada. O PAAI ordena as auditorias pela prioridade de risco.</li>
+    <li>Confirme em <span class="ui">Incluir auditoria no PAAI</span>. Repita para todas as auditorias do ano.</li>
+    <li>O controlador clica em <span class="ui">Aprovar PAAI</span>. Depois de aprovado, cada auditoria prevista ganha o botão <span class="ui">Iniciar</span>. Para alterar um PAAI aprovado, use <span class="ui">Voltar para rascunho</span>.</li>
+  </ol>
+  <figure>
+    <img src="img/16-paai.png" alt="Plano Anual de Auditoria Interna">
+    <figcaption>PAAI com as auditorias previstas, ordenadas por prioridade de risco.</figcaption>
+  </figure>
+  <p>Para uma auditoria fora do plano, use <span class="ui">Nova auditoria</span> na lista de auditorias e preencha título, tipo, alcance, objetivo, escopo, critérios e normas, período previsto e a <strong>Equipe de auditoria</strong> (só usuários da controladoria). Confirme em <span class="ui">Registrar auditoria</span>.</p>
+  <figure>
+    <img src="img/15-auditorias.png" alt="Lista de auditorias">
+    <figcaption>Lista de auditorias por etapa, com filtros por etapa, tipo, unidade auditada e ano.</figcaption>
+  </figure>
+
+  <h2>9.3 Dentro da auditoria: as abas</h2>
+  <figure>
+    <img src="img/17-auditoria-detalhe.png" alt="Detalhe de auditoria">
+    <figcaption>Auditoria aberta: etapas no topo, dados do planejamento e as abas de trabalho.</figcaption>
+  </figure>
+  <table>
+    <thead><tr><th style="width:24%">Aba</th><th>O que fazer</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Planejamento</strong></td><td>Objetivo, escopo, critérios, equipe e a <strong>Matriz de planejamento</strong>: em <span class="ui">Nova questão</span>, registre cada <strong>Questão de auditoria</strong> com <strong>Informações requeridas</strong>, <strong>Fontes de informação</strong> e <strong>Procedimentos</strong> (exame documental, entrevista, inspeção, amostragem…).</td></tr>
+      <tr><td><strong>Execução</strong></td><td><span class="ui">Aplicar modelo de checklist</span> e avalie cada item como <span class="selo s-verde">Conforme</span> <span class="selo s-vermelho">Não conforme</span> <span class="selo s-ambar">Parcialmente conforme</span> <span class="selo s-cinza">Não se aplica</span>, com observação (o que foi verificado, amostra, ressalvas) e evidências.</td></tr>
+      <tr><td><strong>Achados e recomendações</strong></td><td>Registre cada achado e suas recomendações (veja 9.4).</td></tr>
+      <tr><td><strong>Solicitações</strong></td><td><span class="ui">Nova solicitação</span> cria uma demanda à unidade auditada. A unidade vê só a solicitação, nunca os papéis de trabalho.</td></tr>
+      <tr><td><strong>Documentos</strong></td><td>Papéis de trabalho: evidências dos checklists e dos achados, visíveis só para a controladoria.</td></tr>
+      <tr><td><strong>Histórico</strong></td><td>Registros permanentes de tudo o que foi feito na auditoria.</td></tr>
+    </tbody>
+  </table>
+  <p>Para avançar de etapa, use <span class="ui">Mudar etapa</span>. Para iniciar a execução, a auditoria precisa ter equipe definida. Voltar de etapa exige observação; cancelar exige justificativa; encerrar e cancelar são exclusivos do controlador.</p>
+
+  <h2>9.4 Achados e recomendações</h2>
+  <p>Clique em <span class="ui">Novo achado</span>. O sistema segue o padrão do TCU, com quatro elementos obrigatórios:</p>
+  <table>
+    <thead><tr><th style="width:18%">Elemento</th><th>Pergunta que responde</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Condição</strong></td><td>O que foi encontrado? (a situação de fato, com dados e evidências)</td></tr>
+      <tr><td><strong>Critério</strong></td><td>O que deveria ser? (lei, norma, contrato ou boa prática)</td></tr>
+      <tr><td><strong>Causa</strong></td><td>Por que a condição ocorreu? (falha de controle, de processo, de pessoal…)</td></tr>
+      <tr><td><strong>Efeito</strong></td><td>Qual a consequência real ou potencial? (dano, risco, prejuízo ao serviço)</td></tr>
+    </tbody>
+  </table>
+  <p>Informe também a <strong>Gravidade (probabilidade × impacto)</strong>, o <strong>Item de checklist relacionado</strong> (se houver) e as evidências. Em seguida, em <span class="ui">Nova recomendação</span>, escreva o que a unidade deve fazer para corrigir a causa, a <strong>Unidade responsável</strong> e o <strong>Prazo sugerido</strong>.</p>
+  <figure>
+    <img src="img/18-auditoria-achados.png" alt="Achados e recomendações">
+    <figcaption>Aba “Achados e recomendações” de uma auditoria.</figcaption>
+  </figure>
+  <p><strong>Monitoramento:</strong> em cada recomendação, <span class="ui">Gerar ação</span> cria a ação 5W2H correspondente no plano de ação da auditoria. A partir daí, o acompanhamento é feito no capítulo 8 (status, marcos, envio como demanda e validação).</p>
+  <div class="caixa atencao"><strong>Atenção</strong>
+    <p>Achados e recomendações podem ser editados da execução até a manifestação do gestor. Recomendação que já virou ação não pode ser excluída — ajuste a ação no plano.</p>
+  </div>
+
+  <h2>9.5 Modelos de checklist</h2>
+  <p>Em <span class="ui">Modelos de checklist</span> ficam roteiros reutilizáveis. <span class="ui">Criar modelos-base</span> cria três modelos prontos (licitação, contrato e folha). Você pode criar os seus com <span class="ui">Novo modelo</span> e incluir itens com <strong>Item a verificar</strong> e <strong>Orientação ou base legal</strong>. Ao aplicar um modelo a uma auditoria, os itens são copiados; mudanças posteriores no modelo não alteram auditorias já em andamento.</p>
+  <figure>
+    <img src="img/19-modelos-checklist.png" alt="Modelos de checklist">
+    <figcaption>Modelos de checklist do cliente.</figcaption>
+  </figure>
+  <div class="caixa erro"><strong>Erros comuns</strong>
+    <ul>
+      <li>Pedir documentos à unidade por e-mail fora do sistema: use <span class="ui">Nova solicitação</span> para ter prazo, histórico e anexos dentro da auditoria.</li>
+      <li>Achado sem critério claro: cite a norma ou cláusula que foi descumprida.</li>
+      <li>Encerrar a auditoria sem gerar as ações das recomendações: o monitoramento fica sem acompanhamento.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ 10. MEDIDAS ============================ -->
+<section class="capitulo" id="cap-10">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 10</div>
+    <h1>Medidas (situações de risco)</h1>
+    <p class="resumo">Situações que exigem intervenção da controladoria, fora da conformidade normativa, classificadas por gravidade e tratadas com plano de ação.</p>
+  </div>
+  <div class="quadro-uso">
+    <div><h4>Para que serve</h4><p>Registrar e tratar irregularidades e riscos concretos: uma constatação em campo, uma denúncia, um alerta fiscal, uma análise da IA ou uma demanda externa (Ministério Público, Tribunal, Câmara).</p></div>
+    <div><h4>Quando usar</h4><p>Sempre que surgir um fato que precise de providência e acompanhamento até a solução — por exemplo, pagamentos sem liquidação ou despesa com pessoal acima do limite de alerta.</p></div>
+  </div>
+
+  <h2>10.1 Registrar uma situação</h2>
+  <ol class="passos">
+    <li>Em <span class="ui">Atuação</span> → <span class="ui">Medidas</span>, clique em <span class="ui">Nova situação</span>.</li>
+    <li>Preencha <strong>Título</strong> e <strong>Descrição</strong> (o que foi constatado, quando, onde e os possíveis efeitos).</li>
+    <li>Escolha a <strong>Origem</strong>: Constatação, Denúncia, Alerta, Análise da IA ou Demanda externa; e a <strong>Unidade envolvida</strong>, se houver.</li>
+    <li>Se for denúncia, informe o <strong>Denunciante (opcional)</strong> e marque <span class="ui">Denúncia sigilosa</span> quando for o caso: a identidade fica visível <strong>somente ao controlador</strong>.</li>
+    <li>Defina a <strong>Probabilidade</strong> e o <strong>Impacto</strong> (veja a matriz abaixo). O sistema calcula a gravidade.</li>
+    <li>Anexe documentos, se houver, e clique em <span class="ui">Registrar situação</span>.</li>
+  </ol>
+  <figure>
+    <img src="img/22-medida-nova.png" alt="Nova situação">
+    <figcaption>Formulário de nova situação, com origem, unidade envolvida e gravidade.</figcaption>
+  </figure>
+
+  <h2>10.2 Gravidade: probabilidade × impacto</h2>
+  <div class="duas">
+    <div>
+      <p><strong>Probabilidade</strong>: 1 Rara · 2 Improvável · 3 Possível · 4 Provável · 5 Quase certa.</p>
+      <p><strong>Impacto</strong>: 1 Insignificante · 2 Menor · 3 Moderado · 4 Maior · 5 Catastrófico.</p>
+      <p>A pontuação é a multiplicação dos dois (de 1 a 25):</p>
+      <ul>
+        <li><span class="selo s-vermelho">Crítico</span> 15 ou mais</li>
+        <li><span class="selo s-ambar">Alto</span> de 10 a 14</li>
+        <li><span class="selo s-bordo">Médio</span> de 6 a 9</li>
+        <li><span class="selo s-verde">Baixo</span> abaixo de 6</li>
+      </ul>
+      <p class="nota">A mesma escala é usada para priorizar o PAAI e classificar achados de auditoria.</p>
+    </div>
+    <table class="matriz">
+      <thead><tr><th>P \ I</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+      <tbody>
+        <tr><th>5</th><td class="m-b">5</td><td class="m-a">10</td><td class="m-c">15</td><td class="m-c">20</td><td class="m-c">25</td></tr>
+        <tr><th>4</th><td class="m-b">4</td><td class="m-m">8</td><td class="m-a">12</td><td class="m-c">16</td><td class="m-c">20</td></tr>
+        <tr><th>3</th><td class="m-b">3</td><td class="m-m">6</td><td class="m-m">9</td><td class="m-a">12</td><td class="m-c">15</td></tr>
+        <tr><th>2</th><td class="m-b">2</td><td class="m-b">4</td><td class="m-m">6</td><td class="m-m">8</td><td class="m-a">10</td></tr>
+        <tr><th>1</th><td class="m-b">1</td><td class="m-b">2</td><td class="m-b">3</td><td class="m-b">4</td><td class="m-b">5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>10.3 Acompanhar e tratar</h2>
+  <p>A tela <span class="ui">Medidas</span> mostra o <strong>Painel de medidas</strong> com a matriz das situações em aberto e a lista com filtros por situação, gravidade, origem e unidade. <span class="ui">Painel (PDF)</span> emite o relatório.</p>
+  <figure>
+    <img src="img/20-medidas.png" alt="Painel de medidas">
+    <figcaption>Painel de medidas: matriz de gravidade das situações em aberto e lista com filtros.</figcaption>
+  </figure>
+  <ol class="passos">
+    <li>Abra a situação e clique em <span class="ui">Criar plano de ação</span>: o sistema cria o plano 5W2H geral da situação. Cada ação pode ser enviada à unidade com <span class="ui">Enviar como demanda</span>.</li>
+    <li>Use <span class="ui">Editar</span> para atualizar dados (as alterações ficam no histórico) e <span class="ui">Mudar situação</span> para indicar o andamento.</li>
+    <li>Para encerrar (só controlador), mude para <strong>Resolvida</strong> ou <strong>Arquivada</strong> e escreva <strong>como a situação foi resolvida ou por que está sendo arquivada</strong> (justificativa obrigatória). Se necessário, <span class="ui">Reabrir</span>.</li>
+  </ol>
+  <figure>
+    <img src="img/21-medida-detalhe.png" alt="Detalhe da situação">
+    <figcaption>Situação aberta, com origem, gravidade, execução do plano, anexos e histórico.</figcaption>
+  </figure>
+  <table>
+    <thead><tr><th style="width:24%">Situação</th><th>Significado</th></tr></thead>
+    <tbody>
+      <tr><td><span class="selo s-azul">Aberta</span></td><td>Registrada, ainda sem tratamento iniciado.</td></tr>
+      <tr><td><span class="selo s-ambar">Em tratamento</span></td><td>Providências em curso (normalmente com plano de ação).</td></tr>
+      <tr><td><span class="selo s-verde">Resolvida</span></td><td>Encerrada com solução; justificativa registrada.</td></tr>
+      <tr><td><span class="selo s-cinza">Arquivada</span></td><td>Encerrada sem providência (improcedente, perda de objeto); justificativa registrada.</td></tr>
+    </tbody>
+  </table>
+  <div class="caixa dica"><strong>Dica</strong>
+    <p>Na tela <span class="ui">Dados externos</span>, o botão <span class="ui">Registrar medida</span> cria uma situação já preenchida quando a despesa com pessoal passa do limite de alerta ou há entregas pendentes ao SICONFI.</p>
+  </div>
+</section>
+
+<!-- ============================ 11. DOCUMENTOS E IA ============================ -->
+<section class="capitulo" id="cap-11">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 11</div>
+    <h1>Documentos e Sugestões da IA</h1>
+    <p class="resumo">Todos os arquivos da entidade em um só lugar e uma inteligência artificial que ajuda a ler documentos — sempre com a palavra final do controlador.</p>
+  </div>
+
+  <h2>11.1 Documentos</h2>
+  <p>Em <span class="ui">Gestão</span> → <span class="ui">Documentos</span> aparecem todos os arquivos enviados no sistema, com a origem: <strong>Demanda</strong>, <strong>Requisito (autoavaliação)</strong>, <strong>Ação de plano</strong>, <strong>Medida</strong> ou <strong>Avulso</strong>. Busque pelo nome e filtre por origem e unidade; <span class="ui">Baixar</span> faz o download (registrado na trilha).</p>
+  <p>O quadro <span class="ui">Envio avulso</span> serve para arquivos sem vínculo com demanda, requisito ou ação — normas internas, atos de nomeação, regimentos. Selecione os <strong>Arquivos</strong> e clique em <span class="ui">Enviar</span>.</p>
+  <figure>
+    <img src="img/23-documentos.png" alt="Documentos">
+    <figcaption>Lista de documentos com origem, unidade, autor e tamanho.</figcaption>
+  </figure>
+
+  <h2>11.2 O que a IA faz</h2>
+  <p>A IA é uma assistente de leitura. Ela <strong>não decide nada sozinha</strong>: tudo o que ela produz fica como <strong>sugestão pendente</strong> até você aceitar, editar ou rejeitar. Há duas análises:</p>
+  <table>
+    <thead><tr><th style="width:30%">Análise</th><th>Onde iniciar</th><th style="width:36%">Resultado</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Documento × norma</strong> (comparar com a norma)</td><td>No detalhe de um documento (<span class="ui">Comparar com a norma</span> → <span class="ui">Analisar com IA</span>) ou no ciclo (<span class="ui">Analisar documento com IA</span>)</td><td>Sugere a resposta de cada requisito do ciclo, citando o trecho e a página do documento.</td></tr>
+      <tr><td><strong>Avaliação de evidência</strong></td><td>No cartão do requisito ou no documento anexado a ele (<span class="ui">Avaliar evidência com IA</span>)</td><td>Diz se os anexos <em>comprovam</em>, <em>comprovam em parte</em> ou <em>não comprovam</em> o requisito, e o que falta comprovar.</td></tr>
+    </tbody>
+  </table>
+  <p>Antes do envio, dados pessoais (CPF, RG, e-mail, telefone, cartão SUS, nomes rotulados) são mascarados.</p>
+
+  <h2>11.3 Revisar as sugestões</h2>
+  <ol class="passos">
+    <li>Abra <span class="ui">Conformidade</span> → <span class="ui">Sugestões da IA</span>. As análises aparecem em <strong>Análises recentes</strong> (Na fila, Processando, Concluída).</li>
+    <li>Em <strong>Pendentes de revisão</strong>, cada cartão mostra a situação <strong>Atual</strong> e a <strong>Sugerida</strong>, a evidência proposta e as <strong>Citações conferidas no documento</strong>.</li>
+    <li>Confira as citações no documento original.</li>
+    <li>Escolha: <span class="ui">Aceitar</span> (aplica a resposta ao requisito), <span class="ui">Editar</span> (ajusta e clica em <span class="ui">Aplicar edição</span>) ou <span class="ui">Rejeitar</span> (nada é aplicado; o motivo é opcional).</li>
+  </ol>
+  <figure>
+    <img src="img/24-ia.png" alt="Sugestões da IA">
+    <figcaption>Tela de Sugestões da IA, com filtro por ciclo, análises recentes e sugestões pendentes.</figcaption>
+  </figure>
+  <div class="caixa atencao"><strong>Atenção</strong>
+    <ul>
+      <li>A responsabilidade pela resposta é sempre do controlador. Leia a citação antes de aceitar.</li>
+      <li>Ciclo concluído não aceita mais sugestões.</li>
+      <li>A IA é configurada pela administração HorizonAJ (provedor, chave e limites). Se aparecer aviso de IA não configurada, fale com o suporte.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ 12. RELATÓRIOS ============================ -->
+<section class="capitulo" id="cap-12">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 12</div>
+    <h1>Relatórios em PDF</h1>
+    <p class="resumo">Relatórios prontos, com o nome e o brasão da entidade. Cada emissão fica registrada na trilha de auditoria.</p>
+  </div>
+  <figure>
+    <img src="img/25-relatorios.png" alt="Relatórios">
+    <figcaption>Tela de Relatórios com os modelos disponíveis.</figcaption>
+  </figure>
+  <table>
+    <thead><tr><th style="width:28%">Relatório</th><th>Conteúdo</th><th style="width:24%">Opções</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Relatório Anual de Controle Interno</strong></td><td>Números do exercício preenchidos automaticamente e os textos do controlador. O próprio sistema o associa ao art. 17 da Res. TCM-BA 1.120/2005.</td><td>Exercício · <span class="ui">Editar textos</span> · <span class="ui">Gerar PDF</span></td></tr>
+      <tr><td><strong>Autoavaliação com plano de ação</strong></td><td>Conformidade geral ponderada, por capítulo e por macrofunção, requisitos pendentes e ações 5W2H.</td><td>Ciclo</td></tr>
+      <tr><td><strong>Demandas</strong></td><td>Atendidas, vencidas e em aberto, com tempo médio de resposta por unidade (demandas criadas no período).</td><td>Unidade · período</td></tr>
+      <tr><td><strong>Painel de medidas</strong></td><td>Situações por gravidade e status, matriz 5×5 das abertas e ações vinculadas.</td><td>—</td></tr>
+      <tr><td><strong>Relatório de auditoria</strong></td><td>Dados, escopo, critérios, matriz de planejamento, achados (condição, critério, causa e efeito) e recomendações.</td><td>Auditoria · versão Preliminar ou Final</td></tr>
+      <tr><td><strong>Ofício de demanda</strong></td><td>Ofício formal de uma demanda específica.</td><td>No detalhe da demanda: <span class="ui">Emitir ofício (PDF)</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2>12.1 Relatório Anual de Controle Interno, passo a passo</h2>
+  <ol class="passos">
+    <li>Em <span class="ui">Gestão</span> → <span class="ui">Relatórios</span>, no quadro do Relatório Anual, escolha o exercício e clique em <span class="ui">Editar textos</span>.</li>
+    <li>Escreva as partes analíticas (avaliação do controlador, conclusões, recomendações). Clique em <span class="ui">Salvar textos</span>. Você pode voltar e editar quantas vezes quiser; cada edição fica na trilha.</li>
+    <li>Clique em <span class="ui">Gerar PDF</span>. Os números (demandas, autoavaliação, auditorias, medidas) são buscados no momento da emissão.</li>
+    <li>Revise o PDF, assine conforme o procedimento da entidade e encaminhe dentro dos prazos fixados pelo TCM-BA.</li>
+  </ol>
+  <div class="caixa dica"><strong>Dica</strong>
+    <p>Comece a escrever os textos do relatório anual ao longo do ano (por exemplo, a cada quadrimestre). No fim do exercício, basta revisar e gerar o PDF.</p>
+  </div>
+</section>
+
+<!-- ============================ 13. DADOS EXTERNOS ============================ -->
+<section class="capitulo" id="cap-13">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 13</div>
+    <h1>Dados externos e indicadores fiscais</h1>
+    <p class="resumo">Indicadores do município coletados automaticamente de fontes oficiais, para acompanhar os limites da LRF sem planilhas.</p>
+  </div>
+  <figure>
+    <img src="img/26-dados-externos.png" alt="Dados externos">
+    <figcaption>Dados externos: população, receita corrente líquida, entregas ao SICONFI e despesa com pessoal.</figcaption>
+  </figure>
+  <table>
+    <thead><tr><th style="width:30%">Quadro</th><th>O que mostra</th><th style="width:20%">Fonte</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Indicadores</strong></td><td>População, receita corrente líquida (RCL), entregas pendentes ao SICONFI e DCL/RCL.</td><td>IBGE, SICONFI</td></tr>
+      <tr><td><strong>Despesa com pessoal × limites da LRF</strong></td><td>Despesa total com pessoal sobre a RCL ajustada, com barras de limite de alerta, prudencial e máximo, e o selo da faixa.</td><td>SICONFI (RGF)</td></tr>
+      <tr><td><strong>Entregas ao SICONFI</strong></td><td>Cada demonstrativo, período, prazo e situação (Entregue, Pendente, A vencer).</td><td>SICONFI</td></tr>
+      <tr><td><strong>Endividamento e resultado primário</strong></td><td>Dívida consolidada líquida sobre a RCL (RGF, Anexo 2) e resultado primário (RREO, Anexo 6) comparado à meta da LDO.</td><td>SICONFI</td></tr>
+      <tr><td><strong>Transferências e convênios federais</strong></td><td>Recursos federais recebidos pelo CNPJ da entidade no ano e convênios vigentes no município.</td><td>Portal da Transparência (CGU)</td></tr>
+      <tr><td><strong>Empresas sancionadas (CEIS/CNEP)</strong></td><td>Consulta pelo CNPJ do fornecedor antes de contratar ou pagar. Cada consulta fica na trilha.</td><td>Portal da Transparência (CGU)</td></tr>
+      <tr><td><strong>TCM-BA</strong></td><td>Links para os serviços do Tribunal (abrem em nova aba). O sistema não coleta dados do TCM-BA.</td><td>—</td></tr>
+      <tr><td><strong>Fontes e coletas</strong></td><td>Situação da última sincronização de cada fonte.</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <h2>13.1 Como usar</h2>
+  <ol class="passos">
+    <li>Os dados são atualizados automaticamente todos os dias. Para forçar a atualização, o controlador clica em <span class="ui">Atualizar dados</span>; os cartões se atualizam à medida que cada fonte responde.</li>
+    <li>Confira a faixa da despesa com pessoal. Se estiver em alerta, prudencial ou excedida, clique em <span class="ui">Registrar medida</span> para abrir uma situação já descrita, com os limites e a gravidade sugerida.</li>
+    <li>Em <strong>Entregas ao SICONFI</strong>, use <span class="ui">Registrar medida para as pendências</span> se houver demonstrativos com prazo vencido.</li>
+  </ol>
+  <div class="caixa norma"><strong>Base normativa (LRF — Lei Complementar nº 101/2000)</strong>
+    <ul>
+      <li><strong>Art. 20</strong>: limites da despesa com pessoal por Poder — no município, 54% da RCL para o Executivo e 6% para o Legislativo.</li>
+      <li><strong>Art. 22</strong>: verificação ao final de cada quadrimestre; o parágrafo único estabelece as vedações quando a despesa passa de 95% do limite (limite prudencial).</li>
+      <li><strong>Art. 59, § 1º, II</strong>: o Tribunal de Contas alerta quando a despesa com pessoal ultrapassa 90% do limite (limite de alerta).</li>
+      <li><strong>Art. 54</strong>: o Relatório de Gestão Fiscal (RGF), emitido ao fim de cada quadrimestre, é assinado também pelas autoridades responsáveis pelo controle interno.</li>
+      <li><strong>Art. 59</strong>: o sistema de controle interno de cada Poder participa da fiscalização do cumprimento da LRF.</li>
+    </ul>
+  </div>
+  <div class="caixa atencao"><strong>Atenção</strong>
+    <p>As integrações usam o <strong>código IBGE</strong> do município. Se aparecer “Código IBGE não cadastrado”, peça à HorizonAJ para preenchê-lo. Os números vêm das declarações enviadas pelo próprio município ao SICONFI: se estiverem errados ou ausentes, o problema está na origem (contabilidade), não no sistema.</p>
+  </div>
+</section>
+
+<!-- ============================ 14. TRILHA, CONFIGURAÇÕES, APARÊNCIA ============================ -->
+<section class="capitulo" id="cap-14">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 14</div>
+    <h1>Trilha de auditoria, Configurações e Aparência</h1>
+    <p class="resumo">O histórico permanente da entidade e os ajustes da sua conta.</p>
+  </div>
+  <h2>14.1 Trilha de auditoria</h2>
+  <p>Em <span class="ui">Gestão</span> → <span class="ui">Trilha de auditoria</span> está o registro permanente das operações realizadas na entidade: <strong>Data e hora</strong>, <strong>Usuário</strong>, <strong>Operação</strong> e <strong>Detalhes</strong>. A tela mostra os 200 registros mais recentes e traz o selo <strong>Somente inclusão</strong>: os registros não podem ser alterados nem excluídos por ninguém.</p>
+  <p>Exemplos de operações registradas: acessou a entidade, cadastrou unidade, criou/respondeu/concluiu/devolveu/cancelou demanda, pediu/deferiu/indeferiu prorrogação, enviou lembretes de prazo, registrou/editou/encerrou situação, enviou ou baixou documento, emitiu relatório em PDF, emitiu ofício.</p>
+  <figure>
+    <img src="img/27-trilha.png" alt="Trilha de auditoria">
+    <figcaption>Trilha de auditoria da entidade.</figcaption>
+  </figure>
+  <h2>14.2 Configurações da conta</h2>
+  <p>Menu do usuário → <span class="ui">Configurações</span>. Há três seções:</p>
+  <ul>
+    <li><strong>Perfil</strong>: nome completo, CPF e telefone (opcionais) e o cargo (ex.: Controlador-Geral), que aparece no menu do usuário e vale só para a entidade atual. Clique em <span class="ui">Salvar perfil</span>.</li>
+    <li><strong>E-mail de acesso</strong>: o e-mail é o seu login. Informe o novo e-mail e a senha atual e clique em <span class="ui">Alterar e-mail</span>. Depois, entre com o novo endereço.</li>
+    <li><strong>Alterar senha</strong>: senha atual, nova senha (ao menos 10 caracteres, diferente da atual) e confirmação. Após 5 tentativas com a senha atual incorreta, novas tentativas ficam bloqueadas por 15 minutos.</li>
+  </ul>
+  <p>A seção <strong>Inteligência artificial</strong> apenas informa se a IA está habilitada; a configuração é feita pela HorizonAJ.</p>
+  <figure>
+    <img src="img/28-configuracoes.png" alt="Configurações">
+    <figcaption>Configurações da conta.</figcaption>
+  </figure>
+  <h2>14.3 Aparência</h2>
+  <p>Em <span class="ui">Gestão</span> → <span class="ui">Aparência</span>, o controlador escolhe a identidade visual (cores) usada por todos os usuários da entidade e confirma em <span class="ui">Aplicar à entidade</span>. É apenas estética: não muda dados nem permissões.</p>
+</section>
+
+<!-- ============================ 15. ROTINAS ============================ -->
+<section class="capitulo" id="cap-15">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 15</div>
+    <h1>Rotinas recomendadas</h1>
+    <p class="resumo">Uma agenda prática para manter o controle interno em dia sem sobrecarga.</p>
+  </div>
+  <table>
+    <thead><tr><th style="width:17%">Quando</th><th>O que fazer no sistema</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Todo dia</strong><br><span class="nota">10 a 15 min</span></td><td>
+        <ul>
+          <li>Abrir o <span class="ui">Painel</span> e olhar <strong>Respostas a analisar</strong> e <strong>Demandas vencidas</strong>.</li>
+          <li>Analisar as respostas: aceitar e concluir ou devolver com orientação clara.</li>
+          <li>Decidir os pedidos de prorrogação pendentes.</li>
+          <li>Ler o e-mail de resumo das demandas vencidas.</li>
+        </ul></td></tr>
+      <tr><td><strong>Toda semana</strong></td><td>
+        <ul>
+          <li>Em <span class="ui">Demandas</span>, filtrar <span class="ui">Só vencidas</span> e cobrar as unidades (comentário visível para a unidade ou ofício em PDF).</li>
+          <li>Nos <span class="ui">Planos de ação</span>, filtrar ações <strong>Vencidas</strong> e <strong>Aguardando validação</strong>; validar o que estiver comprovado.</li>
+          <li>Revisar as <span class="ui">Sugestões da IA</span> pendentes.</li>
+          <li>Conferir as medidas críticas e altas em aberto.</li>
+          <li>Avançar as respostas do ciclo de autoavaliação.</li>
+        </ul></td></tr>
+      <tr><td><strong>Todo mês</strong></td><td>
+        <ul>
+          <li>Abrir <span class="ui">Dados externos</span>: despesa com pessoal, entregas ao SICONFI, endividamento. Registrar medida se houver alerta ou pendência.</li>
+          <li>Emitir o relatório de <strong>Demandas</strong> do mês e o <strong>Painel de medidas</strong> para acompanhamento interno.</li>
+          <li>Conferir a execução do PAAI: auditorias que deveriam ter começado e ainda não foram iniciadas.</li>
+          <li>Conferir se a lista de unidades e responsáveis continua atualizada.</li>
+        </ul></td></tr>
+      <tr><td><strong>A cada quadrimestre</strong></td><td>
+        <ul>
+          <li>Acompanhar o RGF do quadrimestre (LRF, art. 54, assinado também pelo controle interno) e a verificação dos limites de despesa com pessoal (art. 22).</li>
+          <li>Se houver extrapolação de alerta ou prudencial, registrar medida, criar plano de ação e enviar demandas às unidades responsáveis.</li>
+          <li>Atualizar os textos do Relatório Anual com os fatos do período.</li>
+        </ul></td></tr>
+      <tr><td><strong>Todo ano</strong></td><td>
+        <ul>
+          <li>Concluir o ciclo de autoavaliação do exercício e abrir o do exercício seguinte (a aba <span class="ui">Evolução</span> mostrará a comparação).</li>
+          <li>Emitir o <strong>Relatório Anual de Controle Interno</strong> e encaminhá-lo nos prazos fixados pelo TCM-BA.</li>
+          <li>Elaborar e aprovar o <strong>PAAI</strong> do ano seguinte, priorizado por risco.</li>
+          <li>Encerrar auditorias concluídas e verificar o monitoramento das recomendações.</li>
+          <li>Revisar a lista de usuários com a HorizonAJ (servidores que saíram ou mudaram de unidade).</li>
+        </ul></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================ 16. FAQ ============================ -->
+<section class="capitulo faq" id="cap-16">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 16</div>
+    <h1>Perguntas frequentes</h1>
+    <p class="resumo">Respostas rápidas para as dúvidas mais comuns.</p>
+  </div>
+
+  <h3>Esqueci a senha. O que faço?</h3>
+  <p>O sistema não tem recuperação automática de senha. Peça ao suporte da HorizonAJ a redefinição. Ao entrar com a senha provisória, troque-a em <span class="ui">Configurações</span> → <span class="ui">Alterar senha</span>. Se aparecer “Muitas tentativas”, aguarde alguns minutos antes de tentar de novo.</p>
+
+  <h3>O servidor da secretaria diz que não vê a demanda.</h3>
+  <ul>
+    <li>Confira na demanda a <strong>Unidade destinatária</strong>: ele só vê demandas da(s) unidade(s) a que o acesso dele está vinculado.</li>
+    <li>Confira se ele está na <strong>entidade certa</strong> (Prefeitura ou Câmara) e usando o e-mail cadastrado.</li>
+    <li>Se o vínculo estiver errado ou ele mudou de setor, peça à HorizonAJ para ajustar o acesso.</li>
+    <li>Se a demanda foi enviada à unidade errada, cancele-a (com motivo) e envie uma nova à unidade correta.</li>
+  </ul>
+
+  <h3>O prazo venceu. E agora?</h3>
+  <p>A demanda continua aberta e passa a contar como <strong>vencida</strong>; a unidade ainda pode responder. Você pode: cobrar com um comentário <strong>visível para a unidade</strong>; emitir o <strong>ofício em PDF</strong>; deferir uma prorrogação, se a unidade pedir; ou, se a resposta veio incompleta, devolver com novo prazo. Demandas vencidas aparecem no relatório de Demandas, o que ajuda a documentar a falta de colaboração.</p>
+
+  <h3>Registrei algo errado. Como corrijo?</h3>
+  <p>A trilha de auditoria é permanente: nada é apagado. A correção é sempre um novo registro:</p>
+  <ul>
+    <li><strong>Demanda</strong> enviada errada: cancele (com motivo) e crie outra. Uma observação pode ser feita por comentário.</li>
+    <li><strong>Resposta da autoavaliação</strong>: edite e salve enquanto o ciclo não estiver concluído. Ciclo concluído fica congelado; registre a correção no ciclo seguinte.</li>
+    <li><strong>Situação (medida)</strong> ou <strong>auditoria</strong>: use <span class="ui">Editar</span> ou <span class="ui">Editar planejamento</span>; a alteração fica no histórico.</li>
+    <li><strong>Ação de plano</strong>: edite a ação ou devolva-a na validação.</li>
+  </ul>
+
+  <h3>A unidade pode ver comentários internos ou papéis de trabalho de auditoria?</h3>
+  <p>Não. Comentários só aparecem para a unidade se você marcar <span class="ui">Visível para a unidade destinatária</span>. Na auditoria, a unidade vê apenas as solicitações enviadas a ela.</p>
+
+  <h3>Quem vê o nome de quem fez uma denúncia sigilosa?</h3>
+  <p>Somente o perfil Controlador. A equipe de controle vê a situação, mas não a identidade do denunciante.</p>
+
+  <h3>Como trabalho com a Prefeitura e a Câmara ao mesmo tempo?</h3>
+  <p>Use o botão com o nome da entidade no topo da tela e escolha a outra em <span class="ui">Trocar entidade</span>. Os dados nunca se misturam.</p>
+
+  <h3>As unidades não estão recebendo e-mails.</h3>
+  <p>Peça que verifiquem a caixa de spam e confirmem o e-mail cadastrado. Lembre que o aviso é um apoio: a demanda está sempre disponível em <span class="ui">Minhas demandas</span>. Persistindo o problema, acione o suporte.</p>
+
+  <h3>Posso confiar na resposta da IA?</h3>
+  <p>Use-a como ponto de partida. Confira as citações no documento antes de aceitar. Nada é aplicado sem a sua revisão, e a responsabilidade pela avaliação é do controlador.</p>
+
+  <h3>Como incluo uma nova norma ou altero um requisito?</h3>
+  <p>Os catálogos de normas são mantidos pela HorizonAJ. Envie a sugestão ao suporte.</p>
+
+  <h3>Como cadastro um novo usuário da controladoria ou de uma secretaria?</h3>
+  <p>Envie ao suporte da HorizonAJ: nome, e-mail, cargo, entidade, perfil (Controlador, Equipe de controle ou Acesso restrito) e, para acesso restrito, a unidade.</p>
+</section>
+
+<!-- ============================ 17. GLOSSÁRIO ============================ -->
+<section class="capitulo" id="cap-17">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 17</div>
+    <h1>Glossário</h1>
+    <p class="resumo">Os termos usados no sistema, em poucas palavras.</p>
+  </div>
+  <div class="duas glossario">
+    <dl>
+      <dt>Acesso restrito (satélite)</dt><dd>Perfil dos servidores das unidades; só vê as demandas da própria unidade.</dd>
+      <dt>Achado</dt><dd>Constatação de auditoria descrita por condição, critério, causa e efeito.</dd>
+      <dt>Alcance</dt><dd>Abrangência de um ciclo ou auditoria: entidade inteira ou uma unidade.</dd>
+      <dt>Checklist</dt><dd>Lista de itens a verificar na execução da auditoria, copiada de um modelo.</dd>
+      <dt>Ciclo de autoavaliação</dt><dd>Rodada de avaliação de uma norma em um período; ao ser concluído, fica congelado.</dd>
+      <dt>Conformidade</dt><dd>Percentual ponderado de atendimento aos requisitos avaliados.</dd>
+      <dt>Demanda</dt><dd>Solicitação formal da controladoria a uma unidade, com prazo e histórico.</dd>
+      <dt>Denúncia sigilosa</dt><dd>Situação cuja identidade do denunciante só o controlador vê.</dd>
+      <dt>DCL / RCL</dt><dd>Dívida consolidada líquida sobre a receita corrente líquida.</dd>
+      <dt>Entidade</dt><dd>Órgão controlado (Prefeitura, Câmara, autarquia…); cada uma só vê os próprios dados.</dd>
+      <dt>Evidência</dt><dd>Documento, ato ou registro que comprova o atendimento de um requisito ou a execução de uma ação.</dd>
+      <dt>Gravidade</dt><dd>Probabilidade × impacto (1 a 25): baixo, médio, alto ou crítico.</dd>
+      <dt>Lacuna</dt><dd>Requisito “Não atende” ou “Atende parcialmente”; vira ação no plano.</dd>
+      <dt>LRF</dt><dd>Lei de Responsabilidade Fiscal (Lei Complementar nº 101/2000).</dd>
+    </dl>
+    <dl>
+      <dt>Macrofunção</dt><dd>Área do controle interno (controladoria, auditoria interna, corregedoria, ouvidoria) ou área controlada (pessoal, licitações, obras…).</dd>
+      <dt>Marco</dt><dd>Etapa com prazo dentro de uma ação de plano.</dd>
+      <dt>Matriz de planejamento</dt><dd>Questões de auditoria com informações requeridas, fontes e procedimentos.</dd>
+      <dt>Medida (situação)</dt><dd>Fato que exige intervenção, tratado com plano de ação até ser resolvido ou arquivado.</dd>
+      <dt>Ofício</dt><dd>Documento formal em PDF gerado a partir de uma demanda.</dd>
+      <dt>PAAI</dt><dd>Plano Anual de Auditoria Interna, priorizado por risco e aprovado pelo controlador.</dd>
+      <dt>Papéis de trabalho</dt><dd>Documentos da auditoria visíveis só para a controladoria.</dd>
+      <dt>Peso</dt><dd>Importância do requisito no cálculo da conformidade (padrão 1).</dd>
+      <dt>Plano de ação 5W2H</dt><dd>Conjunto de ações descritas por o quê, por quê, onde, quem, quando, como e quanto.</dd>
+      <dt>Prorrogação</dt><dd>Pedido da unidade por mais prazo, deferido ou indeferido pela controladoria.</dd>
+      <dt>RCL</dt><dd>Receita corrente líquida, base dos limites da LRF.</dd>
+      <dt>RGF / RREO</dt><dd>Relatório de Gestão Fiscal (quadrimestral) e Relatório Resumido da Execução Orçamentária (bimestral).</dd>
+      <dt>SICONFI</dt><dd>Sistema do Tesouro Nacional que recebe as declarações fiscais dos municípios.</dd>
+      <dt>Trâmite</dt><dd>Cada movimentação de uma demanda (envio, resposta, devolução, comentário…).</dd>
+      <dt>Trilha de auditoria</dt><dd>Registro permanente, que não pode ser alterado, de todas as operações.</dd>
+      <dt>Unidade</dt><dd>Secretaria, departamento, divisão ou setor da entidade.</dd>
+      <dt>Validação</dt><dd>Decisão do controlador que conclui (ou devolve) uma ação de plano.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================ 18. SUPORTE ============================ -->
+<section class="capitulo" id="cap-18">
+  <div class="cab-cap">
+    <div class="olho">Capítulo 18</div>
+    <h1>Suporte</h1>
+    <p class="resumo">A quem pedir ajuda e como agilizar o atendimento.</p>
+  </div>
+  <p>O suporte do Sistema de Controladoria Municipal é prestado pela <strong>HorizonAJ</strong>, pelos canais informados no contrato e na implantação. Procure o suporte para:</p>
+  <ul>
+    <li>criar, desativar ou alterar usuários e seus vínculos (perfil, entidade e unidade);</li>
+    <li>redefinir senha esquecida;</li>
+    <li>ajustar o cadastro da entidade (nome, CNPJ, código IBGE, brasão) e o link do município;</li>
+    <li>configurar ou ajustar a inteligência artificial;</li>
+    <li>sugerir novas normas, requisitos ou relatórios;</li>
+    <li>relatar erros ou comportamentos inesperados.</li>
+  </ul>
+  <h2>O que informar ao pedir ajuda</h2>
+  <ol class="passos">
+    <li>Seu nome, a entidade (Prefeitura, Câmara…) e o município.</li>
+    <li>A tela em que estava (o nome no menu) e o que tentou fazer.</li>
+    <li>A mensagem que apareceu, copiada exatamente, ou uma captura de tela.</li>
+    <li>O número da demanda, auditoria ou situação envolvida (ex.: 012/2026), se houver.</li>
+  </ol>
+  <div class="caixa atencao"><strong>Segurança</strong>
+    <p>A HorizonAJ nunca pede a sua senha. Não compartilhe sua conta: cada pessoa deve ter o próprio acesso, porque tudo o que é feito fica registrado em seu nome na trilha de auditoria.</p>
+  </div>
+  <p style="margin-top:14mm; text-align:center; color:var(--suave)">HorizonAJ · Sistema de Controladoria Municipal · Manual do Controlador · versão 1.0 · outubro de 2026</p>
+</section>
+
+</body>
+</html>

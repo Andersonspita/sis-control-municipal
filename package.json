@@ -27,6 +27,7 @@
     "usuario:criar": "tsx scripts/criar-usuario.ts",
     "demo:popular": "tsx scripts/popular-demo.ts",
     "docs:propostas": "tsx scripts/gerar-pdf-propostas.ts",
+    "manual:pdf": "tsx scripts/manual/gerar-pdf.ts",
     "test:e2e": "tsx scripts/e2e-smoke.ts",
     "test:e2e:demandas": "tsx scripts/e2e-demandas.ts",
     "test:emails": "tsx scripts/testar-emails.ts",
