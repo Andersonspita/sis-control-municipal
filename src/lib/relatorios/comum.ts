@@ -14,7 +14,7 @@ import { gerarPdf } from "@/lib/pdf/navegador";
 
 export type ContextoRelatorio = ContextoCliente & { usuarioNome: string };
 
-export type TipoRelatorio = "autoavaliacao" | "demandas" | "medidas" | "auditoria" | "anual" | "oficio";
+export type TipoRelatorio = "autoavaliacao" | "demandas" | "alertas" | "auditoria" | "anual" | "oficio";
 
 export type RelatorioMontado = {
   tipo: TipoRelatorio;

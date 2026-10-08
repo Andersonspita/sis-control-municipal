@@ -3,12 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ClipboardList, EyeOff, History, Paperclip } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
-import { carregarSituacao, numeroSituacao } from "@/lib/dados/medidas";
+import { carregarSituacao, numeroSituacao } from "@/lib/dados/alertas";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Evidencias } from "@/components/anexos/evidencias";
-import { SeloGravidade, SeloStatusSituacao } from "@/components/medidas/selos";
+import { SeloGravidade, SeloStatusSituacao } from "@/components/alertas/selos";
 import { SeloStatusPlano, SeloVencida } from "@/components/selos-status";
 import { formatarDataHora } from "@/lib/datas";
 import { IMPACTO, PROBABILIDADE } from "@/lib/risco";
@@ -64,7 +64,7 @@ function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode
   );
 }
 
-export default async function DetalheSituacao({ params }: PageProps<"/medidas/[id]">) {
+export default async function DetalheSituacao({ params }: PageProps<"/alertas/[id]">) {
   const ctx = await exigirContexto(PERFIS_CONTROLE);
   const dados = await carregarSituacao(ctx, (await params).id);
   if (!dados) notFound();
@@ -74,8 +74,8 @@ export default async function DetalheSituacao({ params }: PageProps<"/medidas/[i
 
   return (
     <>
-      <Link href="/medidas" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft aria-hidden="true" className="size-4" /> Medidas
+      <Link href="/alertas" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft aria-hidden="true" className="size-4" /> Alertas
       </Link>
       <CabecalhoPagina
         titulo={s.titulo}

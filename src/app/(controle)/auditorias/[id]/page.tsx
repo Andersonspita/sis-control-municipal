@@ -11,7 +11,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Evidencias } from "@/components/anexos/evidencias";
 import { ListaAnexos } from "@/components/anexos/lista-anexos";
-import { SeloGravidade } from "@/components/medidas/selos";
+import { SeloGravidade } from "@/components/alertas/selos";
 import { SeloStatusAcao, SeloStatusPlano, SeloVencida } from "@/components/selos-status";
 import { SituacaoDemanda } from "@/components/demandas/situacao";
 import { SeloResultadoItem, SeloStatusAuditoria } from "@/components/auditorias/selos";

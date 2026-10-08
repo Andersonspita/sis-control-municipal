@@ -98,6 +98,7 @@ model Cliente {
   analisesIA         AnaliseIA[]
   sugestoesIA        SugestaoIA[]
   relatoriosAnuais RelatorioAnual[]
+  modeloRelatorioAnual ModeloRelatorioAnual?
   coletasIntegracao ColetaIntegracao[]
 
   @@index([municipioId])
@@ -115,6 +116,8 @@ model Usuario {
   adminHorizon  Boolean   @default(false) @map("admin_horizon")
   ativo         Boolean   @default(true)
   ultimoAcessoEm DateTime? @map("ultimo_acesso_em") @db.Timestamptz(3)
+  /// Preferências de exibição (blocos do painel, seções recolhidas). Formato em src/lib/preferencias-esquema.ts.
+  preferencias  Json      @default("{}")
   criadoEm      DateTime  @default(now()) @map("criado_em") @db.Timestamptz(3)
   atualizadoEm  DateTime  @updatedAt @map("atualizado_em") @db.Timestamptz(3)
 
@@ -964,6 +967,21 @@ model RelatorioAnual {
 
   @@unique([clienteId, ano])
   @@map("relatorios_anuais")
+}
+
+/// Texto padrão do Relatório Anual, válido para todos os exercícios do cliente.
+/// Seções não preenchidas aqui usam o texto-base do sistema (src/lib/relatorios/anual-padrao.ts).
+model ModeloRelatorioAnual {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  clienteId       String   @unique @map("cliente_id") @db.Uuid
+  secoes          Json     @default("{}")
+  atualizadoPorId String?  @map("atualizado_por_id") @db.Uuid
+  criadoEm        DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm    DateTime @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@map("modelos_relatorio_anual")
 }
 
 // ───────────────────────── Integrações com APIs públicas ─────────────────────────

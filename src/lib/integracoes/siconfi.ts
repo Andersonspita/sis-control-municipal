@@ -297,24 +297,39 @@ export async function coletarSiconfi(
       dados.pessoal = { valor: a1.dtp, percentual: a1.percentual, faixa: faixaPessoal(a1.percentual, poder), referencia };
     } else avisos.push(`O ${referencia} não trouxe a despesa total com pessoal.`);
 
-    if (poder === "E") {
-      const a2 = interpretarRgfAnexo02(await demonstrativo("rgf", { ...base, no_anexo: "RGF-Anexo 02" }, ["RGF", "RGF Simplificado"], opcoes));
-      if (a2 && (a2.consolidada !== null || a2.consolidadaLiquida !== null)) dados.divida = { ...a2, referencia };
-    }
   } else avisos.push("Nenhum RGF entregue no exercício atual nem no anterior.");
 
-  if (poder === "E") {
-    const rreo = entreguesDe(proprias, "RREO")[0];
+  // Dívida consolidada e resultado primário são indicadores do ente, publicados pelo Executivo:
+  // a Câmara também os acompanha, lidos dos demonstrativos da Prefeitura.
+  const executivo = poder === "E" ? proprias : daInstituicao(entregues, "E");
+  const sufixo = poder === "E" ? "" : " — Executivo municipal";
+  const rgfExecutivo = entreguesDe(executivo, "RGF")[0];
+  if (rgfExecutivo) {
+    const base = {
+      an_exercicio: rgfExecutivo.exercicio,
+      in_periodicidade: rgfExecutivo.periodicidade,
+      nr_periodo: rgfExecutivo.periodo,
+      co_esfera: "M",
+      co_poder: "E",
+      id_ente: codigoIbge,
+    };
+    const referencia = `RGF ${rotuloPeriodo(rgfExecutivo.periodicidade, rgfExecutivo.periodo, rgfExecutivo.exercicio)}${sufixo}`;
+    const a2 = interpretarRgfAnexo02(await demonstrativo("rgf", { ...base, no_anexo: "RGF-Anexo 02" }, ["RGF", "RGF Simplificado"], opcoes));
+    if (a2 && (a2.consolidada !== null || a2.consolidadaLiquida !== null)) dados.divida = { ...a2, referencia };
+  }
+
+  {
+    const rreo = entreguesDe(executivo, "RREO")[0];
     if (rreo) {
       const base = { an_exercicio: rreo.exercicio, nr_periodo: rreo.periodo, co_esfera: "M", id_ente: codigoIbge };
-      const referencia = `RREO ${rotuloPeriodo("B", rreo.periodo, rreo.exercicio)}`;
+      const referencia = `RREO ${rotuloPeriodo("B", rreo.periodo, rreo.exercicio)}${sufixo}`;
       const a6 = interpretarRreoAnexo06(await demonstrativo("rreo", { ...base, no_anexo: "RREO-Anexo 06" }, ["RREO", "RREO Simplificado"], opcoes));
       if (a6) dados.resultadoPrimario = { ...a6, referencia };
-      if (!dados.rcl) {
+      if (!dados.rcl && poder === "E") {
         const a3 = interpretarRreoAnexo03(await demonstrativo("rreo", { ...base, no_anexo: "RREO-Anexo 03" }, ["RREO", "RREO Simplificado"], opcoes));
         if (a3.rcl !== null) dados.rcl = { valor: a3.rcl, ajustadaPessoal: a3.rclAjustadaPessoal, referencia };
       }
-    } else avisos.push("Nenhum RREO entregue no exercício atual nem no anterior.");
+    } else if (poder === "E") avisos.push("Nenhum RREO entregue no exercício atual nem no anterior.");
   }
   return dados;
 }

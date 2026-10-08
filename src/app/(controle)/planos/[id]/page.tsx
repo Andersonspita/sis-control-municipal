@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AlarmClock, ArrowLeft, CircleCheck, ClipboardCheck, Hourglass, ListTodo, Siren } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { carregarPlano } from "@/lib/dados/planos";
-import { numeroSituacao } from "@/lib/dados/medidas";
+import { numeroSituacao } from "@/lib/dados/alertas";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -86,7 +86,7 @@ export default async function DetalhePlano({ params }: PageProps<"/planos/[id]">
             </Link>
           )}
           {plano.situacao && (
-            <Link href={`/medidas/${plano.situacao.id}`} className="flex w-fit items-center gap-1.5 font-medium text-primary hover:underline">
+            <Link href={`/alertas/${plano.situacao.id}`} className="flex w-fit items-center gap-1.5 font-medium text-primary hover:underline">
               <Siren aria-hidden="true" className="size-4" />
               Situação de origem: <span className="font-mono">{numeroSituacao(plano.situacao.numero, plano.situacao.ano)}</span> ·{" "}
               {plano.situacao.titulo}

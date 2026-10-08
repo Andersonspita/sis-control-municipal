@@ -174,8 +174,8 @@ export default async function Documentos(props: PageProps<"/documentos">) {
                                 Ação: {d.acao.oQue}
                               </span>
                             ) : d.situacao ? (
-                              <Link href={`/medidas/${d.situacao.id}`} className="underline-offset-4 hover:underline" title={d.situacao.titulo}>
-                                Medida <span className="font-mono text-xs font-semibold">{numeroDemanda(d.situacao.numero, d.situacao.ano)}</span>
+                              <Link href={`/alertas/${d.situacao.id}`} className="underline-offset-4 hover:underline" title={d.situacao.titulo}>
+                                Alerta <span className="font-mono text-xs font-semibold">{numeroDemanda(d.situacao.numero, d.situacao.ano)}</span>
                               </Link>
                             ) : (
                               <span className="text-muted-foreground">Avulso</span>

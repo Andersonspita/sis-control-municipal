@@ -1,7 +1,7 @@
 /**
  * Classificação de risco por probabilidade (1 a 5) × impacto (1 a 5):
  * 15 ou mais é crítico, de 10 a 14 é alto, de 6 a 9 é médio e abaixo de 6 é baixo.
- * Vale para riscos e para a gravidade das Medidas.
+ * Vale para riscos e para a gravidade dos Alertas.
  */
 
 export type NivelRisco = "CRITICO" | "ALTO" | "MEDIO" | "BAIXO";

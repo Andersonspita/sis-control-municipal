@@ -22,6 +22,8 @@ import {
   resumirRecursos,
 } from "../src/lib/integracoes/portal-transparencia";
 import { linksTcmBa } from "../src/lib/integracoes/tcmba";
+import { calcularAlertasFiscais } from "../src/lib/integracoes/alertas-fiscais";
+import type { DadosSiconfi } from "../src/lib/integracoes/tipos";
 
 // Testes das integrações com APIs públicas.
 //   npm run test:integracoes             → só respostas simuladas (parsing, prazos, limites da LRF, paginação, erros)
@@ -236,6 +238,51 @@ async function simulados() {
   await caso("SICONFI: ente sem nenhuma entrega devolve null", async () => {
     const { buscador } = simulado([]);
     assert.equal(await coletarSiconfi("2900108", "E", { buscador, hoje: "2026-10-05", pausaMs: 0 }), null);
+  });
+
+  await caso("SICONFI: Câmara também recebe dívida consolidada e resultado primário do Executivo", async () => {
+    const { buscador, pedidas } = simulado([
+      ["extrato_entregas", (u) => json({ items: ENTREGUES.filter((e) => String(e.exercicio) === u.searchParams.get("an_referencia")), hasMore: false })],
+      ["RGF-Anexo+01", () => json({ items: [linha("DespesaComPessoalTotal", "Valor", 600000, CAM), linha("DespesaComPessoalTotal", "% sobre a RCL Ajustada", 2.5, CAM)], hasMore: false })],
+      ["RGF-Anexo+02", () => json({ items: RGF_A2, hasMore: false })],
+      ["RREO-Anexo+06", () => json({ items: RREO_A6, hasMore: false })],
+    ]);
+    const d = await coletarSiconfi("2900108", "L", { buscador, hoje: "2026-10-05", pausaMs: 0 });
+    assert.equal(d?.pessoal?.faixa, "REGULAR");
+    assert.equal(d?.divida?.percentualDcl, 38.51);
+    assert.equal(d?.divida?.referencia, "RGF 1º quadrimestre/2026 — Executivo municipal");
+    assert.equal(d?.resultadoPrimario?.valor, 3217020.39);
+    assert.ok(pedidas.some((p) => p.includes("RGF-Anexo+02") && p.includes("co_poder=E")));
+    assert.ok(pedidas.some((p) => p.includes("RGF-Anexo+01") && p.includes("co_poder=L")));
+  });
+
+  await caso("Alertas fiscais: folha acima do prudencial, DCL em alerta e entregas vencidas, do mais grave ao menos grave", () => {
+    const base: DadosSiconfi = {
+      exercicio: 2026,
+      poder: "E",
+      instituicao: PREF,
+      rcl: null,
+      pessoal: { valor: 1, percentual: 52, faixa: "PRUDENCIAL", referencia: "RGF 1º quadrimestre/2026" },
+      divida: { consolidada: 1, consolidadaLiquida: 1, percentualDcl: 110, referencia: "RGF 1º quadrimestre/2026" },
+      resultadoPrimario: null,
+      entregas: calcularEntregas(ENTREGUES, "E", "2026-10-05", [2025, 2026]),
+      avisos: [],
+    };
+    const agora = new Date("2026-10-05T12:00:00Z");
+    const coleta = { dados: base, erro: null, travada: false, coletadoEm: agora };
+    const a = calcularAlertasFiscais({ entidade: "Prefeitura", codigoIbge: "2900108", siconfi: coleta, agora });
+    assert.deepEqual(
+      a.map((x) => `${x.id}:${x.nivel}`),
+      ["pessoal:PRUDENCIAL", "divida:ALERTA", ...(base.entregas.some((e) => e.situacao === "PENDENTE") ? ["entregas:" + a.find((x) => x.id === "entregas")!.nivel] : [])].sort(
+        (x, y) => ["EXCEDIDO", "PRUDENCIAL", "ALERTA", "INFO"].indexOf(x.split(":")[1]) - ["EXCEDIDO", "PRUDENCIAL", "ALERTA", "INFO"].indexOf(y.split(":")[1]),
+      ),
+    );
+    assert.ok(a.find((x) => x.id === "pessoal")!.registrar!.startsWith("/alertas/nova?origem=ALERTA"));
+    const regular = { ...base, pessoal: { ...base.pessoal!, percentual: 40, faixa: "REGULAR" as const }, divida: { ...base.divida!, percentualDcl: 30 }, entregas: [] };
+    assert.deepEqual(calcularAlertasFiscais({ entidade: "P", codigoIbge: "1", siconfi: { ...coleta, dados: regular }, agora }), []);
+    const antiga = new Date("2026-08-01T00:00:00Z");
+    assert.equal(calcularAlertasFiscais({ entidade: "P", codigoIbge: "1", siconfi: { ...coleta, dados: regular, coletadoEm: antiga }, agora })[0]?.id, "coleta");
+    assert.equal(calcularAlertasFiscais({ entidade: "P", codigoIbge: null, siconfi: null, agora })[0]?.titulo, "Código IBGE não cadastrado");
   });
 
   await caso("SICONFI: tenta o RGF Simplificado quando o completo vem vazio", async () => {

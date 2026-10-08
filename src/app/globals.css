@@ -390,3 +390,12 @@
     @apply font-heading;
   }
 }
+
+/* Áreas que podem rolar (menu em telas baixas) sem exibir a barra de rolagem em nenhum tema. */
+@utility sem-barra-rolagem {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

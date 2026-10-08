@@ -19,6 +19,8 @@ async function entrar(page: Page, email: string) {
   await page.getByLabel("Senha").fill(SENHA);
   await page.getByRole("button", { name: "Entrar" }).click();
   await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 });
+  // O login passa por /painel antes do redirecionamento final (seleção de entidade ou satélite).
+  await page.waitForLoadState("networkidle");
 }
 
 async function sair(page: Page) {
@@ -82,6 +84,7 @@ async function main() {
     await sair(page);
 
     await entrar(page, "saude@exemplo.ba.gov.br");
+    await page.waitForURL(/\/satelite/, { timeout: 60_000 }).catch(() => {});
     conferir("satélite cai direto em /satelite", page.url().includes("/satelite"));
     const texto = await page.locator("main").innerText();
     conferir("satélite vê a demanda da regulação", texto.includes("Lista de espera da regulação"));

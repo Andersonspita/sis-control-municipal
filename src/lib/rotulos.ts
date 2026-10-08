@@ -109,7 +109,7 @@ export const STATUS_CICLO: Record<StatusCiclo, string> = {
 export const ORIGEM_PLANO: Record<OrigemPlano, string> = {
   REQUISITO: "Autoavaliação",
   AUDITORIA: "Auditoria",
-  MEDIDA: "Medida",
+  MEDIDA: "Alerta",
   DETERMINACAO_TC: "Determinação do TC",
   OUTRA: "Outra",
 };
@@ -117,7 +117,7 @@ export const ORIGEM_PLANO: Record<OrigemPlano, string> = {
 export const ORIGEM_SITUACAO: Record<OrigemSituacao, string> = {
   CONSTATACAO: "Constatação",
   DENUNCIA: "Denúncia",
-  ALERTA: "Alerta",
+  ALERTA: "Alerta automático (LRF/SICONFI)",
   ANALISE_IA: "Análise da IA",
   DEMANDA_EXTERNA: "Demanda externa",
 };

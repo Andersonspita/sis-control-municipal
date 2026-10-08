@@ -7,7 +7,7 @@ import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { comCliente, type Tx } from "@/lib/db";
 import { registrarLog } from "@/lib/auditoria";
 import { arquivosDoFormulario, comArquivos, registrarDocumentos } from "@/lib/documentos";
-import { numeroSituacao } from "@/lib/dados/medidas";
+import { numeroSituacao } from "@/lib/dados/alertas";
 import { ErroNegocio, mensagemDeErro } from "@/lib/erros";
 import { classificarRisco } from "@/lib/risco";
 import type { EstadoAcao } from "@/lib/acoes";
@@ -46,8 +46,8 @@ async function conferirUnidade(tx: Tx, unidadeId: string | null) {
 }
 
 function revalidarSituacao(id: string) {
-  revalidatePath(`/medidas/${id}`);
-  revalidatePath("/medidas");
+  revalidatePath(`/alertas/${id}`);
+  revalidatePath("/alertas");
 }
 
 export async function criarSituacao(_: EstadoAcao, formData: FormData): Promise<EstadoAcao> {
@@ -96,8 +96,8 @@ export async function criarSituacao(_: EstadoAcao, formData: FormData): Promise<
     return { erro: mensagemDeErro(err) };
   }
 
-  revalidatePath("/medidas");
-  redirect(`/medidas/${id}`);
+  revalidatePath("/alertas");
+  redirect(`/alertas/${id}`);
 }
 
 const CAMPOS_COMPARADOS = ["titulo", "origem", "unidadeId", "probabilidade", "impacto", "sigilosa"] as const;
@@ -231,7 +231,7 @@ export async function criarPlanoDaSituacao(situacaoId: string): Promise<EstadoAc
         throw new ErroNegocio("Situação encerrada: reabra-a para criar o plano de ação.");
       }
 
-      const titulo = `Medida ${numeroSituacao(situacao.numero, situacao.ano)} — ${situacao.titulo}`.slice(0, 200);
+      const titulo = `Alerta ${numeroSituacao(situacao.numero, situacao.ano)} — ${situacao.titulo}`.slice(0, 200);
       const plano = await tx.planoAcao.create({
         data: {
           clienteId: ctx.clienteId,

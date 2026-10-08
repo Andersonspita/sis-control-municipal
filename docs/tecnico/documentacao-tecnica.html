@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Documentação Técnica — Sistema de Controladoria Municipal</title>
+<style>
+  @page {
+    size: A4;
+    margin: 22mm 16mm 18mm 16mm;
+    @top-left { content: "Documentação Técnica · Sistema de Controladoria Municipal"; font: 600 7.5pt "Segoe UI", Arial, sans-serif; color: #2f4f7a; vertical-align: bottom; padding-bottom: 1.5mm; margin-bottom: 5mm; border-bottom: .8pt solid #2f4f7a; }
+    @top-right { content: "HorizonAJ · v1.1"; font: 700 7.5pt "Segoe UI", Arial, sans-serif; color: #2f4f7a; vertical-align: bottom; padding-bottom: 1.5mm; margin-bottom: 5mm; border-bottom: .8pt solid #2f4f7a; }
+    @bottom-left { content: "Uso interno — equipe de desenvolvimento"; font: 7.5pt "Segoe UI", Arial, sans-serif; color: #6b6f75; }
+    @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 7.5pt "Segoe UI", Arial, sans-serif; color: #6b6f75; }
+  }
+  @page :first { margin: 0; @top-left { content: none; border: 0; } @top-right { content: none; border: 0; } @bottom-left { content: none; } @bottom-right { content: none; } }
+  :root { --azul: #2f4f7a; --azul-escuro: #1f3656; --azul-claro: #eaf0f7; --texto: #1f2328; --suave: #5b6168; --linha: #d6dbe1; --fundo: #f6f7f9; --verde: #2e6b47; --verde-claro: #e7f2eb; --ambar: #8a5a00; --ambar-claro: #fcf3e2; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; font-size: 9.8pt; line-height: 1.5; color: var(--texto); }
+  p { margin: 0 0 6pt; orphans: 3; widows: 3; }
+  code, pre { font-family: Consolas, "Cascadia Mono", monospace; font-size: 8.6pt; }
+  code { background: var(--fundo); border: 1px solid var(--linha); border-radius: 3px; padding: 0 3px; }
+  pre { background: #10233d; color: #e6edf6; border-radius: 6px; padding: 8pt 10pt; white-space: pre-wrap; break-inside: avoid; margin: 4pt 0 8pt; }
+  pre code { background: none; border: 0; padding: 0; color: inherit; }
+  h1 { font-size: 19pt; color: var(--azul-escuro); margin: 0 0 4pt; }
+  h2 { font-size: 13pt; color: var(--azul); margin: 14pt 0 5pt; border-bottom: 1.2pt solid var(--azul-claro); padding-bottom: 2pt; break-after: avoid; }
+  h3 { font-size: 10.6pt; margin: 10pt 0 4pt; color: var(--azul-escuro); break-after: avoid; }
+  ul, ol { margin: 0 0 7pt; padding-left: 15pt; }
+  li { margin-bottom: 2pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 9pt; font-size: 8.9pt; break-inside: auto; }
+  th { background: var(--azul); color: #fff; text-align: left; font-weight: 600; padding: 4pt 6pt; }
+  td { border-bottom: 1px solid var(--linha); padding: 3.5pt 6pt; vertical-align: top; }
+  tr { break-inside: avoid; }
+  tbody tr:nth-child(even) td { background: var(--fundo); }
+  .capitulo { break-before: page; }
+  .capitulo:first-of-type { break-before: auto; }
+  .olho { font-size: 8pt; letter-spacing: .16em; text-transform: uppercase; color: var(--azul); font-weight: 700; }
+  .resumo { color: var(--suave); font-size: 10.4pt; margin-bottom: 10pt; }
+  .caixa { border-left: 3pt solid var(--azul); background: var(--azul-claro); padding: 6pt 9pt; margin: 6pt 0 9pt; border-radius: 0 4pt 4pt 0; break-inside: avoid; }
+  .caixa.atencao { border-color: var(--ambar); background: var(--ambar-claro); }
+  .caixa.ok { border-color: var(--verde); background: var(--verde-claro); }
+  .caixa > strong:first-child { display: block; margin-bottom: 2pt; }
+  .caixa p:last-child, .caixa ul:last-child { margin-bottom: 0; }
+  /* Capa */
+  .capa { width: 210mm; height: 297mm; position: relative; break-after: page; }
+  .capa .faixa { background: var(--azul); color: #fff; padding: 36mm 22mm 20mm; height: 140mm; }
+  .capa .sobretitulo { font-size: 10pt; letter-spacing: .18em; text-transform: uppercase; opacity: .85; }
+  .capa h1 { font-size: 34pt; color: #fff; margin: 10mm 0 5mm; line-height: 1.1; }
+  .capa .sub { font-size: 14pt; opacity: .92; max-width: 150mm; }
+  .capa .corpo { padding: 14mm 22mm; color: var(--suave); font-size: 11pt; }
+  .capa .corpo ol { columns: 2; column-gap: 12mm; font-size: 10.2pt; color: var(--texto); }
+  .capa .rodape { position: absolute; left: 22mm; right: 22mm; bottom: 18mm; display: flex; justify-content: space-between; border-top: 1px solid var(--linha); padding-top: 5mm; font-size: 10pt; color: var(--suave); }
+  .diagrama { border: 1px solid var(--linha); border-radius: 6px; padding: 8pt; background: #fff; font-family: Consolas, monospace; font-size: 8.4pt; white-space: pre; line-height: 1.35; break-inside: avoid; margin: 4pt 0 9pt; }
+</style>
+</head>
+<body>
+
+<section class="capa">
+  <div class="faixa">
+    <div class="sobretitulo">HorizonAJ · Engenharia</div>
+    <h1>Documentação Técnica</h1>
+    <div class="sub">Sistema de Controladoria Municipal — arquitetura, ambiente, banco de dados, segurança, módulos, testes e operação</div>
+  </div>
+  <div class="corpo">
+    <p>Guia para quem vai manter ou evoluir o sistema: como subir o ambiente, onde fica cada coisa, as regras de isolamento entre entidades, as integrações públicas e as rotinas de teste e documentação.</p>
+    <ol>
+      <li>Visão geral e stack</li>
+      <li>Ambiente de desenvolvimento</li>
+      <li>Estrutura do projeto</li>
+      <li>Multi-entidade e segurança (RLS)</li>
+      <li>Autenticação e sessão</li>
+      <li>Módulos e rotas</li>
+      <li>Banco de dados e migrações</li>
+      <li>Integrações e alertas fiscais</li>
+      <li>Painel personalizável e preferências</li>
+      <li>Relatórios em PDF e Relatório Anual</li>
+      <li>IA, e-mails e rotinas agendadas</li>
+      <li>Testes</li>
+      <li>Manual, documentação e implantação</li>
+      <li>Convenções de código</li>
+      <li>Histórico da versão 1.1</li>
+    </ol>
+  </div>
+  <div class="rodape">
+    <div><strong style="color:var(--azul)">HorizonAJ</strong><br>Sistema de Controladoria Municipal</div>
+    <div style="text-align:right">Versão 1.1<br>Outubro de 2026</div>
+  </div>
+</section>
+
+<section class="capitulo">
+  <div class="olho">1</div>
+  <h1>Visão geral e stack</h1>
+  <p class="resumo">Aplicação web única (Next.js App Router) com PostgreSQL. Cada entidade (Prefeitura, Câmara, autarquia…) é um <em>cliente</em> com dados isolados no banco por Row Level Security.</p>
+  <table>
+    <thead><tr><th style="width:24%">Camada</th><th>Tecnologia</th><th style="width:34%">Observações</th></tr></thead>
+    <tbody>
+      <tr><td>Framework</td><td>Next.js 16 (App Router, Turbopack, Server Actions), React 19, TypeScript estrito</td><td>Leia <code>node_modules/next/dist/docs/</code> antes de usar APIs novas (AGENTS.md).</td></tr>
+      <tr><td>Interface</td><td>Tailwind CSS 4, componentes shadcn/ui sobre Base UI, lucide-react, sonner</td><td>Seis temas em <code>src/lib/temas.ts</code> e <code>globals.css</code>.</td></tr>
+      <tr><td>Banco</td><td>PostgreSQL 17 + pgvector, Prisma 7 (adapter <code>@prisma/adapter-pg</code>)</td><td>Cliente gerado em <code>src/generated/prisma</code>.</td></tr>
+      <tr><td>Autenticação</td><td>Sessões próprias no banco, cookie assinado (jose), senhas Argon2 (<code>@node-rs/argon2</code>)</td><td>Ver capítulo 5.</td></tr>
+      <tr><td>Arquivos</td><td>S3 compatível (Silo/MinIO) ou disco local</td><td><code>src/lib/armazenamento.ts</code>.</td></tr>
+      <tr><td>PDF</td><td>HTML → PDF com Playwright/Chromium</td><td><code>src/lib/pdf/</code>, <code>src/lib/relatorios/</code>.</td></tr>
+      <tr><td>IA</td><td>OpenAI, Anthropic e Gemini (multiprovedor) com provedor “falso” para testes</td><td><code>src/lib/ia/</code>.</td></tr>
+      <tr><td>E-mail</td><td>Nodemailer (Mailpit em desenvolvimento)</td><td><code>src/lib/email/</code>.</td></tr>
+      <tr><td>Integrações</td><td>IBGE, SICONFI (Tesouro), Portal da Transparência (CGU); links do TCM-BA</td><td><code>src/lib/integracoes/</code>.</td></tr>
+    </tbody>
+  </table>
+  <div class="diagrama">Navegador ──► proxy.ts (cookie de sessão) ──► Server Components / Server Actions
+                                                    │
+                       exigirContexto() ── sessão + vínculo + cliente ativo
+                                                    │
+                comCliente(ctx, tx => …) ── SET app.cliente_id / app.usuario_id / app.perfil
+                                                    │
+                  PostgreSQL (papel controladoria_app, sem BYPASSRLS) ── políticas RLS por cliente</div>
+</section>
+
+<section class="capitulo">
+  <div class="olho">2</div>
+  <h1>Ambiente de desenvolvimento</h1>
+  <h3>Pré-requisitos</h3>
+  <ul>
+    <li>Node.js 20+ (testado com 24) e npm.</li>
+    <li>Docker Desktop (Postgres com pgvector, Redis, Silo/MinIO e Mailpit via <code>docker-compose.yml</code>). Sem Docker, <code>npm run db:local</code> sobe um Postgres embutido, <strong>mas sem pgvector</strong>: a migração <code>ia_documentos</code> falha nele, então use-o só para trabalho que não dependa da IA.</li>
+    <li>Edge ou Chrome instalados (ou <code>npx playwright install chromium</code>) para PDFs e testes E2E.</li>
+  </ul>
+  <h3>Primeira execução</h3>
+<pre><code>cp .env.example .env            # preencha senhas, SESSION_SECRET e CHAVE_CRIPTOGRAFIA
+docker compose up -d            # Postgres, Redis, Silo e Mailpit
+npm install                     # roda prisma generate no postinstall
+npm run db:setup                # cria/atualiza o papel controladoria_app (antes das migrações)
+npm run db:deploy               # aplica as migrações
+npm run db:seed                 # normas, entidades e usuários de exemplo
+npm run demo:popular            # (opcional) dados de demonstração de Catolândia/BA
+npm run dev                     # http://localhost:3000</code></pre>
+  <div class="caixa atencao"><strong>Porta 5432</strong>
+    <p>Se o Postgres embutido (<code>db:local</code>) e o do Docker estiverem ativos ao mesmo tempo, o embutido escuta em <code>127.0.0.1:5432</code> e “rouba” as conexões de <code>localhost</code>. Pare um deles antes de rodar migrações.</p>
+  </div>
+  <h3>Variáveis de ambiente</h3>
+  <table>
+    <thead><tr><th style="width:30%">Variável</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td><code>DATABASE_URL</code></td><td>Dono do banco: só Prisma CLI, setup, seed e scripts de teste.</td></tr>
+      <tr><td><code>APP_DATABASE_URL</code></td><td>Papel da aplicação, sujeito a RLS. Nunca use o dono no código da aplicação.</td></tr>
+      <tr><td><code>SESSION_SECRET</code></td><td>Assina o cookie de sessão.</td></tr>
+      <tr><td><code>CHAVE_CRIPTOGRAFIA</code></td><td>AES-256-GCM dos segredos gravados no banco (chaves de IA).</td></tr>
+      <tr><td><code>STORAGE_*</code>, <code>S3_*</code></td><td>Armazenamento de documentos.</td></tr>
+      <tr><td><code>SMTP_*</code>, <code>EMAIL_REMETENTE</code>, <code>APP_URL</code></td><td>E-mails de demandas e lembretes.</td></tr>
+      <tr><td><code>PORTAL_TRANSPARENCIA_CHAVE</code></td><td>Chave gratuita da API da CGU (vazia = transferências e CEIS/CNEP desabilitados).</td></tr>
+      <tr><td><code>IA_PROVEDOR=falso</code></td><td>IA determinística para testes, sem custo.</td></tr>
+      <tr><td><code>PDF_CHROMIUM_PATH</code></td><td>Chromium já instalado (opcional).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="capitulo">
+  <div class="olho">3</div>
+  <h1>Estrutura do projeto</h1>
+  <table>
+    <thead><tr><th style="width:34%">Pasta</th><th>Conteúdo</th></tr></thead>
+    <tbody>
+      <tr><td><code>src/app/(controle)/</code></td><td>Telas da controladoria (perfis Controlador e Equipe), uma pasta por módulo: <code>painel</code>, <code>alertas</code>, <code>demandas</code>, <code>auditorias</code>, <code>autoavaliacao</code>, <code>planos</code>, <code>relatorios</code>, <code>dados-externos</code>… Cada módulo tem <code>page.tsx</code>, <code>actions.ts</code> (Server Actions) e componentes locais.</td></tr>
+      <tr><td><code>src/app/satelite/</code></td><td>Acesso restrito das unidades (demandas e painel da unidade).</td></tr>
+      <tr><td><code>src/app/admin/</code></td><td>Administração HorizonAJ: clientes, municípios, usuários, IA, trilha global.</td></tr>
+      <tr><td><code>src/app/actions/</code></td><td>Server Actions compartilhadas (sessão, evidências, <strong>preferências</strong>).</td></tr>
+      <tr><td><code>src/components/</code></td><td><code>ui/</code> (shadcn), <code>shell/</code> (layout, menus por tema), componentes por domínio (<code>alertas/</code>, <code>demandas/</code>, <code>ia/</code>…) e <code>recolhivel.tsx</code>.</td></tr>
+      <tr><td><code>src/lib/</code></td><td>Regras e acesso a dados: <code>auth/</code>, <code>dados/</code> (consultas por módulo), <code>integracoes/</code>, <code>relatorios/</code>, <code>pdf/</code>, <code>ia/</code>, <code>email/</code>, <code>painel/</code>, <code>preferencias*.ts</code>, <code>risco.ts</code>, <code>rotulos.ts</code>, <code>temas.ts</code>.</td></tr>
+      <tr><td><code>prisma/</code></td><td><code>schema.prisma</code>, migrações SQL (com RLS escritas à mão), seeds.</td></tr>
+      <tr><td><code>catalogos/</code></td><td>Normas em YAML (OT 05/2024 e Res. TCM-BA 1.120/2005), importadas por <code>npm run catalogos:importar</code>.</td></tr>
+      <tr><td><code>scripts/</code></td><td>Setup, seeds de demonstração, testes (<code>testar-*.ts</code>, <code>e2e-*.ts</code>), rotinas (lembretes, sincronização) e geração de documentos.</td></tr>
+      <tr><td><code>docs/</code></td><td>Manual do Controlador, esta documentação, implantação e notas de release.</td></tr>
+    </tbody>
+  </table>
+  <div class="caixa"><strong>Arquivos compartilhados entre servidor e cliente</strong>
+    <p>Módulos usados por componentes <code>"use client"</code> não podem importar nada com <code>server-only</code>. Por isso alguns domínios têm dois arquivos: <code>preferencias-esquema.ts</code> (puro) e <code>preferencias.ts</code> (servidor); <code>anual-secoes.ts</code>/<code>anual-padrao.ts</code> (puros) e <code>anual.ts</code> (servidor).</p>
+  </div>
+</section>
+
+<section class="capitulo">
+  <div class="olho">4</div>
+  <h1>Multi-entidade e segurança (RLS)</h1>
+  <ul>
+    <li><strong>Tabelas globais</strong> (sem RLS): <code>municipios</code>, <code>clientes</code>, <code>usuarios</code>, <code>sessoes</code>, <code>vinculos_cliente</code>, <code>normas</code>, <code>requisitos</code>. Acesse com <code>db</code> direto.</li>
+    <li><strong>Tabelas por cliente</strong>: têm <code>cliente_id</code>, <code>ENABLE</code> + <code>FORCE ROW LEVEL SECURITY</code> e a política <code>isolamento_cliente</code> (<code>cliente_id = app_cliente_id()</code>). Acesse sempre via <code>comCliente(ctx, tx =&gt; …)</code>, que abre transação e faz <code>set_config</code> de <code>app.cliente_id</code>, <code>app.usuario_id</code> e <code>app.perfil</code>.</li>
+    <li><strong>Satélite</strong>: políticas restritivas (<code>app_eh_satelite()</code>, <code>app_unidades_satelite()</code>) limitam o perfil às demandas das suas unidades; documentos internos (auditorias, alertas, relatório anual e seu texto padrão) recusam leitura e gravação.</li>
+    <li>A aplicação conecta com <code>controladoria_app</code> (NOBYPASSRLS). <code>npm run test:rls</code> verifica o isolamento.</li>
+  </ul>
+  <h3>Checklist para uma tabela nova por cliente</h3>
+  <ol>
+    <li>Modelo no <code>schema.prisma</code> com <code>clienteId</code> e relação com <code>Cliente</code> (<code>onDelete: Cascade</code>).</li>
+    <li>Migração com <code>ENABLE</code>/<code>FORCE ROW LEVEL SECURITY</code>, política <code>isolamento_cliente</code> e, se for interna, a política restritiva do satélite; <code>GRANT</code> condicional ao papel (bloco <code>DO $$ … $$</code>), como em <code>20261008120000_painel_alertas_modelo_anual</code>.</li>
+    <li>CHECKs para JSON (<code>jsonb_typeof(...) = 'object'</code>) e faixas.</li>
+    <li>Casos em <code>testar-rls.ts</code> ou no teste do módulo (satélite e outro cliente não leem).</li>
+  </ol>
+  <h3>Perfis</h3>
+  <table>
+    <thead><tr><th style="width:22%">Perfil</th><th>Escopo</th></tr></thead>
+    <tbody>
+      <tr><td><code>CONTROLADOR</code></td><td>Tudo da entidade; decisões finais (concluir ciclo, validar ação, encerrar alerta, aparência, atualizar dados externos).</td></tr>
+      <tr><td><code>EQUIPE</code></td><td>Módulos da controladoria sem as decisões finais.</td></tr>
+      <tr><td><code>SATELITE</code></td><td>Somente demandas das unidades vinculadas (<code>/satelite</code>).</td></tr>
+      <tr><td><code>adminHorizon</code></td><td>Flag do usuário: administração global em <code>/admin</code>.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="capitulo">
+  <div class="olho">5</div>
+  <h1>Autenticação e sessão</h1>
+  <ul>
+    <li><code>src/proxy.ts</code> (o antigo <em>middleware</em>) só verifica a presença/assinatura do cookie e redireciona para <code>/login?voltar=…</code>. A validação real da sessão é feita no servidor, no banco.</li>
+    <li><code>src/lib/auth/dal.ts</code>: <code>obterSessao</code> (cacheada por requisição), <code>exigirUsuario</code>, <code>obterContexto</code>, <code>exigirContexto(perfis)</code>. Toda página e Server Action começa por um deles.</li>
+    <li>Link do município (<code>/m/&lt;slug&gt;</code>): a sessão guarda <code>municipioAcesso</code> e só alcança as entidades daquele município (admins HorizonAJ ficam livres).</li>
+    <li>Tentativas de login são limitadas (<code>src/lib/limite.ts</code>) e registradas na trilha global.</li>
+  </ul>
+</section>
+
+<section class="capitulo">
+  <div class="olho">6</div>
+  <h1>Módulos e rotas</h1>
+  <p>Os menus vêm de <code>src/components/shell/menus.ts</code>; o layout de navegação muda com o tema (<code>lateral</code>, <code>topo</code>, <code>trilho</code>, <code>faixas</code>) em <code>navegacao.tsx</code>/<code>app-shell.tsx</code>.</p>
+  <table>
+    <thead><tr><th style="width:22%">Rota</th><th>Módulo</th><th style="width:36%">Dados / regras</th></tr></thead>
+    <tbody>
+      <tr><td><code>/painel</code></td><td>Painel personalizável (capítulo 9)</td><td><code>lib/dados/painel.ts</code>, <code>lib/painel/blocos.ts</code></td></tr>
+      <tr><td><code>/dados-externos</code></td><td>IBGE, SICONFI, Portal, TCM-BA</td><td><code>lib/dados/integracoes.ts</code>, <code>lib/integracoes/</code></td></tr>
+      <tr><td><code>/normas</code>, <code>/autoavaliacao</code></td><td>Normas e ciclos de autoavaliação</td><td><code>lib/dados/autoavaliacao.ts</code>, <code>conformidade.ts</code></td></tr>
+      <tr><td><code>/planos</code></td><td>Planos 5W2H (motor único)</td><td><code>lib/dados/planos.ts</code>, <code>acoes.ts</code></td></tr>
+      <tr><td><code>/ia</code></td><td>Sugestões da IA com revisão humana</td><td><code>lib/ia/</code></td></tr>
+      <tr><td><code>/demandas</code></td><td>Demandas às unidades</td><td><code>lib/dados/demandas.ts</code>, <code>lib/demandas.ts</code></td></tr>
+      <tr><td><code>/auditorias</code></td><td>PAAI, auditorias, checklists, achados</td><td><code>lib/dados/auditorias.ts</code></td></tr>
+      <tr><td><code>/alertas</code></td><td>Alertas (antigo “Medidas”): alertas fiscais + situações (modelo <code>Situacao</code>)</td><td><code>lib/dados/alertas.ts</code>, <code>lib/integracoes/alertas-fiscais.ts</code>. <code>/medidas/*</code> redireciona (308) em <code>next.config.ts</code>.</td></tr>
+      <tr><td><code>/documentos</code></td><td>Arquivos e evidências</td><td><code>lib/documentos.ts</code>, <code>lib/armazenamento.ts</code></td></tr>
+      <tr><td><code>/relatorios</code></td><td>PDFs; <code>/relatorios/anual/padrao</code> e <code>/relatorios/anual/[ano]</code></td><td><code>lib/relatorios/</code>; rotas em <code>relatorios/pdf/*/route.ts</code></td></tr>
+      <tr><td><code>/unidades</code>, <code>/trilha</code>, <code>/aparencia</code>, <code>/configuracoes</code></td><td>Gestão</td><td><code>lib/auditoria.ts</code> (trilha), <code>lib/temas.ts</code></td></tr>
+    </tbody>
+  </table>
+  <div class="caixa"><strong>Nomes internos × rótulos</strong>
+    <p>O módulo foi renomeado para “Alertas” na interface, nas rotas e nos arquivos; o modelo do banco continua <code>Situacao</code> (tabela <code>situacoes</code>) e o enum <code>OrigemPlano.MEDIDA</code> foi mantido para não exigir migração de dados — o rótulo exibido é “Alerta” (<code>lib/rotulos.ts</code>).</p>
+  </div>
+</section>
+
+<section class="capitulo">
+  <div class="olho">7</div>
+  <h1>Banco de dados e migrações</h1>
+  <ul>
+    <li>Migrações em <code>prisma/migrations/AAAAMMDDHHMMSS_nome/migration.sql</code>; políticas RLS, CHECKs e GRANTs são escritos à mão no mesmo arquivo.</li>
+    <li>Desenvolvimento: <code>npm run db:migrate</code> (cria) · Produção: <code>npm run db:deploy</code> (aplica). Depois de mudar o schema: <code>npm run db:generate</code>.</li>
+    <li>UUID v7 (<code>@default(uuid(7))</code>), datas <code>timestamptz(3)</code>, nomes de colunas em snake_case via <code>@map</code>.</li>
+  </ul>
+  <h3>Migração da versão 1.1 — <code>20261008120000_painel_alertas_modelo_anual</code></h3>
+  <table>
+    <thead><tr><th style="width:32%">Objeto</th><th>Mudança</th></tr></thead>
+    <tbody>
+      <tr><td><code>usuarios.preferencias</code></td><td><code>JSONB NOT NULL DEFAULT '{}'</code> + CHECK de objeto. Preferências de exibição por usuário (tabela global, sem RLS).</td></tr>
+      <tr><td><code>modelos_relatorio_anual</code></td><td>Nova tabela por cliente (único por <code>cliente_id</code>), <code>secoes JSONB</code>, RLS de isolamento e bloqueio do satélite.</td></tr>
+    </tbody>
+  </table>
+  <p>Migração aditiva, sem perda de dados e sem passo manual além do <code>db:deploy</code>.</p>
+</section>
+
+<section class="capitulo">
+  <div class="olho">8</div>
+  <h1>Integrações e alertas fiscais</h1>
+  <table>
+    <thead><tr><th style="width:22%">Fonte</th><th>O que coleta</th><th style="width:26%">Arquivo</th></tr></thead>
+    <tbody>
+      <tr><td>IBGE</td><td>Município e população (censo/estimativa).</td><td><code>integracoes/ibge.ts</code></td></tr>
+      <tr><td>SICONFI</td><td>Extrato de entregas; RGF Anexo 1 (pessoal, RCL); RGF Anexo 2 (dívida); RREO Anexos 3 e 6 (RCL, resultado primário).</td><td><code>integracoes/siconfi.ts</code></td></tr>
+      <tr><td>Portal da Transparência</td><td>Recursos federais por CNPJ, convênios, consulta CEIS/CNEP.</td><td><code>integracoes/portal-transparencia.ts</code></td></tr>
+      <tr><td>TCM-BA</td><td>Apenas links (sem API pública).</td><td><code>integracoes/tcmba.ts</code></td></tr>
+    </tbody>
+  </table>
+  <p>A coleta roda por cliente (<code>sincronizar.ts</code>), grava em <code>coletas_integracao</code> e é disparada pelo botão “Atualizar dados” (via <code>after()</code>) ou pelo cron <code>npm run integracoes:sincronizar</code>.</p>
+  <h3>Dívida e resultado primário para a Câmara (v1.1)</h3>
+  <p>Dívida consolidada e resultado primário são indicadores do ente, publicados pelo Executivo. Para clientes do Legislativo, <code>coletarSiconfi</code> agora lê o RGF Anexo 2 (com <code>co_poder=E</code>) e o RREO Anexo 6 a partir das entregas da Prefeitura, com o sufixo “— Executivo municipal” na referência. A despesa com pessoal continua sendo a do próprio Poder.</p>
+  <h3>Alertas fiscais (<code>lib/integracoes/alertas-fiscais.ts</code>)</h3>
+  <p>Funções puras que transformam a coleta do SICONFI em uma lista ordenada por gravidade (<code>EXCEDIDO</code> → <code>PRUDENCIAL</code> → <code>ALERTA</code> → <code>INFO</code>):</p>
+  <ul>
+    <li><strong>pessoal</strong>: faixa da LRF ≠ regular (limites em <code>lrf.ts</code>: alerta 90%, prudencial 95%, máximo 54%/6%);</li>
+    <li><strong>divida</strong>: DCL/RCL ≥ 108% (alerta) ou &gt; 120%;</li>
+    <li><strong>entregas</strong>: demonstrativos pendentes (prudencial se mais de dois);</li>
+    <li><strong>coleta</strong>: sem código IBGE, coleta falha ou dados com mais de 40 dias.</li>
+  </ul>
+  <p>Cada alerta traz <code>registrar</code>, um link para <code>/alertas/nova</code> com título, descrição (com base legal) e probabilidade/impacto sugeridos. A lista é exibida pelo componente <code>components/alertas/alertas-fiscais.tsx</code> no Painel, em Alertas e em Dados externos.</p>
+</section>
+
+<section class="capitulo">
+  <div class="olho">9</div>
+  <h1>Painel personalizável e preferências</h1>
+  <h3>Catálogo de blocos</h3>
+  <p><code>lib/painel/blocos.ts</code> define os blocos (<code>id</code>, título, descrição e página de origem). A ordem do catálogo é a ordem de exibição. Para criar um bloco: adicione-o ao catálogo, ao mapa de ícones/largura em <code>painel/page.tsx</code>, ao <code>switch</code> de conteúdo e, se precisar de dados novos, a <code>resumoPainel</code>.</p>
+  <h3>Preferências (<code>usuarios.preferencias</code>)</h3>
+<pre><code>{
+  "painel":         { "ocultos": ["unidades"], "recolhidos": ["indices"] },
+  "dados-externos": { "recolhidos": ["fontes"] },
+  "alertas":        { "recolhidos": ["painel"] }
+}</code></pre>
+  <ul>
+    <li>Esquema e leitura tolerante em <code>preferencias-esquema.ts</code> (zod; ids <code>[a-z0-9-]</code>, até 50). Guardamos <strong>ocultos</strong> (e não visíveis) para que blocos novos apareçam por padrão.</li>
+    <li><code>gravarPreferencia()</code> faz o merge numa única instrução SQL (<code>preferencias || jsonb_build_object(...)</code>), sem ler antes: cliques rápidos ou outra aba não sobrescrevem os demais campos.</li>
+    <li>Server Actions em <code>app/actions/preferencias.ts</code>: <code>salvarRecolhidos(pagina, ids)</code> (sem revalidar) e <code>salvarBlocosPainel(visiveis)</code> (revalida <code>/painel</code>).</li>
+  </ul>
+  <h3>Componente <code>components/recolhivel.tsx</code></h3>
+  <ul>
+    <li><code>ProvedorRecolhiveis</code> recebe a página e os recolhidos iniciais (lidos no servidor, sem “piscar”) e grava as mudanças com atraso de 400 ms.</li>
+    <li><code>BlocoRecolhivel</code>: cartão com cabeçalho-botão (<code>aria-expanded</code>/<code>aria-controls</code>), resumo quando recolhido e conteúdo renderizado no servidor (apenas <code>hidden</code>).</li>
+    <li><code>AlternarTodos</code>: “Recolher tudo / Expandir tudo”.</li>
+    <li>Para usar em outra página, inclua o nome em <code>PAGINAS_PREFERENCIA</code>.</li>
+  </ul>
+  <h3>Menu sem barra de rolagem</h3>
+  <p>O menu lateral foi compactado e as áreas que ainda podem rolar em telas baixas usam a utilidade <code>sem-barra-rolagem</code> (<code>globals.css</code>, <code>@utility</code>); os temas “topo” e “faixas” quebram linha em vez de rolar na horizontal. <code>npm run test:e2e:painel</code> verifica os seis temas em 1366×768 e 1366×650.</p>
+</section>
+
+<section class="capitulo">
+  <div class="olho">10</div>
+  <h1>Relatórios em PDF e Relatório Anual</h1>
+  <ul>
+    <li>Cada relatório tem um montador em <code>lib/relatorios/&lt;tipo&gt;.ts</code> que devolve HTML (template <code>html``</code> com escape automático), cabeçalho e rodapé; as rotas <code>relatorios/pdf/*/route.ts</code> chamam <code>responderPdf</code>, que gera o PDF e registra a emissão na trilha.</li>
+    <li>O satélite é recusado em <code>exigirControle()</code>, além da RLS.</li>
+  </ul>
+  <h3>Texto padrão do Relatório Anual (v1.1)</h3>
+  <p>Resolução de cada uma das seis seções (<code>anual-padrao.ts → secoesEfetivas</code>):</p>
+  <ol>
+    <li>texto do exercício (<code>relatorios_anuais.secoes</code>);</li>
+    <li>texto padrão do cliente (<code>modelos_relatorio_anual.secoes</code>);</li>
+    <li>texto-base do sistema (<code>TEXTO_BASE_ANUAL</code>).</li>
+  </ol>
+  <ul>
+    <li>Ao salvar um exercício, <code>somentePersonalizadas()</code> grava só as seções diferentes do padrão (comparação normalizando quebras de linha e espaços nas pontas). Assim, as demais seguem o padrão inclusive quando ele mudar.</li>
+    <li>Ao salvar o padrão, <code>somenteDiferentesDoSistema()</code> não grava seções idênticas ao texto-base.</li>
+    <li>Variáveis <code>{entidade}</code>, <code>{municipio}</code>, <code>{uf}</code>, <code>{ano}</code>, <code>{ano_seguinte}</code> são substituídas só na emissão (<code>aplicarVariaveis</code>); variáveis desconhecidas ficam como estão.</li>
+    <li>Telas: <code>/relatorios/anual/padrao</code> (texto padrão + seletor de exercício) e <code>/relatorios/anual/[ano]</code>; o formulário <code>form-relatorio-anual.tsx</code> serve aos dois modos e mostra, por seção, se segue a referência.</li>
+    <li>Trilha: <code>relatorio_anual.salvo</code> (com <code>secoesPersonalizadas</code>) e <code>relatorio_anual.padrao_salvo</code>.</li>
+  </ul>
+</section>
+
+<section class="capitulo">
+  <div class="olho">11</div>
+  <h1>IA, e-mails e rotinas agendadas</h1>
+  <ul>
+    <li><strong>IA</strong>: configuração por cliente/global em <code>/admin/ia</code> (chaves cifradas), mascaramento de dados pessoais antes do envio, citações obrigatórias e revisão humana das sugestões. <code>IA_PROVEDOR=falso</code> nos testes.</li>
+    <li><strong>E-mails</strong>: notificações de demandas (<code>lib/email/</code>); em desenvolvimento, caixa do Mailpit em <code>http://localhost:8025</code>.</li>
+    <li><strong>Cron</strong> (ver <code>docs/implantacao-vps.md</code>): <code>npm run lembretes:prazo</code> (lembretes de prazo) e <code>npm run integracoes:sincronizar</code> (dados externos, diário).</li>
+  </ul>
+</section>
+
+<section class="capitulo">
+  <div class="olho">12</div>
+  <h1>Testes</h1>
+  <p>Os testes são scripts <code>tsx</code> com verificações explícitas (saída “OK/FALHA” e código de saída ≠ 0 em falha). Os que importam módulos <code>server-only</code> rodam com <code>--conditions=react-server</code> (já configurado no <code>package.json</code>). Requerem migrações + seed; os E2E requerem também <code>npm run dev</code>.</p>
+  <table>
+    <thead><tr><th style="width:30%">Comando</th><th>Cobre</th></tr></thead>
+    <tbody>
+      <tr><td><code>npm run typecheck</code> · <code>npm run lint</code></td><td>TypeScript estrito e ESLint.</td></tr>
+      <tr><td><code>test:rls</code></td><td>Isolamento entre clientes e restrições do satélite.</td></tr>
+      <tr><td><code>test:acesso-municipio</code>, <code>test:senha</code></td><td>Link do município, sessão, política de senha.</td></tr>
+      <tr><td><code>test:autoavaliacao</code>, <code>test:risco</code>, <code>test:auditorias</code></td><td>Regras de conformidade, matriz de risco, ciclo da auditoria.</td></tr>
+      <tr><td><code>test:relatorios</code></td><td>Todos os PDFs, regras do texto padrão do relatório anual e RLS dos textos.</td></tr>
+      <tr><td><code>test:preferencias</code></td><td>Leitura tolerante, merge atômico e CHECK das preferências.</td></tr>
+      <tr><td><code>test:integracoes</code> (<code>-- --real</code>)</td><td>Parsing das APIs, prazos do SICONFI, limites da LRF, dívida para a Câmara, alertas fiscais; opcionalmente as APIs reais.</td></tr>
+      <tr><td><code>test:ia</code>, <code>test:config-ia</code>, <code>test:emails</code></td><td>IA com provedor falso, configuração e modelos de e-mail.</td></tr>
+      <tr><td><code>test:e2e</code>, <code>test:e2e:demandas</code></td><td>Fluxos principais no navegador (seed de exemplo).</td></tr>
+      <tr><td><code>test:e2e:painel</code></td><td>Painel personalizável, persistência dos blocos recolhidos, Alertas, redirecionamento de <code>/medidas</code>, texto padrão e menu sem barra de rolagem nos seis temas (dados de Catolândia).</td></tr>
+    </tbody>
+  </table>
+  <div class="caixa atencao"><strong>Dados de teste</strong>
+    <p>Os testes que dependem do seed escolhem os clientes mais antigos (<code>ORDER BY criado_em</code>), porque o banco pode conter também os dados de demonstração. Os testes que alteram registros (tema, preferências, texto padrão) restauram o estado original no <code>finally</code>.</p>
+  </div>
+</section>
+
+<section class="capitulo">
+  <div class="olho">13</div>
+  <h1>Manual, documentação e implantação</h1>
+  <table>
+    <thead><tr><th style="width:34%">Comando</th><th>Gera</th></tr></thead>
+    <tbody>
+      <tr><td><code>npm run manual:pdf -- --capturar</code></td><td>Refaz as capturas (<code>scripts/manual/capturas.ts</code>, 1366×768, dados de Catolândia) e gera <code>docs/manual/Manual-do-Controlador.pdf</code> a partir de <code>manual-controlador.html</code>, com o sumário paginado automaticamente.</td></tr>
+      <tr><td><code>npm run docs:tecnico</code></td><td>Este documento: <code>docs/tecnico/Documentacao-Tecnica.pdf</code> a partir de <code>documentacao-tecnica.html</code>.</td></tr>
+      <tr><td><code>docs/notas-de-release/</code></td><td>Notas de release por versão (Markdown).</td></tr>
+      <tr><td><code>docs/implantacao-vps.md</code></td><td>Implantação com Docker Compose, proxy reverso (Caddy/OpenResty) e cron.</td></tr>
+    </tbody>
+  </table>
+  <h3>Publicar a versão 1.1</h3>
+<pre><code>git pull
+docker compose -f docker-compose.prod.yml build app
+docker compose -f docker-compose.prod.yml run --rm app npm run db:deploy
+docker compose -f docker-compose.prod.yml up -d app</code></pre>
+</section>
+
+<section class="capitulo">
+  <div class="olho">14</div>
+  <h1>Convenções de código</h1>
+  <ul>
+    <li>Código, rotas, tabelas e mensagens em português; nomes descritivos (<code>exigirContexto</code>, <code>calcularAlertasFiscais</code>).</li>
+    <li>Páginas são Server Components; interatividade em componentes <code>"use client"</code> pequenos. Mutação por Server Action que começa com <code>exigirContexto</code>/<code>exigirUsuario</code>, valida com zod, grava via <code>comCliente</code>, registra na trilha e chama <code>revalidatePath</code>.</li>
+    <li>Retorno padrão das actions: <code>EstadoAcao</code> (<code>{ ok, erro, mensagem }</code>); mensagens de erro amigáveis via <code>mensagemDeErro</code>.</li>
+    <li>Estados vazios, de carregamento e de erro explícitos nas telas; acessibilidade (rótulos, <code>aria-*</code>, foco visível).</li>
+    <li>Rótulos exibidos ficam em <code>lib/rotulos.ts</code>; regras puras em módulos sem dependência de servidor, para serem testadas sem banco.</li>
+    <li>Formatação: Prettier com largura de linha 150 (padrão dos arquivos existentes).</li>
+  </ul>
+</section>
+
+<section class="capitulo">
+  <div class="olho">15</div>
+  <h1>Histórico da versão 1.1 (08/10/2026)</h1>
+  <table>
+    <thead><tr><th style="width:28%">Mudança</th><th>Arquivos principais</th></tr></thead>
+    <tbody>
+      <tr><td>Medidas → Alertas (rótulos, rotas, PDF, trilha) com redirecionamento</td><td><code>app/(controle)/alertas/</code>, <code>lib/dados/alertas.ts</code>, <code>lib/relatorios/alertas.ts</code>, <code>components/alertas/</code>, <code>next.config.ts</code></td></tr>
+      <tr><td>Alertas fiscais automáticos (folha, dívida, SICONFI)</td><td><code>lib/integracoes/alertas-fiscais.ts</code>, <code>components/alertas/alertas-fiscais.tsx</code></td></tr>
+      <tr><td>Dívida/resultado primário também para a Câmara</td><td><code>lib/integracoes/siconfi.ts</code>, <code>dados-externos/page.tsx</code></td></tr>
+      <tr><td>Painel personalizável com índices em destaque</td><td><code>app/(controle)/painel/*</code>, <code>lib/painel/blocos.ts</code>, <code>lib/dados/painel.ts</code></td></tr>
+      <tr><td>Blocos recolhíveis lembrados por usuário</td><td><code>components/recolhivel.tsx</code>, <code>lib/preferencias*.ts</code>, <code>app/actions/preferencias.ts</code></td></tr>
+      <tr><td>Menu sem barra de rolagem em todos os temas</td><td><code>shell/navegacao.tsx</code>, <code>shell/app-shell.tsx</code>, <code>globals.css</code></td></tr>
+      <tr><td>Texto padrão do Relatório Anual</td><td><code>lib/relatorios/anual-padrao.ts</code>, <code>relatorios/anual/*</code>, <code>lib/relatorios/anual.ts</code></td></tr>
+      <tr><td>Testes</td><td><code>testar-preferencias.ts</code>, <code>e2e-painel.ts</code>, casos novos em <code>testar-integracoes.ts</code> e <code>testar-relatorios.ts</code>; correções de espera em <code>e2e-smoke.ts</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+</body>
+</html>

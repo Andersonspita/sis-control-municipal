@@ -4,7 +4,7 @@ export const ORIGENS = {
   demanda: "Demanda",
   requisito: "Requisito (autoavaliação)",
   acao: "Ação de plano",
-  situacao: "Medida",
+  situacao: "Alerta",
   avulso: "Envio avulso",
 } as const;
 
