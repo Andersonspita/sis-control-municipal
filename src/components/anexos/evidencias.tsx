@@ -9,7 +9,7 @@ import { CampoAnexos } from "./campo-anexos";
 import { ListaAnexos, type Anexo } from "./lista-anexos";
 
 /**
- * Evidências em arquivo de uma resposta da autoavaliação, de uma ação do plano ou de uma situação (Medidas).
+ * Evidências em arquivo de uma resposta da autoavaliação, de uma ação do plano ou de uma situação (Alertas).
  * Não usa <form> porque pode ficar dentro de outro formulário; o envio é imediato e independente do "Salvar".
  */
 export function Evidencias({

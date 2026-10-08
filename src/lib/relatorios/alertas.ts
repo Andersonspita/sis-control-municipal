@@ -25,7 +25,7 @@ import {
 const STATUS: StatusSituacao[] = ["ABERTA", "EM_TRATAMENTO", "RESOLVIDA", "ARQUIVADA"];
 const EM_ABERTO: StatusSituacao[] = ["ABERTA", "EM_TRATAMENTO"];
 
-// Mesmo formato de src/lib/dados/medidas.ts, que não é importado aqui por depender das telas de Medidas.
+// Mesmo formato de src/lib/dados/alertas.ts, que não é importado aqui por depender das telas de Alertas.
 function numeroSituacao(numero: number, ano: number) {
   return `${String(numero).padStart(3, "0")}/${ano}`;
 }
@@ -43,8 +43,8 @@ export function matrizHtml(matriz: number[][], legenda: string) {
 </tbody></table>`;
 }
 
-/** Painel de medidas: situações por gravidade e status, matriz 5×5 das abertas e ações vinculadas. */
-export async function montarRelatorioMedidas(
+/** Painel de alertas: situações por gravidade e status, matriz 5×5 das abertas e ações vinculadas. */
+export async function montarRelatorioAlertas(
   ctx: ContextoRelatorio,
   filtros: { unidadeId?: string },
 ): Promise<RelatorioMontado> {
@@ -87,7 +87,7 @@ export async function montarRelatorioMedidas(
   const comPlano = abertas.filter((s) => s.plano);
 
   const corpo = html`
-<h1>Painel de Medidas</h1>
+<h1>Painel de Alertas</h1>
 <p class="subtitulo">Situações que exigem intervenção da controladoria, fora da conformidade normativa</p>
 ${meta([{ rotulo: "Unidade", valor: unidade ? rotuloUnidade(unidade) : "Todas" }])}
 ${kpis([
@@ -135,9 +135,9 @@ ${tabelaAcoes(s.plano!.acoes)}`,
 `;
 
   return {
-    tipo: "medidas",
-    titulo: "Painel de Medidas",
-    arquivo: nomeArquivo("painel-medidas", unidade?.sigla ?? unidade?.nome),
+    tipo: "alertas",
+    titulo: "Painel de Alertas",
+    arquivo: nomeArquivo("painel-alertas", unidade?.sigla ?? unidade?.nome),
     corpo,
     filtros: { unidadeId: filtros.unidadeId ?? null },
   };

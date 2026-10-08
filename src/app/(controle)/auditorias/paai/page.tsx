@@ -6,7 +6,7 @@ import { anoAtual, carregarPaai } from "@/lib/dados/auditorias";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { SeloGravidade } from "@/components/medidas/selos";
+import { SeloGravidade } from "@/components/alertas/selos";
 import { SeloStatusAuditoria, SeloStatusPaai } from "@/components/auditorias/selos";
 import { numeroAuditoria, periodoPrevisto } from "@/lib/auditorias";
 import { formatarDataHora } from "@/lib/datas";

@@ -10,7 +10,7 @@ import { ORIGEM_SITUACAO } from "@/lib/rotulos";
 import type { OrigemSituacao } from "@/generated/prisma/enums";
 import { FormSituacao } from "../form-situacao";
 
-export const metadata: Metadata = { title: "Nova situação" };
+export const metadata: Metadata = { title: "Novo alerta" };
 
 const texto = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 const escala = (v: string | string[] | undefined) => {
@@ -18,7 +18,7 @@ const escala = (v: string | string[] | undefined) => {
   return Number.isInteger(n) && n >= 1 && n <= 5 ? n : undefined;
 };
 
-export default async function NovaSituacao(props: PageProps<"/medidas/nova">) {
+export default async function NovaSituacao(props: PageProps<"/alertas/nova">) {
   const ctx = await exigirContexto(PERFIS_CONTROLE);
   // Pré-preenchimento vindo de outras telas (ex.: alertas de Dados externos); o usuário revisa antes de registrar.
   const sp = await props.searchParams;
@@ -37,12 +37,12 @@ export default async function NovaSituacao(props: PageProps<"/medidas/nova">) {
   return (
     <>
       <CabecalhoPagina
-        titulo="Nova situação"
-        descricao="Registre a situação que precisa de intervenção; depois crie o plano de ação geral para tratá-la."
+        titulo="Novo alerta"
+        descricao="Registre o alerta (situação) que precisa de intervenção; depois crie o plano de ação geral para tratá-la."
         acoes={
-          <Link href="/medidas" className={buttonVariants({ variant: "outline", size: "lg" })}>
+          <Link href="/alertas" className={buttonVariants({ variant: "outline", size: "lg" })}>
             <ArrowLeft aria-hidden="true" />
-            Voltar às medidas
+            Voltar aos alertas
           </Link>
         }
       />

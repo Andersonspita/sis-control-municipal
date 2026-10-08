@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ClipboardCheck, FileDown, FileSearch, Landmark, PencilLine, Send, Siren, type LucideIcon } from "lucide-react";
+import { ClipboardCheck, FileDown, FileSearch, FileText, Landmark, PencilLine, Send, Siren, type LucideIcon } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { comCliente } from "@/lib/db";
 import { numeroAuditoria } from "@/lib/auditorias";
@@ -12,6 +12,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { PDF_RELATORIO } from "@/lib/relatorios/urls";
+import { SeletorExercicio } from "./anual/seletor-exercicio";
 
 export const metadata: Metadata = { title: "Relatórios" };
 
@@ -106,8 +107,15 @@ export default async function Relatorios() {
         <CartaoRelatorio
           icone={Landmark}
           titulo="Relatório Anual de Controle Interno"
-          descricao="Art. 17 da Res. TCM-BA 1.120/2005: números do exercício preenchidos automaticamente e textos do controlador."
+          descricao="Art. 17 da Res. TCM-BA 1.120/2005: números do exercício preenchidos automaticamente. Os textos vêm do texto padrão; personalize um exercício só se precisar."
         >
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-2">
+            <Link href="/relatorios/anual/padrao" className={buttonVariants({ variant: "secondary", size: "sm" })}>
+              <FileText aria-hidden="true" />
+              Editar texto padrão
+            </Link>
+            <SeletorExercicio anoInicial={ano} />
+          </div>
           <ul className="divide-y rounded-lg border">
             {anos.map((a) => (
               <li key={a} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
@@ -115,7 +123,7 @@ export default async function Relatorios() {
                 <span className="flex gap-2">
                   <Link href={`/relatorios/anual/${a}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
                     <PencilLine aria-hidden="true" />
-                    Editar textos
+                    Personalizar
                   </Link>
                   <a href={PDF_RELATORIO.anual(a)} target="_blank" rel="noopener" className={buttonVariants({ size: "sm" })}>
                     <FileDown aria-hidden="true" />
@@ -174,11 +182,11 @@ export default async function Relatorios() {
 
         <CartaoRelatorio
           icone={Siren}
-          titulo="Painel de medidas"
+          titulo="Painel de alertas"
           descricao="Situações por gravidade e status, matriz 5×5 das abertas e ações vinculadas."
         >
-          <form method="get" action="/relatorios/pdf/medidas" target="_blank" className="grid gap-3 sm:grid-cols-2 sm:items-end">
-            <SeletorUnidade id="unidade-medidas" unidades={unidades} />
+          <form method="get" action="/relatorios/pdf/alertas" target="_blank" className="grid gap-3 sm:grid-cols-2 sm:items-end">
+            <SeletorUnidade id="unidade-alertas" unidades={unidades} />
             <div>
               <BotaoGerar />
             </div>

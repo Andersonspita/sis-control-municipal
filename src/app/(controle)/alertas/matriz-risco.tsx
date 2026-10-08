@@ -1,4 +1,4 @@
-import { VISUAL_GRAVIDADE } from "@/components/medidas/selos";
+import { VISUAL_GRAVIDADE } from "@/components/alertas/selos";
 import { classificarRisco, ESCALA, IMPACTO, NIVEL_RISCO, PROBABILIDADE } from "@/lib/risco";
 import { cn } from "@/lib/utils";
 

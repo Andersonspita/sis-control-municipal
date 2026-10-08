@@ -35,11 +35,11 @@ export function NavLateral({ variante, admin, aoNavegar }: PropsNav & { aoNavega
   const multiplosGrupos = grupos.length > 1;
 
   return (
-    <nav aria-label="Menu principal" className="flex flex-col gap-6">
+    <nav aria-label="Menu principal" className="flex flex-col gap-3">
       {grupos.map((grupo) => (
         <div key={grupo.id} className="space-y-1">
           {multiplosGrupos && grupo.itens.length > 1 && (
-            <p className="px-3 pb-1 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/60">
+            <p className="px-3 pb-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/60">
               {grupo.titulo}
             </p>
           )}
@@ -50,7 +50,7 @@ export function NavLateral({ variante, admin, aoNavegar }: PropsNav & { aoNavega
               if (item.emBreve) {
                 return (
                   <li key={item.href} className="flex items-center gap-2 pr-2">
-                    <EmBreve item={item} className="flex-1 px-3 py-2 text-sm text-sidebar-foreground" />
+                    <EmBreve item={item} className="flex-1 px-3 py-1.5 text-sm text-sidebar-foreground" />
                     <span className="rounded-full border border-sidebar-foreground/25 px-1.5 text-[0.62rem] uppercase tracking-wide text-sidebar-foreground/60">
                       em breve
                     </span>
@@ -64,7 +64,7 @@ export function NavLateral({ variante, admin, aoNavegar }: PropsNav & { aoNavega
                     onClick={aoNavegar}
                     aria-current={ativo ? "page" : undefined}
                     className={cn(
-                      "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                      "relative flex items-center gap-3 rounded-md px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                       ativo
                         ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-sidebar-primary"
                         : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
@@ -101,7 +101,7 @@ export function MenuMovel({ variante, admin, className }: PropsNav & { className
         <div className="px-5 py-5">
           <Marca />
         </div>
-        <div className="flex-1 overflow-y-auto px-3 pb-6">
+        <div className="sem-barra-rolagem flex-1 overflow-y-auto px-3 pb-6">
           <NavLateral variante={variante} admin={admin} aoNavegar={() => setAberto(false)} />
         </div>
       </SheetContent>
@@ -117,7 +117,7 @@ export function NavTrilho({ variante, admin }: PropsNav) {
 
   return (
     <nav aria-label="Menu principal" className="flex h-full">
-      <ul className="flex w-[4.5rem] shrink-0 flex-col items-stretch gap-1 bg-sidebar px-1.5 pt-1 text-sidebar-foreground">
+      <ul className="sem-barra-rolagem flex w-[4.5rem] shrink-0 flex-col items-stretch gap-1 overflow-y-auto bg-sidebar px-1.5 pt-1 text-sidebar-foreground">
         {grupos.map((grupo) => {
           const destino = primeiroDisponivel(grupo);
           const ativo = grupo.id === grupoAtivo?.id;
@@ -157,7 +157,7 @@ export function NavTrilho({ variante, admin }: PropsNav) {
       </ul>
 
       {mostrarPainel && (
-        <div className="w-56 shrink-0 border-r bg-card">
+        <div className="sem-barra-rolagem w-56 shrink-0 overflow-y-auto border-r bg-card">
           <p className="px-5 pt-5 pb-3 font-heading text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             {grupoAtivo.titulo}
           </p>
@@ -240,7 +240,7 @@ export function NavTopoItens({ variante, admin }: PropsNav) {
   const { grupoAtivo, ativoHref } = useMenu(variante, admin);
   if (!grupoAtivo) return null;
   return (
-    <ul className="flex h-11 items-stretch gap-1 overflow-x-auto">
+    <ul className="flex min-h-11 flex-wrap items-stretch gap-x-1">
       {grupoAtivo.itens.map((item) => {
         const Icone = item.icone;
         if (item.emBreve) {
@@ -257,7 +257,7 @@ export function NavTopoItens({ variante, admin }: PropsNav) {
               href={item.href}
               aria-current={ativo ? "page" : undefined}
               className={cn(
-                "relative flex items-center gap-2 px-3 text-sm whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                "relative flex min-h-11 items-center gap-2 px-3 text-sm whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                 ativo
                   ? "font-semibold text-primary after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-primary"
                   : "text-foreground/80 hover:text-foreground",
@@ -278,13 +278,13 @@ export function NavTopoItens({ variante, admin }: PropsNav) {
 export function NavFaixas({ variante, admin }: PropsNav) {
   const { grupos, ativoHref } = useMenu(variante, admin);
   return (
-    <nav aria-label="Menu principal" className="flex items-stretch gap-0 overflow-x-auto">
+    <nav aria-label="Menu principal" className="flex flex-wrap items-stretch gap-y-1">
       {grupos.map((grupo, i) => (
         <div key={grupo.id} className={cn("flex flex-col justify-center py-1.5", i > 0 && "border-l pl-3 ml-3")}>
           <p className="px-2 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             {grupo.titulo}
           </p>
-          <ul className="flex items-center gap-0.5">
+          <ul className="flex flex-wrap items-center gap-0.5">
             {grupo.itens.map((item) => {
               const Icone = item.icone;
               if (item.emBreve) {

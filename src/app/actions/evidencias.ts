@@ -17,7 +17,7 @@ export type ResultadoEvidencias = { ok: true; documentos: Anexo[] } | { ok: fals
 
 const SELECAO = { id: true, nome: true, tamanho: true, mimeType: true } as const;
 
-/** Anexa arquivos de evidência a uma resposta de autoavaliação, a uma ação de plano ou a uma situação (Medidas). */
+/** Anexa arquivos de evidência a uma resposta de autoavaliação, a uma ação de plano ou a uma situação (Alertas). */
 export async function anexarEvidencias(formData: FormData): Promise<ResultadoEvidencias> {
   const ctx = await exigirContexto(PERFIS_CONTROLE);
   const dados = esquema.safeParse({ alvo: formData.get("alvo"), id: formData.get("id") });
@@ -86,7 +86,7 @@ export async function anexarEvidencias(formData: FormData): Promise<ResultadoEvi
       }),
     );
     revalidatePath("/documentos");
-    if (alvo === "situacao") revalidatePath(`/medidas/${id}`);
+    if (alvo === "situacao") revalidatePath(`/alertas/${id}`);
     if (auditoriaRevalidar) revalidatePath(`/auditorias/${auditoriaRevalidar}`);
     return { ok: true, documentos };
   } catch (err) {

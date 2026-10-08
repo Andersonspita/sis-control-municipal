@@ -5,6 +5,8 @@ import { hojeComoDataSimples as hoje } from "@/lib/datas";
 import { STATUS_ABERTOS as ABERTAS } from "@/lib/demandas";
 import { calcularConformidade, percentual } from "./conformidade";
 import { STATUS_ABERTOS } from "./acoes";
+import { classificarRisco, NIVEIS_RISCO, type NivelRisco } from "@/lib/risco";
+import { STATUS_EM_ABERTO as SITUACOES_ABERTAS } from "@/app/(controle)/alertas/filtros";
 
 export async function resumoPainel(ctx: Contexto) {
   const normas = await db.norma.findMany({
@@ -32,6 +34,8 @@ export async function resumoPainel(ctx: Contexto) {
       unidades,
       ciclos,
       recentes,
+      situacoesAbertas,
+      acoesVencidasAlertas,
     ] = await Promise.all([
       tx.demanda.count({ where: { status: { in: [...ABERTAS] } } }),
       // Mesma regra de estaVencida(): prazo passado e demanda não encerrada.
@@ -68,7 +72,12 @@ export async function resumoPainel(ctx: Contexto) {
           demanda: { select: { numero: true, ano: true, assunto: true } },
         },
       }),
+      tx.situacao.findMany({ where: { status: { in: SITUACOES_ABERTAS } }, select: { probabilidade: true, impacto: true } }),
+      tx.acao.count({ where: { plano: { situacaoId: { not: null } }, status: { in: STATUS_ABERTOS }, prazo: { lt: hoje() } } }),
     ]);
+
+    const alertasPorNivel = Object.fromEntries(NIVEIS_RISCO.map((n) => [n, 0])) as Record<NivelRisco, number>;
+    for (const s of situacoesAbertas) alertasPorNivel[classificarRisco(s.probabilidade, s.impacto)]++;
 
     const aderencia = normas.map((n) => {
       const daNorma = ciclos.filter((c) => c.normaId === n.id);
@@ -102,6 +111,7 @@ export async function resumoPainel(ctx: Contexto) {
       unidades,
       aderencia,
       recentes,
+      alertas: { emAberto: situacoesAbertas.length, porNivel: alertasPorNivel, acoesVencidas: acoesVencidasAlertas },
     };
   });
 }

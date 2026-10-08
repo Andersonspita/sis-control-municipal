@@ -9,7 +9,8 @@ import { acaoVencida, dataIso, STATUS_ABERTOS as ACOES_ABERTAS } from "@/lib/dad
 import { hojeComoDataSimples } from "@/lib/datas";
 import { html, paragrafos } from "@/lib/pdf/html";
 import type { OrigemPlano } from "@/generated/prisma/client";
-import { anoValido, lerSecoesAnual, SECOES_ANUAL, type ChaveSecaoAnual, type SecoesAnual } from "./anual-secoes";
+import { anoValido, lerSecoesAnual, SECOES_ANUAL, type ChaveSecaoAnual } from "./anual-secoes";
+import { aplicarVariaveis, secoesEfetivas, type ValoresVariaveis } from "./anual-padrao";
 import {
   assinante,
   blocoAssinatura,
@@ -41,9 +42,23 @@ export async function carregarRelatorioAnual(ctx: ContextoRelatorio, ano: number
   return r ? { ...r, secoes: lerSecoesAnual(r.secoes) } : null;
 }
 
-function secaoTexto(numero: number, chave: ChaveSecaoAnual, secoes: SecoesAnual) {
+/** Texto padrão do cliente para todos os exercícios (null = usa só o texto-base do sistema). */
+export async function carregarModeloAnual(ctx: ContextoRelatorio) {
+  exigirControle(ctx);
+  const m = await comCliente(ctx, (tx) =>
+    tx.modeloRelatorioAnual.findUnique({
+      where: { clienteId: ctx.clienteId },
+      select: { secoes: true, atualizadoEm: true, atualizadoPorId: true },
+    }),
+  );
+  return m ? { ...m, secoes: lerSecoesAnual(m.secoes) } : null;
+}
+
+type TextoSecoes = Record<ChaveSecaoAnual, { texto: string }>;
+
+function secaoTexto(numero: number, chave: ChaveSecaoAnual, secoes: TextoSecoes, valores: ValoresVariaveis) {
   const s = SECOES_ANUAL.find((x) => x.chave === chave)!;
-  return html`<h2>${numero}. ${s.titulo}</h2>${paragrafos(secoes[chave], "Seção não preenchida pelo controlador.")}`;
+  return html`<h2>${numero}. ${s.titulo}</h2>${paragrafos(aplicarVariaveis(secoes[chave].texto, valores), "Seção não preenchida pelo controlador.")}`;
 }
 
 /** Relatório Anual de Controle Interno (art. 17 da Res. TCM-BA 1.120/2005): números do ano + textos do controlador. */
@@ -60,6 +75,7 @@ export async function montarRelatorioAnual(ctx: ContextoRelatorio, params: { ano
       where: { clienteId_ano: { clienteId: ctx.clienteId, ano } },
       select: { secoes: true },
     }),
+    modelo: await tx.modeloRelatorioAnual.findUnique({ where: { clienteId: ctx.clienteId }, select: { secoes: true } }),
     ciclos: await tx.cicloAvaliacao.findMany({
       where: { dataInicio: noAno, status: { not: "ARQUIVADO" } },
       orderBy: { dataInicio: "asc" },
@@ -106,7 +122,14 @@ export async function montarRelatorioAnual(ctx: ContextoRelatorio, params: { ano
     }),
   }));
   const [entidade, quem] = await Promise.all([dadosEntidade(ctx.clienteId), assinante(ctx)]);
-  const secoes = lerSecoesAnual(dados.relatorio?.secoes);
+  const secoes = secoesEfetivas(lerSecoesAnual(dados.relatorio?.secoes), lerSecoesAnual(dados.modelo?.secoes));
+  const valores: ValoresVariaveis = {
+    entidade: entidade.nome,
+    municipio: entidade.municipio,
+    uf: entidade.uf,
+    ano: String(ano),
+    ano_seguinte: String(ano + 1),
+  };
   const hoje = dataIso(hojeComoDataSimples());
 
   const auditoriasRealizadas = dados.auditorias.filter((a) => a.status !== "CANCELADA");
@@ -122,8 +145,8 @@ export async function montarRelatorioAnual(ctx: ContextoRelatorio, params: { ano
 <h1>Relatório Anual de Controle Interno — Exercício ${ano}</h1>
 <p class="subtitulo">${entidade.nome} · Art. 17 da Resolução TCM-BA nº 1.120/2005</p>
 
-${secaoTexto(1, "apresentacao", secoes)}
-${secaoTexto(2, "estrutura", secoes)}
+${secaoTexto(1, "apresentacao", secoes, valores)}
+${secaoTexto(2, "estrutura", secoes, valores)}
 
 <h2>3. Autoavaliação do controle interno</h2>
 ${
@@ -156,7 +179,7 @@ ${
     : vazio("Nenhuma auditoria registrada no exercício.")
 }
 
-<h2>5. Medidas (situações que exigiram intervenção)</h2>
+<h2>5. Alertas (situações que exigiram intervenção)</h2>
 ${
   situacoes.length
     ? html`<table><thead><tr><th>Gravidade</th><th class="num">Registradas</th><th class="num">Em aberto</th><th class="num">Resolvidas</th><th class="num">Arquivadas</th></tr></thead>
@@ -191,10 +214,10 @@ ${
     : vazio("Nenhuma ação de plano criada ou com prazo no exercício.")
 }
 
-${secaoTexto(8, "metas", secoes)}
-${secaoTexto(9, "gestao", secoes)}
-${secaoTexto(10, "recomendacoes", secoes)}
-${secaoTexto(11, "conclusao", secoes)}
+${secaoTexto(8, "metas", secoes, valores)}
+${secaoTexto(9, "gestao", secoes, valores)}
+${secaoTexto(10, "recomendacoes", secoes, valores)}
+${secaoTexto(11, "conclusao", secoes, valores)}
 
 ${blocoAssinatura(quem, localEData(entidade.municipio, entidade.uf))}
 `;

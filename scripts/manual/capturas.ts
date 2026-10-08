@@ -140,6 +140,16 @@ async function controlador(browser: Browser) {
   await entrar(page, CONTROLADOR);
 
   await telaSimples(page, "/painel", "02-painel");
+  await etapa("02b-personalizar-painel", async () => {
+    if (existe("02b-personalizar-painel")) return;
+    await ir(page, "/painel");
+    await estabilizar(page);
+    await page.getByRole("button", { name: "Personalizar painel" }).click();
+    await page.getByRole("dialog").waitFor();
+    await page.waitForTimeout(500);
+    await capturar(page, "02b-personalizar-painel");
+    await page.keyboard.press("Escape");
+  });
   await etapa("03-menu-usuario", async () => {
     if (existe("03-menu-usuario")) return;
     await ir(page, "/painel");
@@ -205,20 +215,21 @@ async function controlador(browser: Browser) {
   });
   await telaSimples(page, "/auditorias/modelos", "19-modelos-checklist");
 
-  await telaSimples(page, "/medidas", "20-medidas");
-  await etapa("21-medida-detalhe", async () => {
-    if (existe("21-medida-detalhe")) return;
-    await ir(page, "/medidas");
-    const alvo = await maisCompleto(page, await detalhes(page, "/medidas"), 5);
-    if (!alvo) throw new Error("nenhuma medida");
+  await telaSimples(page, "/alertas", "20-alertas");
+  await etapa("21-alerta-detalhe", async () => {
+    if (existe("21-alerta-detalhe")) return;
+    await ir(page, "/alertas");
+    const alvo = await maisCompleto(page, await detalhes(page, "/alertas"), 5);
+    if (!alvo) throw new Error("nenhum alerta");
     await ir(page, alvo);
-    await capturar(page, "21-medida-detalhe");
+    await capturar(page, "21-alerta-detalhe");
   });
-  await telaSimples(page, "/medidas/nova", "22-medida-nova");
+  await telaSimples(page, "/alertas/nova", "22-alerta-novo");
 
   await telaSimples(page, "/documentos", "23-documentos");
   await telaSimples(page, "/ia", "24-ia");
   await telaSimples(page, "/relatorios", "25-relatorios");
+  await telaSimples(page, "/relatorios/anual/padrao", "25b-relatorio-anual-padrao");
   await telaSimples(page, "/dados-externos", "26-dados-externos");
   await telaSimples(page, "/trilha", "27-trilha");
   await telaSimples(page, "/configuracoes", "28-configuracoes");

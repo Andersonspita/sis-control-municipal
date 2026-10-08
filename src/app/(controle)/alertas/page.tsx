@@ -1,28 +1,42 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlarmClock, ChevronLeft, ChevronRight, EyeOff, FileDown, Filter, Paperclip, Plus } from "lucide-react";
+import { AlarmClock, ChevronLeft, ChevronRight, EyeOff, FileDown, Filter, Paperclip, Plus, ShieldAlert, Siren } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
-import { listarSituacoes, numeroSituacao } from "@/lib/dados/medidas";
+import { listarSituacoes, numeroSituacao } from "@/lib/dados/alertas";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { SeloGravidade, SeloStatusSituacao, VISUAL_GRAVIDADE } from "@/components/medidas/selos";
+import { SeloGravidade, SeloStatusSituacao, VISUAL_GRAVIDADE } from "@/components/alertas/selos";
 import { SeloVencida } from "@/components/selos-status";
 import { NIVEIS_RISCO, NIVEL_RISCO } from "@/lib/risco";
 import { ORIGEM_SITUACAO, STATUS_SITUACAO } from "@/lib/rotulos";
 import { cn } from "@/lib/utils";
 import { PDF_RELATORIO } from "@/lib/relatorios/urls";
+import { carregarDadosExternos } from "@/lib/dados/integracoes";
+import { calcularAlertasFiscais } from "@/lib/integracoes/alertas-fiscais";
+import { preferenciasDaPagina } from "@/lib/preferencias";
+import { ListaAlertasFiscais } from "@/components/alertas/alertas-fiscais";
+import { BlocoRecolhivel, ProvedorRecolhiveis } from "@/components/recolhivel";
 import { CLASSE_SELECT, filtrosSituacoes, POR_PAGINA } from "./filtros";
 import { MatrizRisco } from "./matriz-risco";
 
-export const metadata: Metadata = { title: "Medidas" };
+export const metadata: Metadata = { title: "Alertas" };
 
-export default async function Medidas(props: PageProps<"/medidas">) {
+export default async function Alertas(props: PageProps<"/alertas">) {
   const ctx = await exigirContexto(PERFIS_CONTROLE);
   const filtros = filtrosSituacoes(await props.searchParams);
-  const { unidades, total, situacoes, painel } = await listarSituacoes(ctx, filtros);
+  const [{ unidades, total, situacoes, painel }, externos, pref] = await Promise.all([
+    listarSituacoes(ctx, filtros),
+    carregarDadosExternos(ctx),
+    preferenciasDaPagina(ctx.usuarioId, "alertas"),
+  ]);
+  const fiscais = calcularAlertasFiscais({
+    entidade: externos.cliente.nome,
+    codigoIbge: externos.cliente.codigoIbge,
+    siconfi: externos.siconfi,
+  });
   const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
   const temFiltro = filtros.status || filtros.gravidade || filtros.origem || filtros.unidade || filtros.busca;
 
@@ -33,79 +47,109 @@ export default async function Medidas(props: PageProps<"/medidas">) {
       if (v && !(k === "pagina" && Number(v) === 1)) q.set(k, String(v));
     }
     const s = q.toString();
-    return s ? `/medidas?${s}` : "/medidas";
+    return s ? `/alertas?${s}` : "/alertas";
   };
 
   return (
-    <>
+    <ProvedorRecolhiveis pagina="alertas" iniciais={pref.recolhidos}>
       <CabecalhoPagina
-        titulo="Medidas"
-        descricao="Situações que precisam de intervenção, fora da conformidade normativa, classificadas por gravidade e tratadas com plano de ação."
+        titulo="Alertas"
+        descricao="Alertas automáticos dos limites fiscais (LRF/SICONFI) e situações que precisam de intervenção, classificadas por gravidade e tratadas com plano de ação."
         acoes={
           <>
-            <a href={PDF_RELATORIO.medidas(filtros.unidade)} target="_blank" rel="noopener" className={buttonVariants({ variant: "outline", size: "lg" })}>
+            <a
+              href={PDF_RELATORIO.alertas(filtros.unidade)}
+              target="_blank"
+              rel="noopener"
+              className={buttonVariants({ variant: "outline", size: "lg" })}
+            >
               <FileDown aria-hidden="true" />
               Painel (PDF)
             </a>
-            <Link href="/medidas/nova" className={buttonVariants({ size: "lg" })}>
+            <Link href="/alertas/nova" className={buttonVariants({ size: "lg" })}>
               <Plus aria-hidden="true" />
-              Nova situação
+              Novo alerta
             </Link>
           </>
         }
       />
 
-      <section aria-label="Painel de medidas" className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <div className="grid grid-cols-2 gap-3 self-start">
-          {NIVEIS_RISCO.map((n) => {
-            const v = VISUAL_GRAVIDADE[n];
-            const Icone = v.icone;
-            return (
-              <Link
-                key={n}
-                href={url({ status: "ABERTAS", gravidade: n })}
-                className="rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                <Card size="sm" className="h-full transition-colors hover:bg-muted/40">
-                  <CardContent className="flex items-center gap-3">
-                    <span className={cn("flex size-9 items-center justify-center rounded-md", v.celula)}>
-                      <Icone aria-hidden className="size-4" />
-                    </span>
-                    <div>
-                      <p className="font-heading text-xl font-semibold tabular-nums">{painel.porNivel[n]}</p>
-                      <p className="text-xs text-muted-foreground">Abertas · {NIVEL_RISCO[n].toLowerCase()}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-          <Card size="sm" className="col-span-2">
-            <CardContent className="flex items-center gap-3">
-              <span
-                className={cn(
-                  "flex size-9 items-center justify-center rounded-md",
-                  painel.acoesVencidas > 0 ? "bg-perigo/12 text-perigo" : "bg-primary/10 text-primary",
-                )}
-              >
-                <AlarmClock aria-hidden className="size-4" />
-              </span>
-              <div>
-                <p className="font-heading text-xl font-semibold tabular-nums">{painel.acoesVencidas}</p>
-                <p className="text-xs text-muted-foreground">Ações vencidas nos planos das medidas</p>
-              </div>
+      <BlocoRecolhivel
+        id="fiscais"
+        titulo="Alertas fiscais (LRF)"
+        descricao="Gerados automaticamente a partir do SICONFI: despesa com pessoal (folha), dívida consolidada e entregas vencidas. Registre o alerta para tratá-lo com plano de ação."
+        icone={<ShieldAlert />}
+        resumo={fiscais.length ? `${fiscais.length} alerta(s)` : "nenhum alerta"}
+        className="mb-6"
+        acoes={
+          <Link href="/dados-externos" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            Dados externos
+          </Link>
+        }
+      >
+        <ListaAlertasFiscais alertas={fiscais} />
+      </BlocoRecolhivel>
+
+      <BlocoRecolhivel
+        id="painel"
+        titulo="Painel de alertas"
+        descricao="Alertas registrados em aberto por gravidade e matriz de risco."
+        icone={<Siren />}
+        resumo={`${painel.emAberto} em aberto`}
+        className="mb-6"
+      >
+        <section aria-label="Painel de alertas" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <div className="grid grid-cols-2 gap-3 self-start">
+            {NIVEIS_RISCO.map((n) => {
+              const v = VISUAL_GRAVIDADE[n];
+              const Icone = v.icone;
+              return (
+                <Link
+                  key={n}
+                  href={url({ status: "ABERTAS", gravidade: n })}
+                  className="rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  <Card size="sm" className="h-full transition-colors hover:bg-muted/40">
+                    <CardContent className="flex items-center gap-3">
+                      <span className={cn("flex size-9 items-center justify-center rounded-md", v.celula)}>
+                        <Icone aria-hidden className="size-4" />
+                      </span>
+                      <div>
+                        <p className="font-heading text-xl font-semibold tabular-nums">{painel.porNivel[n]}</p>
+                        <p className="text-xs text-muted-foreground">Abertas · {NIVEL_RISCO[n].toLowerCase()}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+            <Card size="sm" className="col-span-2">
+              <CardContent className="flex items-center gap-3">
+                <span
+                  className={cn(
+                    "flex size-9 items-center justify-center rounded-md",
+                    painel.acoesVencidas > 0 ? "bg-perigo/12 text-perigo" : "bg-primary/10 text-primary",
+                  )}
+                >
+                  <AlarmClock aria-hidden className="size-4" />
+                </span>
+                <div>
+                  <p className="font-heading text-xl font-semibold tabular-nums">{painel.acoesVencidas}</p>
+                  <p className="text-xs text-muted-foreground">Ações vencidas nos planos dos alertas</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle className="text-sm">Matriz de risco · {painel.emAberto} situação(ões) em aberto</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MatrizRisco matriz={painel.matriz} />
             </CardContent>
           </Card>
-        </div>
-        <Card size="sm">
-          <CardHeader>
-            <CardTitle className="text-sm">Matriz de risco · {painel.emAberto} situação(ões) em aberto</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MatrizRisco matriz={painel.matriz} />
-          </CardContent>
-        </Card>
-      </section>
+        </section>
+      </BlocoRecolhivel>
 
       <Card className="mb-6">
         <CardContent>
@@ -165,7 +209,7 @@ export default async function Medidas(props: PageProps<"/medidas">) {
                 Filtrar
               </button>
               {temFiltro && (
-                <Link href="/medidas" className={buttonVariants({ variant: "ghost", size: "lg" })}>
+                <Link href="/alertas" className={buttonVariants({ variant: "ghost", size: "lg" })}>
                   Limpar
                 </Link>
               )}
@@ -183,12 +227,24 @@ export default async function Medidas(props: PageProps<"/medidas">) {
               </caption>
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
-                  <th scope="col" className="px-5 py-3 font-medium">Número</th>
-                  <th scope="col" className="px-3 py-3 font-medium">Situação</th>
-                  <th scope="col" className="hidden px-3 py-3 font-medium md:table-cell">Origem</th>
-                  <th scope="col" className="hidden px-3 py-3 font-medium lg:table-cell">Unidade</th>
-                  <th scope="col" className="px-3 py-3 font-medium">Gravidade</th>
-                  <th scope="col" className="px-5 py-3 font-medium">Status</th>
+                  <th scope="col" className="px-5 py-3 font-medium">
+                    Número
+                  </th>
+                  <th scope="col" className="px-3 py-3 font-medium">
+                    Situação
+                  </th>
+                  <th scope="col" className="hidden px-3 py-3 font-medium md:table-cell">
+                    Origem
+                  </th>
+                  <th scope="col" className="hidden px-3 py-3 font-medium lg:table-cell">
+                    Unidade
+                  </th>
+                  <th scope="col" className="px-3 py-3 font-medium">
+                    Gravidade
+                  </th>
+                  <th scope="col" className="px-5 py-3 font-medium">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -196,7 +252,7 @@ export default async function Medidas(props: PageProps<"/medidas">) {
                   <tr key={s.id} className="border-b last:border-0 hover:bg-muted/40">
                     <td className="px-5 py-3 font-mono text-xs font-semibold whitespace-nowrap">{numeroSituacao(s.numero, s.ano)}</td>
                     <td className="px-3 py-3">
-                      <Link href={`/medidas/${s.id}`} className="font-medium underline-offset-4 hover:underline">
+                      <Link href={`/alertas/${s.id}`} className="font-medium underline-offset-4 hover:underline">
                         {s.titulo}
                       </Link>
                       {s._count.documentos > 0 && (
@@ -223,7 +279,11 @@ export default async function Medidas(props: PageProps<"/medidas">) {
                     </td>
                     <td className="hidden px-3 py-3 md:table-cell">{ORIGEM_SITUACAO[s.origem]}</td>
                     <td className="hidden px-3 py-3 lg:table-cell">
-                      {s.unidade ? <span title={s.unidade.nome}>{s.unidade.sigla ?? s.unidade.nome}</span> : <span className="text-muted-foreground">—</span>}
+                      {s.unidade ? (
+                        <span title={s.unidade.nome}>{s.unidade.sigla ?? s.unidade.nome}</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </td>
                     <td className="px-3 py-3">
                       <SeloGravidade nivel={s.nivel} pontuacao={s.probabilidade * s.impacto} />
@@ -265,6 +325,6 @@ export default async function Medidas(props: PageProps<"/medidas">) {
           </div>
         </nav>
       )}
-    </>
+    </ProvedorRecolhiveis>
   );
 }

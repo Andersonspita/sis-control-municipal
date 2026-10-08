@@ -1,11 +1,10 @@
+import { percentual } from "@/lib/integracoes/formatos";
+export { dataIso, moeda, percentual } from "@/lib/integracoes/formatos";
 import type { FaixaLimite, SituacaoEntrega } from "@/lib/integracoes/tipos";
 import type { StatusColeta } from "@/generated/prisma/enums";
 import { formatarDataHora } from "@/lib/datas";
 import { cn } from "@/lib/utils";
 
-export const moeda = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-export const percentual = (v: number) => `${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
-export const dataIso = (v: string | null) => (v ? v.slice(0, 10).split("-").reverse().join("/") : "—");
 
 const TOM_FAIXA: Record<FaixaLimite, string> = {
   REGULAR: "bg-sucesso-fundo text-sucesso",

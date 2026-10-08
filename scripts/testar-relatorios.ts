@@ -8,11 +8,12 @@ import { fecharNavegador, gerarPdf } from "../src/lib/pdf/navegador";
 import { ErroAcessoRelatorio, montarDocumento, type ContextoRelatorio, type RelatorioMontado } from "../src/lib/relatorios/comum";
 import { montarRelatorioAutoavaliacao } from "../src/lib/relatorios/autoavaliacao";
 import { montarRelatorioDemandas } from "../src/lib/relatorios/demandas";
-import { montarRelatorioMedidas } from "../src/lib/relatorios/medidas";
+import { montarRelatorioAlertas } from "../src/lib/relatorios/alertas";
 import { montarRelatorioAuditoria, versaoEfetiva } from "../src/lib/relatorios/auditoria";
 import { montarRelatorioAnual } from "../src/lib/relatorios/anual";
 import { montarOficioDemanda } from "../src/lib/relatorios/oficio";
 import { escapar, html } from "../src/lib/pdf/html";
+import { aplicarVariaveis, secoesEfetivas, somentePersonalizadas, TEXTO_BASE_ANUAL } from "../src/lib/relatorios/anual-padrao";
 
 // Gera cada relatório em PDF a partir do seed (montagem direta, com o contexto de RLS da aplicação),
 // confere textos-chave no HTML, a assinatura %PDF e o número de páginas, e o bloqueio do satélite.
@@ -64,6 +65,13 @@ function regrasPuras() {
   conferir("auditoria: antes do relatório final a versão é sempre preliminar", versaoEfetiva("EXECUCAO", "final") === "preliminar");
   conferir("auditoria: no relatório final, padrão é a versão final", versaoEfetiva("RELATORIO_FINAL") === "final");
   conferir("auditoria: no relatório final, a preliminar ainda pode ser pedida", versaoEfetiva("ENCERRADA", "preliminar") === "preliminar");
+
+  const vars = { entidade: "Prefeitura X", municipio: "Abaíra", uf: "BA", ano: "2026", ano_seguinte: "2027" };
+  conferir("anual: variáveis substituídas, desconhecidas preservadas", aplicarVariaveis("{entidade} {ano} {xyz}", vars) === "Prefeitura X 2026 {xyz}");
+  const ef = secoesEfetivas({ conclusao: "Do ano" }, { apresentacao: "Do padrão" });
+  conferir("anual: prioridade ano > padrão do cliente > texto-base", ef.conclusao.origem === "ano" && ef.apresentacao.origem === "padrao" && ef.metas.texto === TEXTO_BASE_ANUAL.metas);
+  const so = somentePersonalizadas({ apresentacao: "Do padrão\r\n", conclusao: "Outro", metas: TEXTO_BASE_ANUAL.metas }, { apresentacao: "Do padrão" });
+  conferir("anual: só grava no exercício as seções diferentes do padrão", JSON.stringify(Object.keys(so)) === '["conclusao"]');
 }
 
 async function main() {
@@ -71,7 +79,8 @@ async function main() {
   await mkdir(SAIDA, { recursive: true });
   await dono.connect();
 
-  const { rows: clientes } = await dono.query("SELECT id, tipo FROM clientes");
+  // Clientes do seed (o banco pode ter também os dados de demonstração): os mais antigos de cada tipo.
+  const { rows: clientes } = await dono.query("SELECT id, tipo FROM clientes ORDER BY criado_em");
   const pm = clientes.find((c) => c.tipo === "PREFEITURA")!.id as string;
   const cm = clientes.find((c) => c.tipo === "CAMARA")!.id as string;
   const { rows: us } = await dono.query("SELECT id, email FROM usuarios");
@@ -116,6 +125,15 @@ async function main() {
   // Textos do relatório anual: cria só se o ano ainda não tiver relatório (e remove ao final).
   const { rows: existente } = await dono.query("SELECT 1 FROM relatorios_anuais WHERE cliente_id = $1 AND ano = $2", [pm, ANO_TESTE]);
   const criouAnual = existente.length === 0;
+  // Texto padrão do cliente: o teste usa um temporário (restaurado ao final) para conferir a herança no PDF.
+  const { rows: modeloAntes } = await dono.query("SELECT secoes FROM modelos_relatorio_anual WHERE cliente_id = $1", [pm]);
+  await comCliente(ctx, (tx) =>
+    tx.modeloRelatorioAnual.upsert({
+      where: { clienteId: pm },
+      create: { clienteId: pm, secoes: { conclusao: "Conclusão padrão de {entidade} para {ano}." } },
+      update: { secoes: { conclusao: "Conclusão padrão de {entidade} para {ano}." } },
+    }),
+  );
   if (criouAnual) {
     await comCliente(ctx, (tx) =>
       tx.relatorioAnual.create({
@@ -147,7 +165,7 @@ async function main() {
     const soSesau = await montarRelatorioDemandas(ctx, { unidadeId: sesau, inicio: new Date("2000-01-01T00:00:00Z") });
     conferir("demandas: filtro por unidade aparece no relatório", textoDoHtml(soSesau.corpo.valor).includes("Secretaria"));
 
-    await gerarEConferir(ctx, await montarRelatorioMedidas(ctx, {}), ["Painel de Medidas", "Matriz de gravidade", "Situações por gravidade"], "medidas");
+    await gerarEConferir(ctx, await montarRelatorioAlertas(ctx, {}), ["Painel de Alertas", "Matriz de gravidade", "Situações por gravidade"], "alertas");
 
     const relAud = await montarRelatorioAuditoria(ctx, { auditoriaId: idAuditoria, versao: "final" });
     conferir("auditoria: antes do relatório final sai como preliminar com marca d'água", relAud?.marcaDagua === "PRELIMINAR");
@@ -161,7 +179,9 @@ async function main() {
     await gerarEConferir(
       ctx,
       await montarRelatorioAnual(ctx, { ano: ANO_TESTE }),
-      [`Relatório Anual de Controle Interno — Exercício ${ANO_TESTE}`, "Autoavaliação do controle interno", "Auditorias realizadas", "Demandas às unidades", ...(criouAnual ? ["Texto de apresentação do teste automatizado."] : [])],
+      [`Relatório Anual de Controle Interno — Exercício ${ANO_TESTE}`, "Autoavaliação do controle interno", "Auditorias realizadas", "Demandas às unidades", ...(criouAnual
+          ? ["Texto de apresentação do teste automatizado.", "Conclusão padrão de Prefeitura Municipal de Exemplo para " + ANO_TESTE + ".", "Plano Plurianual (PPA)"]
+          : [])],
       "relatorio-anual",
     );
 
@@ -171,7 +191,7 @@ async function main() {
 
     // Satélite: bloqueado na montagem e, por baixo, pela RLS.
     conferir("satélite: relatório de demandas recusado", await lancaAcesso(() => montarRelatorioDemandas(ctxSat, {})));
-    conferir("satélite: painel de medidas recusado", await lancaAcesso(() => montarRelatorioMedidas(ctxSat, {})));
+    conferir("satélite: painel de medidas recusado", await lancaAcesso(() => montarRelatorioAlertas(ctxSat, {})));
     conferir("satélite: relatório de auditoria recusado", await lancaAcesso(() => montarRelatorioAuditoria(ctxSat, { auditoriaId: idAuditoria })));
     conferir("satélite: relatório anual recusado", await lancaAcesso(() => montarRelatorioAnual(ctxSat, { ano: ANO_TESTE })));
     if (ciclos[0]) conferir("satélite: autoavaliação recusada", await lancaAcesso(() => montarRelatorioAutoavaliacao(ctxSat, { cicloId: ciclos[0].id })));
@@ -180,7 +200,11 @@ async function main() {
       auditorias: await tx.auditoria.count(),
       situacoes: await tx.situacao.count(),
       anuais: await tx.relatorioAnual.count(),
+      modelos: await tx.modeloRelatorioAnual.count(),
     }));
+    conferir("satélite (RLS): não lê o texto padrão do relatório anual", rls.modelos === 0);
+    const modeloOutro = await comCliente({ ...ctx, clienteId: cm }, (tx) => tx.modeloRelatorioAnual.count({ where: { clienteId: pm } }));
+    conferir("outro cliente (RLS): não lê o texto padrão da prefeitura", modeloOutro === 0);
     conferir("satélite (RLS): não lê auditorias", rls.auditorias === 0);
     conferir("satélite (RLS): não lê situações", rls.situacoes === 0);
     conferir("satélite (RLS): não lê relatórios anuais", rls.anuais === 0);
@@ -197,6 +221,8 @@ async function main() {
     await dono.query("DELETE FROM auditorias WHERE id = $1", [idAuditoria]);
     await dono.query("DELETE FROM relatorios_anuais WHERE cliente_id = $1 AND ano = 2001", [pm]);
     if (criouAnual) await dono.query("DELETE FROM relatorios_anuais WHERE cliente_id = $1 AND ano = $2", [pm, ANO_TESTE]);
+    if (modeloAntes.length) await dono.query("UPDATE modelos_relatorio_anual SET secoes = $2 WHERE cliente_id = $1", [pm, modeloAntes[0].secoes]);
+    else await dono.query("DELETE FROM modelos_relatorio_anual WHERE cliente_id = $1", [pm]);
     await dono.end();
     await fecharNavegador();
   }

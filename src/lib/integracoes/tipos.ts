@@ -48,7 +48,7 @@ export type DadosSiconfi = {
     faixa: FaixaLimite;
     referencia: string;
   } | null;
-  /** Só do Executivo (RGF Anexo 02). */
+  /** Do ente, lido no RGF Anexo 02 do Executivo (também exibido para a Câmara). */
   divida: {
     consolidada: number | null;
     consolidadaLiquida: number | null;
@@ -56,7 +56,7 @@ export type DadosSiconfi = {
     percentualDcl: number | null;
     referencia: string;
   } | null;
-  /** Só do Executivo (RREO Anexo 06). */
+  /** Do ente, lido no RREO Anexo 06 do Executivo (também exibido para a Câmara). */
   resultadoPrimario: { valor: number; meta: number | null; criterio: "SEM_RPPS" | "COM_RPPS"; referencia: string } | null;
   entregas: EntregaSiconfi[];
   avisos: string[];

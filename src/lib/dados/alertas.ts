@@ -4,14 +4,14 @@ import { comCliente, db } from "@/lib/db";
 import type { Contexto } from "@/lib/auth/dal";
 import { hojeComoDataSimples } from "@/lib/datas";
 import { classificarRisco, ESCALA, NIVEIS_RISCO, type NivelRisco } from "@/lib/risco";
-import { POR_PAGINA, STATUS_EM_ABERTO, whereSituacoes, type FiltrosSituacoes } from "@/app/(controle)/medidas/filtros";
+import { POR_PAGINA, STATUS_EM_ABERTO, whereSituacoes, type FiltrosSituacoes } from "@/app/(controle)/alertas/filtros";
 import { acaoVencida, dataIso, percentualExecutado, STATUS_ABERTOS } from "./acoes";
 
 export function numeroSituacao(numero: number, ano: number) {
   return `${String(numero).padStart(3, "0")}/${ano}`;
 }
 
-/** Lista filtrada e paginada + indicadores do painel de Medidas (sempre sobre as situações em aberto). */
+/** Lista filtrada e paginada + indicadores do painel de Alertas (sempre sobre as situações em aberto). */
 export async function listarSituacoes(ctx: Contexto, filtros: FiltrosSituacoes) {
   const where = whereSituacoes(filtros);
   const hojeData = hojeComoDataSimples();
