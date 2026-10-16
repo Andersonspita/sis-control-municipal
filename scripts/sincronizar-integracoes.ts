@@ -55,7 +55,7 @@ async function main() {
         console.log(`${cliente.nome}: sincronização já em andamento, pulando.`);
         continue;
       }
-      const resumo = await executarSincronizacao({
+      const { fontes: resumo, alertas } = await executarSincronizacao({
         cliente,
         usuarioId: null,
         origem: "AGENDADA",
@@ -65,7 +65,10 @@ async function main() {
         .map(([fonte, r]) => `${fonte}=${r.status}${r.status === "ERRO" ? ` (${r.erro})` : ""}`)
         .join(" ");
       if (Object.values(resumo).some((r) => r.status === "ERRO")) falhas++;
-      console.log(`${cliente.nome} [${cliente.codigoIbge}] ${linha} — ${((Date.now() - inicio) / 1000).toFixed(1)}s`);
+      const automaticos = alertas
+        ? ` · alertas: ${alertas.criados.length} novo(s), ${alertas.atualizados.length} atualizado(s), ${alertas.encerrados.length} encerrado(s)`
+        : "";
+      console.log(`${cliente.nome} [${cliente.codigoIbge}] ${linha}${automaticos} — ${((Date.now() - inicio) / 1000).toFixed(1)}s`);
     } catch (err) {
       falhas++;
       console.error(`${cliente.nome}: falha inesperada`, err);

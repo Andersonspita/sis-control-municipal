@@ -166,7 +166,7 @@
   </div>
   <div class="rodape">
     <div><span class="marca">HorizonAJ</span><br>Sistema de Controladoria Municipal</div>
-    <div style="text-align:right">Versão 1.1<br>Outubro de 2026</div>
+    <div style="text-align:right">Versão 1.2<br>Outubro de 2026</div>
   </div>
 </section>
 
@@ -375,8 +375,8 @@
   <table>
     <thead><tr><th style="width:26%">Bloco</th><th>O que mostra e o que fazer</th></tr></thead>
     <tbody>
-      <tr><td><strong>Índices em destaque</strong></td><td>Despesa com pessoal sobre a RCL (com a faixa da LRF), dívida consolidada líquida sobre a RCL, receita corrente líquida, resultado primário acumulado, entregas pendentes ao SICONFI e aderência média às normas. Cada índice abre a tela de origem.</td></tr>
-      <tr><td><strong>Alertas fiscais (LRF)</strong></td><td>Avisos automáticos quando a despesa com pessoal (folha) atinge o limite de alerta, prudencial ou máximo, quando a dívida consolidada passa de 108% da RCL ou quando há demonstrativos vencidos no SICONFI. O botão <span class="ui">Registrar alerta</span> abre o registro já preenchido (capítulo 10).</td></tr>
+      <tr><td><strong>Índices em destaque</strong></td><td>Despesa com pessoal sobre a RCL (com a faixa da LRF), dívida consolidada líquida sobre a RCL, receita corrente líquida, resultado primário acumulado, entregas pendentes ao SICONFI, aderência média às normas e os percentuais aplicados em saúde, educação (MDE) e FUNDEB. Cada índice abre a tela de origem.</td></tr>
+      <tr><td><strong>Alertas fiscais (LRF)</strong></td><td>Verificados automaticamente a cada coleta: folha, dívida consolidada, mínimos de saúde e educação, meta fiscal e demonstrativos vencidos. Cada irregularidade já vira um alerta numerado, com aviso por e-mail (capítulo 10).</td></tr>
       <tr><td><strong>Alertas registrados</strong></td><td>Situações em aberto por gravidade (crítico, alto, médio, baixo) e ações vencidas nos planos dos alertas.</td></tr>
       <tr><td><strong>Demandas</strong></td><td>Em aberto, vencidas (<em>deve ser zero ou perto disso</em>), respostas a analisar e ações em execução.</td></tr>
       <tr><td><strong>Aderência às normas</strong></td><td>Percentual de conformidade do ciclo de autoavaliação mais recente de cada norma, com quantos requisitos foram avaliados e quantos estão “não atendidos” ou “parciais”.</td></tr>
@@ -966,17 +966,31 @@
   </div>
 
   <h2>10.1 Alertas fiscais automáticos (LRF)</h2>
-  <p>No topo da tela <span class="ui">Alertas</span>, o bloco <strong>Alertas fiscais (LRF)</strong> é calculado a partir dos dados do SICONFI (capítulo 13) e mostra, do mais grave para o menos grave:</p>
+  <p>Você não precisa consultar o SICONFI, o RREO ou o RGF de outros sistemas: o próprio sistema coleta os demonstrativos <strong>ao menos uma vez por dia</strong> (e também quando alguém abre o Painel, Alertas ou Dados externos com dados de mais de 24 horas) e verifica, do mais grave para o menos grave:</p>
   <table>
     <thead><tr><th style="width:30%">Alerta</th><th>Quando aparece</th></tr></thead>
     <tbody>
       <tr><td><strong>Despesa com pessoal (folha)</strong></td><td>Ao atingir o limite de alerta (90% do máximo), o prudencial (95%) ou o máximo da LRF — no município, 54% da RCL para o Executivo e 6% para o Legislativo.</td></tr>
       <tr><td><strong>Dívida consolidada líquida</strong></td><td>Acima de 108% da RCL (alerta) ou de 120% (limite da Res. Senado nº 40/2001). Para a Câmara, o índice é o do município, lido nos demonstrativos do Executivo.</td></tr>
+      <tr><td><strong>Educação (MDE)</strong></td><td>Aplicação abaixo de 25% das receitas de impostos (CF, art. 212). Até o 5º bimestre aparece como “abaixo do mínimo até o bimestre” (risco); no 6º bimestre, como “mínimo descumprido”.</td></tr>
+      <tr><td><strong>FUNDEB</strong></td><td>Menos de 70% do FUNDEB na remuneração dos profissionais da educação (Lei nº 14.113/2020).</td></tr>
+      <tr><td><strong>Saúde (ASPS)</strong></td><td>Aplicação abaixo de 15% (LC nº 141/2012).</td></tr>
+      <tr><td><strong>Meta de resultado primário</strong></td><td>Resultado do exercício abaixo da meta da LDO, apurado no último bimestre.</td></tr>
       <tr><td><strong>Entregas ao SICONFI</strong></td><td>Demonstrativos (RREO, RGF, DCA, MSC) com prazo vencido e sem registro de entrega.</td></tr>
-      <tr><td><strong>Atenção</strong></td><td>Código IBGE não cadastrado, coleta com falha ou dados com mais de 40 dias.</td></tr>
+      <tr><td><strong>Atenção</strong></td><td>Código IBGE não cadastrado, coleta com falha ou dados com mais de 40 dias (não vira alerta numerado).</td></tr>
     </tbody>
   </table>
-  <p>Clique em <span class="ui">Registrar alerta</span> para abrir o formulário já preenchido com a descrição, a base legal e a gravidade sugerida. A partir daí, o alerta segue o mesmo tratamento das demais situações.</p>
+  <h3>O que o sistema faz sozinho</h3>
+  <ul>
+    <li><strong>Cria o alerta</strong>: cada irregularidade vira um alerta numerado (origem “Alerta automático”), com descrição, base legal e gravidade, marcado com o selo <strong>Automático</strong> na lista. No bloco de alertas fiscais aparece o atalho <span class="ui">Alerta nº</span> para abri-lo.</li>
+    <li><strong>Avisa por e-mail</strong> o controlador e a equipe da entidade sempre que um alerta é criado ou encerrado.</li>
+    <li><strong>Atualiza</strong> o alerta aberto quando sai um novo demonstrativo ou a faixa piora (por exemplo, de alerta para prudencial), registrando no histórico.</li>
+    <li><strong>Encerra</strong> o alerta como “Resolvida”, com justificativa automática, quando a irregularidade deixa de constar (ex.: o demonstrativo foi entregue). O plano de ação e o histórico ficam preservados.</li>
+  </ul>
+  <p>Ao controlador cabe <strong>tratar</strong>: criar o plano de ação, enviar demandas às unidades e acompanhar. Se você encerrar um alerta automático manualmente, ele não é recriado para o mesmo demonstrativo; volta apenas se a irregularidade persistir no período seguinte.</p>
+  <div class="caixa atencao"><strong>Câmara</strong>
+    <p>A Câmara recebe alertas automáticos dos indicadores do próprio Poder (despesa com pessoal do Legislativo e entregas). Os indicadores do município (dívida, saúde, educação, meta fiscal) aparecem para consulta, com o botão <span class="ui">Registrar alerta</span> caso queira acompanhá-los.</p>
+  </div>
   <figure>
     <img src="img/20-alertas.png" alt="Tela de Alertas">
     <figcaption>Tela de Alertas: alertas fiscais automáticos, painel por gravidade e matriz de risco, filtros e lista.</figcaption>
@@ -1146,7 +1160,7 @@
     <p class="resumo">Indicadores do município coletados automaticamente de fontes oficiais, para acompanhar os limites da LRF sem planilhas.</p>
   </div>
   <figure>
-    <img src="img/26-dados-externos.png" alt="Dados externos">
+    <img src="img/26-dados-externos.png" alt="Dados externos" style="width:80%">
     <figcaption>Dados externos: indicadores no topo e blocos recolhíveis — alertas fiscais, despesa com pessoal, entregas ao SICONFI, endividamento e demais fontes.</figcaption>
   </figure>
   <table>
@@ -1156,6 +1170,8 @@
       <tr><td><strong>Alertas fiscais (LRF)</strong></td><td>Os mesmos alertas automáticos do Painel e da tela Alertas: folha, dívida e entregas vencidas.</td><td>SICONFI</td></tr>
       <tr><td><strong>Despesa com pessoal × limites da LRF</strong></td><td>Despesa total com pessoal sobre a RCL ajustada, com barras de limite de alerta, prudencial e máximo, e o selo da faixa.</td><td>SICONFI (RGF)</td></tr>
       <tr><td><strong>Entregas ao SICONFI</strong></td><td>Cada demonstrativo, período, prazo e situação (Entregue, Pendente, A vencer).</td><td>SICONFI</td></tr>
+      <tr><td><strong>Saúde e educação — mínimos constitucionais</strong></td><td>Percentual aplicado em educação (MDE, 25%), FUNDEB (70%) e saúde (15%), com a barra do mínimo, acumulado até o bimestre.</td><td>SICONFI (RREO, Anexo 14)</td></tr>
+      <tr><td><strong>Execução orçamentária e restos a pagar</strong></td><td>Receita prevista e realizada, despesas empenhadas, liquidadas e pagas, superávit ou déficit e saldo de restos a pagar.</td><td>SICONFI (RREO, Anexo 14)</td></tr>
       <tr><td><strong>Endividamento e resultado primário</strong></td><td>Dívida consolidada, dívida consolidada líquida sobre a RCL (RGF, Anexo 2) e resultado primário (RREO, Anexo 6) comparado à meta da LDO. Exibido para todas as entidades; na Câmara, com os dados do Executivo municipal.</td><td>SICONFI</td></tr>
       <tr><td><strong>Transferências e convênios federais</strong></td><td>Recursos federais recebidos pelo CNPJ da entidade no ano e convênios vigentes no município.</td><td>Portal da Transparência (CGU)</td></tr>
       <tr><td><strong>Empresas sancionadas (CEIS/CNEP)</strong></td><td>Consulta pelo CNPJ do fornecedor antes de contratar ou pagar. Cada consulta fica na trilha.</td><td>Portal da Transparência (CGU)</td></tr>
@@ -1165,10 +1181,11 @@
   </table>
   <h2>13.1 Como usar</h2>
   <ol class="passos">
-    <li>Os dados são atualizados automaticamente todos os dias. Para forçar a atualização, o controlador clica em <span class="ui">Atualizar dados</span>; os cartões se atualizam à medida que cada fonte responde.</li>
-    <li>Confira a faixa da despesa com pessoal. Se estiver em alerta, prudencial ou excedida, clique em <span class="ui">Registrar alerta</span> para abrir um alerta já descrito, com os limites e a gravidade sugerida. O mesmo vale para a dívida consolidada acima do limite de alerta.</li>
-    <li>Em <strong>Entregas ao SICONFI</strong>, use <span class="ui">Registrar alerta para as pendências</span> se houver demonstrativos com prazo vencido.</li>
+    <li>Os dados são atualizados automaticamente: todos os dias pela rotina do servidor e, além disso, sempre que alguém abre o Painel, Alertas ou Dados externos com dados de mais de 24 horas. <span class="ui">Atualizar dados</span> força uma nova coleta na hora.</li>
+    <li>A cada coleta, os alertas fiscais são criados, atualizados ou encerrados sozinhos (capítulo 10) — não é preciso registrar nada manualmente.</li>
+    <li>Quando a despesa com pessoal, a dívida ou as entregas exigem atenção, o cartão mostra o atalho <span class="ui">Alerta nº (automático)</span> para o alerta já criado pelo sistema. Na Câmara, os indicadores do município trazem <span class="ui">Registrar alerta</span>, caso queira acompanhá-los.</li>
     <li>Recolha os blocos que consulta pouco; a tela abre sempre do jeito que você deixou.</li>
+    <li>Se aparecer “Código IBGE não cadastrado”, peça à HorizonAJ para preenchê-lo. Os números vêm das declarações do próprio município ao SICONFI: dado errado ou ausente se corrige na origem (contabilidade).</li>
   </ol>
   <div class="caixa norma"><strong>Base normativa (LRF — Lei Complementar nº 101/2000)</strong>
     <ul>
@@ -1178,9 +1195,6 @@
       <li><strong>Art. 54</strong>: o Relatório de Gestão Fiscal (RGF), emitido ao fim de cada quadrimestre, é assinado também pelas autoridades responsáveis pelo controle interno.</li>
       <li><strong>Art. 59</strong>: o sistema de controle interno de cada Poder participa da fiscalização do cumprimento da LRF.</li>
     </ul>
-  </div>
-  <div class="caixa atencao"><strong>Atenção</strong>
-    <p>As integrações usam o <strong>código IBGE</strong> do município. Se aparecer “Código IBGE não cadastrado”, peça à HorizonAJ para preenchê-lo. Os números vêm das declarações enviadas pelo próprio município ao SICONFI: se estiverem errados ou ausentes, o problema está na origem (contabilidade), não no sistema.</p>
   </div>
 </section>
 
@@ -1241,7 +1255,7 @@
         </ul></td></tr>
       <tr><td><strong>Todo mês</strong></td><td>
         <ul>
-          <li>Abrir <span class="ui">Dados externos</span>: despesa com pessoal, entregas ao SICONFI, endividamento. Registrar alerta se houver limite atingido ou pendência.</li>
+          <li>Abrir <span class="ui">Dados externos</span>: despesa com pessoal, entregas ao SICONFI, endividamento, saúde e educação. Os alertas já chegam criados (e por e-mail): priorize os planos de ação.</li>
           <li>Emitir o relatório de <strong>Demandas</strong> do mês e o <strong>Painel de alertas</strong> para acompanhamento interno.</li>
           <li>Conferir a execução do PAAI: auditorias que deveriam ter começado e ainda não foram iniciadas.</li>
           <li>Conferir se a lista de unidades e responsáveis continua atualizada.</li>
@@ -1346,7 +1360,7 @@
       <dt>Marco</dt><dd>Etapa com prazo dentro de uma ação de plano.</dd>
       <dt>Matriz de planejamento</dt><dd>Questões de auditoria com informações requeridas, fontes e procedimentos.</dd>
       <dt>Alerta (situação)</dt><dd>Fato que exige intervenção — inclusive um limite da LRF atingido —, tratado com plano de ação até ser resolvido ou arquivado. Antes chamado “Medida”.</dd>
-      <dt>Alerta fiscal</dt><dd>Aviso automático do sistema quando a despesa com pessoal, a dívida consolidada ou as entregas ao SICONFI exigem atenção.</dd>
+      <dt>Alerta fiscal</dt><dd>Irregularidade identificada automaticamente nos dados do SICONFI (folha, dívida, saúde, educação, meta fiscal, entregas). Vira um alerta numerado e é encerrada sozinha quando se regulariza.</dd>
       <dt>Texto padrão</dt><dd>Texto do Relatório Anual válido para todos os exercícios; cada ano pode personalizar só as seções que precisar.</dd>
       <dt>Ofício</dt><dd>Documento formal em PDF gerado a partir de uma demanda.</dd>
       <dt>PAAI</dt><dd>Plano Anual de Auditoria Interna, priorizado por risco e aprovado pelo controlador.</dd>

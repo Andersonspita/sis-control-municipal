@@ -4,6 +4,7 @@ import { ArrowLeftRight, ClipboardCheck, Gauge, History, Inbox, ListChecks, Netw
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
 import { resumoPainel } from "@/lib/dados/painel";
 import { carregarDadosExternos } from "@/lib/dados/integracoes";
+import { alertasAutomaticosAbertos } from "@/lib/dados/alertas";
 import { calcularAlertasFiscais } from "@/lib/integracoes/alertas-fiscais";
 import { BLOCOS_PAINEL, blocosVisiveis, type IdBlocoPainel } from "@/lib/painel/blocos";
 import { preferenciasDaPagina } from "@/lib/preferencias";
@@ -45,16 +46,10 @@ export default async function Painel() {
   const ctx = await exigirContexto(PERFIS_CONTROLE);
   const pref = await preferenciasDaPagina(ctx.usuarioId, "painel");
   const visiveis = blocosVisiveis(pref.ocultos);
-  const precisaExternos = visiveis.some((id) => id === "indices" || id === "alertas-fiscais" || id === "transferencias");
-  const [r, d] = await Promise.all([resumoPainel(ctx), precisaExternos ? carregarDadosExternos(ctx) : null]);
+  // Os dados externos são carregados sempre: abrir o painel dispara a coleta automática quando estão desatualizados.
+  const [r, d, registrados] = await Promise.all([resumoPainel(ctx), carregarDadosExternos(ctx), alertasAutomaticosAbertos(ctx)]);
 
-  const alertasFiscais = d
-    ? calcularAlertasFiscais({
-        entidade: d.cliente.nome,
-        codigoIbge: d.cliente.codigoIbge,
-        siconfi: d.siconfi,
-      })
-    : [];
+  const alertasFiscais = calcularAlertasFiscais({ entidade: d.cliente.nome, codigoIbge: d.cliente.codigoIbge, siconfi: d.siconfi });
   const resumos: Partial<Record<IdBlocoPainel, string>> = {
     "alertas-fiscais": alertasFiscais.length ? `${alertasFiscais.length} alerta(s)` : "nenhum alerta",
     alertas: `${r.alertas.emAberto} em aberto`,
@@ -68,7 +63,7 @@ export default async function Painel() {
       case "indices":
         return d && <ConteudoIndices r={r} d={d} />;
       case "alertas-fiscais":
-        return <ListaAlertasFiscais alertas={alertasFiscais} />;
+        return <ListaAlertasFiscais alertas={alertasFiscais} registrados={registrados} />;
       case "alertas":
         return <ConteudoAlertas r={r} />;
       case "demandas":
