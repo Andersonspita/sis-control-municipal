@@ -207,6 +207,40 @@ export function interpretarRreoAnexo03(linhas: LinhaDemonstrativo[]) {
   };
 }
 
+/** Percentual aplicado e mínimo legal de um item do RREO Anexo 14 (null se o ente não informou). */
+function aplicacao(linhas: LinhaDemonstrativo[], conta: RegExp) {
+  const aplicado = valorDe(linhas, conta, /% Aplicado/i);
+  const minimo = valorDe(linhas, conta, /% M[ií]nimo/i);
+  if (aplicado === null || minimo === null) return null;
+  return { aplicado, minimo, valor: valorDe(linhas, conta, /^Valor Apurado/i) };
+}
+
+/**
+ * RREO Anexo 14 (demonstrativo simplificado): mínimos constitucionais de educação (MDE e FUNDEB) e saúde,
+ * execução orçamentária e restos a pagar. Os anexos 8 e 12 não são publicados na API de dados do SICONFI;
+ * o Anexo 14 traz os mesmos percentuais acumulados até o bimestre.
+ */
+export function interpretarRreoAnexo14(linhas: LinhaDemonstrativo[]) {
+  if (!linhas.length) return null;
+  const orc = (nome: string) => valorDe(linhas, new RegExp(`^${nome}DemonstrativoSimplificadoBalancoOrcamentario$`), /./);
+  const rap = (coluna: RegExp) => valorDe(linhas, /^TotalRestosAPagarDemonstrativoSimplificado$/, coluna);
+  return {
+    educacao: aplicacao(linhas, /^MinimoAnualDasReceitasDeImpostosNaManutencaoEDesenvolvimentoDoEnsino/),
+    fundeb: aplicacao(linhas, /^MinimoAnualDoFUNDEBNaRemuneracao/),
+    saude: aplicacao(linhas, /^AplicacaoTotalDasDespesasComAcoesEServicosPublicosDeSaude$/),
+    orcamento: {
+      receitaPrevista: orc("PrevisaoAtualizada"),
+      receitaRealizada: orc("ReceitasRealizadas"),
+      despesaAutorizada: orc("DotacaoAtualizada"),
+      despesaEmpenhada: orc("DespesasEmpenhadas"),
+      despesaLiquidada: orc("DespesasLiquidadas"),
+      despesaPaga: orc("DespesasPagas"),
+      superavit: orc("SuperavitOrcamentario"),
+    },
+    restosAPagar: { inscritos: rap(/^Inscri/i), pagos: rap(/^Pagamento/i), saldo: rap(/^Saldo/i) },
+  };
+}
+
 async function demonstrativo(
   endpoint: "rgf" | "rreo",
   params: Record<string, string | number>,
@@ -275,6 +309,7 @@ export async function coletarSiconfi(
     pessoal: null,
     divida: null,
     resultadoPrimario: null,
+    execucao: null,
     entregas: calcularEntregas(entregues, poder, hoje, exercicios),
     avisos,
   };
@@ -324,7 +359,9 @@ export async function coletarSiconfi(
       const base = { an_exercicio: rreo.exercicio, nr_periodo: rreo.periodo, co_esfera: "M", id_ente: codigoIbge };
       const referencia = `RREO ${rotuloPeriodo("B", rreo.periodo, rreo.exercicio)}${sufixo}`;
       const a6 = interpretarRreoAnexo06(await demonstrativo("rreo", { ...base, no_anexo: "RREO-Anexo 06" }, ["RREO", "RREO Simplificado"], opcoes));
-      if (a6) dados.resultadoPrimario = { ...a6, referencia };
+      if (a6) dados.resultadoPrimario = { ...a6, referencia, final: rreo.periodo === 6 };
+      const a14 = interpretarRreoAnexo14(await demonstrativo("rreo", { ...base, no_anexo: "RREO-Anexo 14" }, ["RREO", "RREO Simplificado"], opcoes));
+      if (a14) dados.execucao = { ...a14, referencia, final: rreo.periodo === 6 };
       if (!dados.rcl && poder === "E") {
         const a3 = interpretarRreoAnexo03(await demonstrativo("rreo", { ...base, no_anexo: "RREO-Anexo 03" }, ["RREO", "RREO Simplificado"], opcoes));
         if (a3.rcl !== null) dados.rcl = { valor: a3.rcl, ajustadaPessoal: a3.rclAjustadaPessoal, referencia };

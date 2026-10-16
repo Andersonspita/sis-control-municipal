@@ -10,6 +10,7 @@ import { arquivosDoFormulario, comArquivos, registrarDocumentos } from "@/lib/do
 import { numeroSituacao } from "@/lib/dados/alertas";
 import { ErroNegocio, mensagemDeErro } from "@/lib/erros";
 import { classificarRisco } from "@/lib/risco";
+import { anoDaNumeracao, proximoNumeroSituacao } from "@/lib/numeracao-situacao";
 import type { EstadoAcao } from "@/lib/acoes";
 import { STATUS_ENCERRADOS } from "./filtros";
 
@@ -60,11 +61,8 @@ export async function criarSituacao(_: EstadoAcao, formData: FormData): Promise<
     id = await comArquivos(ctx.clienteId, arquivosDoFormulario(formData), (salvos) =>
       comCliente(ctx, async (tx) => {
         const unidade = await conferirUnidade(tx, dados.data.unidadeId);
-        const ano = Number(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bahia", year: "numeric" }).format(new Date()));
-        // Numeração sequencial por cliente e ano, serializada por trava transacional.
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`situacao:${ctx.clienteId}:${ano}`}, 0))`;
-        const ultima = await tx.situacao.aggregate({ where: { ano }, _max: { numero: true } });
-        const numero = (ultima._max.numero ?? 0) + 1;
+        const ano = anoDaNumeracao();
+        const numero = await proximoNumeroSituacao(tx, ctx.clienteId, ano);
 
         const situacao = await tx.situacao.create({
           data: { ...dados.data, clienteId: ctx.clienteId, numero, ano, criadoPorId: ctx.usuarioId },
@@ -124,10 +122,14 @@ export async function editarSituacao(_: EstadoAcao, formData: FormData): Promise
           impacto: true,
           sigilosa: true,
           denunciante: true,
+          chaveAutomatica: true,
         },
       });
       if (!atual) throw new ErroNegocio("Situação não encontrada.");
       if (STATUS_ENCERRADOS.includes(atual.status)) throw new ErroNegocio("Situação encerrada: reabra-a para editar.");
+      if (atual.chaveAutomatica && dados.data.origem !== "ALERTA") {
+        throw new ErroNegocio("Alertas criados automaticamente mantêm a origem “Alerta automático (LRF/SICONFI)”.");
+      }
       await conferirUnidade(tx, dados.data.unidadeId);
 
       // Só o controlador vê o denunciante de uma denúncia sigilosa; os demais não alteram origem, sigilo nem denunciante.
@@ -185,10 +187,19 @@ export async function alterarStatusSituacao(_: EstadoAcao, formData: FormData): 
 
   try {
     await comCliente(ctx, async (tx) => {
-      const atual = await tx.situacao.findUnique({ where: { id: situacaoId }, select: { status: true } });
+      const atual = await tx.situacao.findUnique({ where: { id: situacaoId }, select: { status: true, chaveAutomatica: true } });
       if (!atual) throw new ErroNegocio("Situação não encontrada.");
       if (atual.status === status) throw new ErroNegocio("A situação já está nesse estado.");
       const reabrindo = STATUS_ENCERRADOS.includes(atual.status);
+      if (reabrindo && atual.chaveAutomatica) {
+        const outraAberta = await tx.situacao.findFirst({
+          where: { chaveAutomatica: atual.chaveAutomatica, status: { notIn: STATUS_ENCERRADOS }, id: { not: situacaoId } },
+          select: { numero: true, ano: true },
+        });
+        if (outraAberta) {
+          throw new ErroNegocio(`Já existe um alerta automático aberto para este indicador (${numeroSituacao(outraAberta.numero, outraAberta.ano)}).`);
+        }
+      }
       if ((encerrando || reabrindo) && ctx.perfil !== "CONTROLADOR") {
         throw new ErroNegocio("Somente o controlador pode encerrar ou reabrir uma situação.");
       }

@@ -4,6 +4,10 @@ import { coletarIbge } from "./ibge";
 import { poderDaEntidade } from "./lrf";
 import { chavePortal, coletarPortalTransparencia, MENSAGEM_SEM_CHAVE } from "./portal-transparencia";
 import { coletarSiconfi, hojeNaBahia } from "./siconfi";
+import { aplicarAlertasAutomaticos, type ResultadoAlertasAutomaticos } from "./alertas-automaticos";
+import type { DadosSiconfi } from "./tipos";
+import { mensagensAlertasAutomaticos } from "../email/alertas";
+import { enviarEmails } from "../email/transporte";
 
 // Sincronização das fontes públicas de um cliente. Sem "server-only": roda na server action (via after())
 // e no script de cron (scripts/sincronizar-integracoes.ts), cada um com sua conexão e contexto de RLS.
@@ -14,6 +18,7 @@ export type ExecutorCliente = <T>(fn: (tx: Tx) => Promise<T>) => Promise<T>;
 
 export type ClienteIntegracao = {
   id: string;
+  nome: string;
   tipo: TipoCliente;
   cnpj: string;
   municipio: string;
@@ -90,18 +95,30 @@ async function coletarFonte(fonte: FonteIntegracao, cliente: ClienteIntegracao, 
 
 export type ResumoSincronizacao = Record<FonteIntegracao, { status: StatusColeta; erro?: string | null }>;
 
-/** Coleta cada fonte, grava o resultado assim que fica pronto e registra a sincronização na trilha. */
+export type ResultadoSincronizacao = {
+  fontes: ResumoSincronizacao;
+  /** Alertas criados, atualizados e encerrados automaticamente (null se o SICONFI não foi coletado). */
+  alertas: ResultadoAlertasAutomaticos | null;
+};
+
+/**
+ * Coleta cada fonte, grava o resultado assim que fica pronto, gera os alertas automáticos a partir do SICONFI,
+ * avisa os controladores por e-mail e registra a sincronização na trilha.
+ */
 export async function executarSincronizacao(opcoes: {
   cliente: ClienteIntegracao;
   executar: ExecutorCliente;
   usuarioId: string | null;
-  origem: "MANUAL" | "AGENDADA" | "CADASTRO";
+  origem: "MANUAL" | "AGENDADA" | "CADASTRO" | "AUTOMATICA";
   hoje?: string;
   buscador?: Buscador;
-}): Promise<ResumoSincronizacao> {
+  /** false: não envia e-mail dos alertas automáticos (testes). */
+  notificar?: boolean;
+}): Promise<ResultadoSincronizacao> {
   const { cliente, executar, usuarioId } = opcoes;
   const hoje = opcoes.hoje ?? hojeNaBahia();
   const resumo = {} as ResumoSincronizacao;
+  let alertas: ResultadoAlertasAutomaticos | null = null;
 
   for (const fonte of FONTES) {
     let r: Resultado;
@@ -128,6 +145,33 @@ export async function executarSincronizacao(opcoes: {
         if (populacao) await tx.cliente.update({ where: { id: cliente.id }, data: { populacao } });
       }
     });
+
+    if (fonte === "SICONFI" && r.status === "SUCESSO" && r.dados) {
+      // Falha nos alertas não desfaz a coleta já gravada; a próxima coleta tenta de novo.
+      try {
+        alertas = await executar((tx) =>
+          aplicarAlertasAutomaticos(tx, {
+            clienteId: cliente.id,
+            entidade: cliente.nome,
+            poder: poderDaEntidade(cliente.tipo),
+            dados: r.dados as unknown as DadosSiconfi,
+            usuarioId,
+          }),
+        );
+      } catch (err) {
+        console.error("[integracoes] falha ao aplicar alertas automáticos", cliente.id, err);
+      }
+    }
+  }
+
+  if (alertas && opcoes.notificar !== false && (alertas.criados.length || alertas.encerrados.length)) {
+    const gerados = alertas;
+    try {
+      const mensagens = await executar((tx) => mensagensAlertasAutomaticos(tx, cliente.id, cliente.nome, gerados));
+      await enviarEmails(mensagens);
+    } catch (err) {
+      console.error("[integracoes] falha ao avisar alertas automáticos por e-mail", cliente.id, err);
+    }
   }
 
   await executar((tx) =>
@@ -139,10 +183,17 @@ export async function executarSincronizacao(opcoes: {
           usuarioId,
           acao: ACAO_LOG,
           entidade: "ColetaIntegracao",
-          dados: { origem: opcoes.origem, codigoIbge: cliente.codigoIbge, fontes: resumo },
+          dados: {
+            origem: opcoes.origem,
+            codigoIbge: cliente.codigoIbge,
+            fontes: resumo,
+            ...(alertas && {
+              alertas: { criados: alertas.criados.length, atualizados: alertas.atualizados.length, encerrados: alertas.encerrados.length },
+            }),
+          },
         },
       ],
     }),
   );
-  return resumo;
+  return { fontes: resumo, alertas };
 }

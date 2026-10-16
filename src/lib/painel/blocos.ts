@@ -14,13 +14,13 @@ export const BLOCOS_PAINEL = [
   {
     id: "indices",
     titulo: "Índices em destaque",
-    descricao: "Despesa com pessoal, dívida consolidada, RCL, resultado primário, entregas ao SICONFI e aderência às normas.",
+    descricao: "Pessoal, dívida consolidada, RCL, resultado primário, entregas ao SICONFI, saúde, educação, FUNDEB e aderência às normas.",
     pagina: { href: "/dados-externos", rotulo: "Dados externos" },
   },
   {
     id: "alertas-fiscais",
     titulo: "Alertas fiscais (LRF)",
-    descricao: "Limites de pessoal (folha), dívida consolidada e entregas ao SICONFI que exigem atenção.",
+    descricao: "Gerados automaticamente a cada coleta: folha, dívida, mínimos de saúde e educação, meta fiscal e entregas ao SICONFI.",
     pagina: { href: "/alertas", rotulo: "Alertas" },
   },
   {

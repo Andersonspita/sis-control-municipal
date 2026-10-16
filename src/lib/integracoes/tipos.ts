@@ -35,6 +35,27 @@ export type EntregaSiconfi = {
   situacao: SituacaoEntrega;
 };
 
+export type AplicacaoMinima = { aplicado: number; minimo: number; valor: number | null };
+
+export type ExecucaoRreo = {
+  educacao: AplicacaoMinima | null;
+  fundeb: AplicacaoMinima | null;
+  saude: AplicacaoMinima | null;
+  orcamento: {
+    receitaPrevista: number | null;
+    receitaRealizada: number | null;
+    despesaAutorizada: number | null;
+    despesaEmpenhada: number | null;
+    despesaLiquidada: number | null;
+    despesaPaga: number | null;
+    superavit: number | null;
+  };
+  restosAPagar: { inscritos: number | null; pagos: number | null; saldo: number | null };
+  referencia: string;
+  /** Último bimestre: o percentual acumulado já é o do exercício. */
+  final: boolean;
+};
+
 export type DadosSiconfi = {
   exercicio: number;
   poder: Poder;
@@ -57,7 +78,19 @@ export type DadosSiconfi = {
     referencia: string;
   } | null;
   /** Do ente, lido no RREO Anexo 06 do Executivo (também exibido para a Câmara). */
-  resultadoPrimario: { valor: number; meta: number | null; criterio: "SEM_RPPS" | "COM_RPPS"; referencia: string } | null;
+  resultadoPrimario: {
+    valor: number;
+    meta: number | null;
+    criterio: "SEM_RPPS" | "COM_RPPS";
+    referencia: string;
+    /** Último bimestre do exercício (o acumulado já é o resultado anual). Ausente em coletas antigas. */
+    final?: boolean;
+  } | null;
+  /**
+   * Do ente, lido no RREO Anexo 14 do Executivo: mínimos de educação, FUNDEB e saúde (acumulados até o
+   * bimestre), execução orçamentária e restos a pagar. Ausente em coletas anteriores à versão 1.2.
+   */
+  execucao?: ExecucaoRreo | null;
   entregas: EntregaSiconfi[];
   avisos: string[];
 };

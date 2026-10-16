@@ -24,6 +24,7 @@
     "test:risco": "tsx scripts/testar-risco.ts",
     "test:auditorias": "tsx scripts/testar-auditorias.ts",
     "test:relatorios": "tsx --conditions=react-server scripts/testar-relatorios.ts",
+    "test:alertas-automaticos": "tsx --conditions=react-server scripts/testar-alertas-automaticos.ts",
     "test:preferencias": "tsx --conditions=react-server scripts/testar-preferencias.ts",
     "usuario:criar": "tsx scripts/criar-usuario.ts",
     "demo:popular": "tsx scripts/popular-demo.ts",

@@ -584,7 +584,12 @@ model Situacao {
   /// Só para denúncia: quando sigilosa, o denunciante fica oculto a quem não é controlador.
   sigilosa                 Boolean        @default(false)
   denunciante              String?
-  criadoPorId              String         @map("criado_por_id") @db.Uuid
+  /// Nulo quando o alerta foi criado automaticamente pelo sistema (coleta do SICONFI).
+  criadoPorId              String?        @map("criado_por_id") @db.Uuid
+  /// Alerta automático: indicador que o gerou (ex.: "pessoal", "entregas"); no máximo um aberto por chave (índice parcial).
+  chaveAutomatica          String?        @map("chave_automatica") @db.VarChar(40)
+  /// Período/conteúdo do demonstrativo que gerou ou atualizou o alerta automático.
+  referenciaAutomatica     String?        @map("referencia_automatica") @db.VarChar(500)
   criadoEm                 DateTime       @default(now()) @map("criado_em") @db.Timestamptz(3)
   atualizadoEm             DateTime       @updatedAt @map("atualizado_em") @db.Timestamptz(3)
   encerradoPorId           String?        @map("encerrado_por_id") @db.Uuid

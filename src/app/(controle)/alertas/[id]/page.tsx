@@ -24,6 +24,9 @@ const HISTORICO: Record<string, string> = {
   "situacao.status_alterado": "Mudou a situação",
   "situacao.encerrada": "Encerrou a situação",
   "situacao.reaberta": "Reabriu a situação",
+  "situacao.criada_automaticamente": "Alerta criado automaticamente pela coleta do SICONFI",
+  "situacao.atualizada_automaticamente": "Alerta atualizado automaticamente (novo demonstrativo)",
+  "situacao.encerrada_automaticamente": "Alerta encerrado automaticamente (irregularidade não consta mais)",
   "plano.criado": "Criou o plano de ação",
   "documento.enviado": "Anexou documento",
 };
@@ -81,7 +84,7 @@ export default async function DetalheSituacao({ params }: PageProps<"/alertas/[i
         titulo={s.titulo}
         descricao={[
           `Situação ${numero}`,
-          `registrada em ${formatarDataHora(s.criadoEm)}${s.criadoPor ? ` por ${s.criadoPor}` : ""}`,
+          `registrada em ${formatarDataHora(s.criadoEm)}${s.automatico && !s.criadoPor ? " automaticamente pelo sistema" : s.criadoPor ? ` por ${s.criadoPor}` : ""}`,
         ].join(" · ")}
         acoes={
           <div className="flex flex-wrap items-center gap-2">
@@ -141,7 +144,7 @@ export default async function DetalheSituacao({ params }: PageProps<"/alertas/[i
                 <div className="rounded-lg border bg-muted/40 p-3 text-sm">
                   <p className="font-medium">
                     {STATUS_SITUACAO[s.status]} em {formatarDataHora(s.encerradoEm)}
-                    {s.encerradoPor ? ` por ${s.encerradoPor}` : ""}
+                    {s.encerradoPor ? ` por ${s.encerradoPor}` : s.automatico ? " automaticamente pelo sistema" : ""}
                   </p>
                   {s.justificativaEncerramento && <p className="mt-1 whitespace-pre-line text-muted-foreground">{s.justificativaEncerramento}</p>}
                 </div>
@@ -226,7 +229,7 @@ export default async function DetalheSituacao({ params }: PageProps<"/alertas/[i
                       {detalhe && <p className="text-muted-foreground">{detalhe}</p>}
                       <p className="text-xs text-muted-foreground">
                         {formatarDataHora(h.criadoEm)}
-                        {h.usuario ? ` · ${h.usuario}` : ""}
+                        {h.usuario ? ` · ${h.usuario}` : " · Sistema"}
                       </p>
                     </li>
                   );

@@ -36,6 +36,7 @@ export async function listarSituacoes(ctx: Contexto, filtros: FiltrosSituacoes) 
           impacto: true,
           status: true,
           sigilosa: true,
+          chaveAutomatica: true,
           unidade: { select: { nome: true, sigla: true } },
           plano: { select: { id: true, acoes: { select: { status: true, prazo: true } } } },
           _count: { select: { documentos: true } },
@@ -89,6 +90,8 @@ export async function carregarSituacao(ctx: Contexto, id: string) {
         denunciante: true,
         criadoPorId: true,
         criadoEm: true,
+        chaveAutomatica: true,
+        referenciaAutomatica: true,
         encerradoPorId: true,
         encerradoEm: true,
         justificativaEncerramento: true,
@@ -130,7 +133,8 @@ export async function carregarSituacao(ctx: Contexto, id: string) {
       denunciante: ocultarDenunciante ? null : denunciante,
       denuncianteOculto: ocultarDenunciante && !!denunciante,
       nivel: classificarRisco(situacao.probabilidade, situacao.impacto),
-      criadoPor: nomes.get(criadoPorId) ?? null,
+      criadoPor: criadoPorId ? (nomes.get(criadoPorId) ?? null) : null,
+      automatico: !!situacao.chaveAutomatica,
       encerradoPor: encerradoPorId ? (nomes.get(encerradoPorId) ?? null) : null,
     },
     plano: plano
@@ -156,3 +160,16 @@ export async function carregarSituacao(ctx: Contexto, id: string) {
 }
 
 export type SituacaoView = NonNullable<Awaited<ReturnType<typeof carregarSituacao>>>["situacao"];
+
+export type AlertaAutomaticoAberto = { id: string; numero: string; status: string };
+
+/** Alertas automáticos em aberto, por indicador (chave), para as telas ligarem o alerta fiscal ao registro. */
+export async function alertasAutomaticosAbertos(ctx: Contexto): Promise<Record<string, AlertaAutomaticoAberto>> {
+  const abertas = await comCliente(ctx, (tx) =>
+    tx.situacao.findMany({
+      where: { chaveAutomatica: { not: null }, status: { in: STATUS_EM_ABERTO } },
+      select: { id: true, numero: true, ano: true, status: true, chaveAutomatica: true },
+    }),
+  );
+  return Object.fromEntries(abertas.map((s) => [s.chaveAutomatica!, { id: s.id, numero: numeroSituacao(s.numero, s.ano), status: s.status }]));
+}

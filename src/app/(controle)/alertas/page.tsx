@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlarmClock, ChevronLeft, ChevronRight, EyeOff, FileDown, Filter, Paperclip, Plus, ShieldAlert, Siren } from "lucide-react";
+import { AlarmClock, ChevronLeft, ChevronRight, EyeOff, FileDown, Filter, Paperclip, Plus, ShieldAlert, Siren, Bot } from "lucide-react";
 import { exigirContexto, PERFIS_CONTROLE } from "@/lib/auth/dal";
-import { listarSituacoes, numeroSituacao } from "@/lib/dados/alertas";
+import { alertasAutomaticosAbertos, listarSituacoes, numeroSituacao } from "@/lib/dados/alertas";
 import { CabecalhoPagina } from "@/components/shell/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -27,10 +27,11 @@ export const metadata: Metadata = { title: "Alertas" };
 export default async function Alertas(props: PageProps<"/alertas">) {
   const ctx = await exigirContexto(PERFIS_CONTROLE);
   const filtros = filtrosSituacoes(await props.searchParams);
-  const [{ unidades, total, situacoes, painel }, externos, pref] = await Promise.all([
+  const [{ unidades, total, situacoes, painel }, externos, pref, registrados] = await Promise.all([
     listarSituacoes(ctx, filtros),
     carregarDadosExternos(ctx),
     preferenciasDaPagina(ctx.usuarioId, "alertas"),
+    alertasAutomaticosAbertos(ctx),
   ]);
   const fiscais = calcularAlertasFiscais({
     entidade: externos.cliente.nome,
@@ -77,7 +78,7 @@ export default async function Alertas(props: PageProps<"/alertas">) {
       <BlocoRecolhivel
         id="fiscais"
         titulo="Alertas fiscais (LRF)"
-        descricao="Gerados automaticamente a partir do SICONFI: despesa com pessoal (folha), dívida consolidada e entregas vencidas. Registre o alerta para tratá-lo com plano de ação."
+        descricao="Verificados automaticamente a cada coleta do SICONFI (ao menos uma vez por dia): folha, dívida consolidada, mínimos de saúde e educação, meta de resultado primário e entregas vencidas. Cada irregularidade vira um alerta numerado, com aviso por e-mail, e é encerrada sozinha quando se regulariza."
         icone={<ShieldAlert />}
         resumo={fiscais.length ? `${fiscais.length} alerta(s)` : "nenhum alerta"}
         className="mb-6"
@@ -87,7 +88,7 @@ export default async function Alertas(props: PageProps<"/alertas">) {
           </Link>
         }
       >
-        <ListaAlertasFiscais alertas={fiscais} />
+        <ListaAlertasFiscais alertas={fiscais} registrados={registrados} />
       </BlocoRecolhivel>
 
       <BlocoRecolhivel
@@ -260,6 +261,14 @@ export default async function Alertas(props: PageProps<"/alertas">) {
                           <Paperclip aria-hidden="true" className="size-3" />
                           {s._count.documentos}
                           <span className="sr-only"> anexo(s)</span>
+                        </span>
+                      )}
+                      {s.chaveAutomatica && (
+                        <span
+                          className="ml-2 inline-flex items-center gap-0.5 rounded-full bg-info/12 px-1.5 py-0.5 text-[0.68rem] font-medium text-info"
+                          title="Criado automaticamente pela coleta do SICONFI"
+                        >
+                          <Bot aria-hidden="true" className="size-3" /> Automático
                         </span>
                       )}
                       {s.sigilosa && (

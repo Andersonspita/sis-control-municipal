@@ -167,3 +167,48 @@ export function modeloResumo(opcoes: { assunto: string; titulo: string; cliente:
     ].join("\n"),
   };
 }
+
+export type ItemAlertaEmail = { numero: string; titulo: string; gravidade: string; link: string };
+
+/** Alertas criados ou encerrados automaticamente pela coleta do SICONFI. */
+export function modeloAlertasAutomaticos(opcoes: { cliente: string; novos: ItemAlertaEmail[]; encerrados: ItemAlertaEmail[]; link: string }): Conteudo {
+  const { novos, encerrados } = opcoes;
+  const secao = (titulo: string, itens: ItemAlertaEmail[]) =>
+    itens.length
+      ? `<h2 style="margin:16px 0 8px;font-size:16px">${escapar(titulo)}</h2><ul style="margin:0;padding:0;list-style:none">${itens
+          .map(
+            (i) => `<li style="margin:0 0 12px;padding:12px 16px;background:#f4f4f5;border-radius:6px">
+<a href="${escapar(i.link)}" style="color:#1d4ed8;font-weight:bold">${escapar(i.numero)} — ${escapar(i.titulo)}</a><br>
+<span style="font-size:14px">Gravidade: <strong>${escapar(i.gravidade)}</strong></span></li>`,
+          )
+          .join("")}</ul>`
+      : "";
+  const titulo = novos.length ? `${novos.length} novo(s) alerta(s) fiscal(is)` : `${encerrados.length} alerta(s) fiscal(is) regularizado(s)`;
+  const introducao = novos.length
+    ? "A coleta automática do SICONFI identificou situações que exigem atenção da controladoria. Os alertas já foram registrados no sistema."
+    : "A coleta automática do SICONFI não aponta mais as irregularidades abaixo; os alertas foram encerrados automaticamente.";
+  const linhas = (rotulo: string, itens: ItemAlertaEmail[]) =>
+    itens.length ? [rotulo, ...itens.map((i) => `- ${i.numero} — ${i.titulo} (${i.gravidade})\n  ${i.link}`), ""] : [];
+  return {
+    assunto: `${titulo} — ${opcoes.cliente}`,
+    html: html({
+      titulo,
+      cliente: opcoes.cliente,
+      introducao,
+      corpo: secao("Novos alertas", novos) + secao("Encerrados automaticamente", encerrados) + botao(opcoes.link, "Abrir os alertas"),
+    }),
+    texto: [
+      opcoes.cliente,
+      "",
+      titulo,
+      "",
+      introducao,
+      "",
+      ...linhas("Novos alertas:", novos),
+      ...linhas("Encerrados automaticamente:", encerrados),
+      `Abrir os alertas: ${opcoes.link}`,
+      "",
+      "Mensagem automática do sistema de Controladoria; não responda a este e-mail.",
+    ].join("\n"),
+  };
+}

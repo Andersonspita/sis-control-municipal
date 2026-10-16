@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  HeartPulse,
+  Receipt,
   ArrowLeftRight,
   CircleAlert,
   Database,
@@ -34,6 +36,8 @@ import { formatarDataHora } from "@/lib/datas";
 import { BotaoAtualizar } from "./botao-atualizar";
 import { ConsultaSancoes } from "./consulta-sancoes";
 import { BarraLimite, dataIso, Fonte, moeda, percentual, SeloColeta, SeloEntrega, SeloFaixa } from "./componentes";
+import { ConteudoExecucao, ConteudoMinimos } from "./execucao";
+import { alertasAutomaticosAbertos, type AlertaAutomaticoAberto } from "@/lib/dados/alertas";
 
 export const metadata: Metadata = { title: "Dados externos" };
 
@@ -64,6 +68,28 @@ function Indicador({
   );
 }
 
+/** Alerta automático já criado para o indicador; sem ele (ex.: indicador do ente na Câmara), registro manual. */
+function AtalhoAlerta({ registrado, registrar }: { registrado?: AlertaAutomaticoAberto; registrar: string }) {
+  if (registrado) {
+    return (
+      <Link href={`/alertas/${registrado.id}`} className={buttonVariants({ variant: "outline" })}>
+        <Siren aria-hidden="true" /> Alerta {registrado.numero} (automático)
+      </Link>
+    );
+  }
+  return (
+    <Link href={registrar} className={buttonVariants({ variant: "outline" })}>
+      <Siren aria-hidden="true" /> Registrar alerta
+    </Link>
+  );
+}
+
+/** Coletas anteriores à versão 1.2 não têm o Anexo 14: a próxima coleta automática completa. */
+function AvisoExecucao({ coleta }: { coleta: Coleta<unknown> | null }) {
+  if (!coleta?.dados) return <AvisoColeta coleta={coleta} />;
+  return <p className="text-sm text-muted-foreground">Dados ainda não disponíveis para esta entidade; a próxima coleta automática os traz.</p>;
+}
+
 function AvisoColeta({ coleta }: { coleta: Coleta<unknown> | null }) {
   if (!coleta) return <p className="text-sm text-muted-foreground">Ainda não coletado. Use “Atualizar dados”.</p>;
   if (coleta.status === "PROCESSANDO" && !coleta.travada) return <p className="text-sm text-muted-foreground">Coletando…</p>;
@@ -73,7 +99,11 @@ function AvisoColeta({ coleta }: { coleta: Coleta<unknown> | null }) {
 
 export default async function DadosExternos() {
   const ctx = await exigirContexto(PERFIS_CONTROLE);
-  const [d, pref] = await Promise.all([carregarDadosExternos(ctx), preferenciasDaPagina(ctx.usuarioId, "dados-externos")]);
+  const [d, pref, registrados] = await Promise.all([
+    carregarDadosExternos(ctx),
+    preferenciasDaPagina(ctx.usuarioId, "dados-externos"),
+    alertasAutomaticosAbertos(ctx),
+  ]);
   const podeAtualizar = ctx.perfil === "CONTROLADOR" || ctx.usuario.adminHorizon;
   const poder = poderDaEntidade(d.cliente.tipo);
   const entidade = d.cliente.nome;
@@ -92,7 +122,9 @@ export default async function DadosExternos() {
     codigoIbge: d.cliente.codigoIbge,
     siconfi: d.siconfi,
   });
-  const blocos = ["alertas-fiscais", "pessoal", "entregas", "divida", "transferencias", "sancoes", "tcmba", "fontes"];
+  const blocos = ["alertas-fiscais", "pessoal", "entregas", "divida", "minimos", "execucao", "transferencias", "sancoes", "tcmba", "fontes"];
+  const execucao = sic?.execucao ?? null;
+  const notaEnte = poder === "L" ? " Indicadores do ente, apurados nos demonstrativos do Executivo municipal." : "";
 
   return (
     <ProvedorRecolhiveis pagina="dados-externos" iniciais={pref.recolhidos}>
@@ -169,12 +201,12 @@ export default async function DadosExternos() {
         <BlocoRecolhivel
           id="alertas-fiscais"
           titulo="Alertas fiscais (LRF)"
-          descricao="Limites de pessoal (folha) e da dívida consolidada e entregas vencidas no SICONFI."
+          descricao="Verificados automaticamente a cada coleta do SICONFI (ao menos uma vez por dia): folha, dívida consolidada, mínimos de saúde e educação, meta de resultado primário e entregas vencidas. Cada irregularidade vira um alerta numerado, com aviso por e-mail, e é encerrada sozinha quando se regulariza."
           icone={<ShieldAlert />}
           resumo={alertas.length ? `${alertas.length} alerta(s)` : "nenhum alerta"}
           className="xl:col-span-2"
         >
-          <ListaAlertasFiscais alertas={alertas} />
+          <ListaAlertasFiscais alertas={alertas} registrados={registrados} />
         </BlocoRecolhivel>
 
         <BlocoRecolhivel
@@ -209,9 +241,7 @@ export default async function DadosExternos() {
                 </div>
               </dl>
               {sic.pessoal.faixa !== "REGULAR" && (
-                <Link href={linkAlertaPessoal(sic, entidade)} className={buttonVariants({ variant: "outline" })}>
-                  <Siren aria-hidden="true" /> Registrar alerta
-                </Link>
+                <AtalhoAlerta registrado={registrados.pessoal} registrar={linkAlertaPessoal(sic, entidade)} />
               )}
             </>
           ) : (
@@ -264,9 +294,7 @@ export default async function DadosExternos() {
                 </Table>
               </div>
               {pendentes.length > 0 && (
-                <Link href={linkAlertaEntregas(pendentes, entidade)} className={buttonVariants({ variant: "outline" })}>
-                  <Siren aria-hidden="true" /> Registrar alerta para as pendências
-                </Link>
+                <AtalhoAlerta registrado={registrados.entregas} registrar={linkAlertaEntregas(pendentes, entidade)} />
               )}
             </>
           ) : (
@@ -312,9 +340,7 @@ export default async function DadosExternos() {
               </dl>
               <Fonte nome="SICONFI" referencia={sic.divida.referencia} />
               {faixaDcl(sic.divida.percentualDcl) !== "REGULAR" && (
-                <Link href={linkAlertaDivida(sic, entidade)} className={buttonVariants({ variant: "outline" })}>
-                  <Siren aria-hidden="true" /> Registrar alerta
-                </Link>
+                <AtalhoAlerta registrado={registrados.divida} registrar={linkAlertaDivida(sic, entidade)} />
               )}
             </div>
           ) : (
@@ -348,6 +374,33 @@ export default async function DadosExternos() {
           ) : (
             <p className="text-sm text-muted-foreground">Resultado primário não disponível.</p>
           )}
+        </BlocoRecolhivel>
+
+        <BlocoRecolhivel
+          id="minimos"
+          titulo="Saúde e educação — mínimos constitucionais"
+          icone={<HeartPulse />}
+          descricao={`Aplicação em educação (25%), FUNDEB (70%) e saúde (15%), acumulada até o bimestre (RREO, Anexo 14).${notaEnte}`}
+          resumo={
+            execucao?.saude && execucao.educacao
+              ? `saúde ${percentual(execucao.saude.aplicado)} · educação ${percentual(execucao.educacao.aplicado)}`
+              : undefined
+          }
+          conteudoClassName="space-y-4"
+        >
+          {execucao ? <ConteudoMinimos execucao={execucao} /> : <AvisoExecucao coleta={d.siconfi} />}
+          <Fonte nome="SICONFI" referencia={execucao?.referencia} coletadoEm={d.siconfi?.coletadoEm} />
+        </BlocoRecolhivel>
+
+        <BlocoRecolhivel
+          id="execucao"
+          titulo="Execução orçamentária e restos a pagar"
+          icone={<Receipt />}
+          descricao={`Receita prevista e realizada, despesas empenhadas, liquidadas e pagas e restos a pagar (RREO, Anexo 14).${notaEnte}`}
+          conteudoClassName="space-y-4"
+        >
+          {execucao ? <ConteudoExecucao execucao={execucao} /> : <AvisoExecucao coleta={d.siconfi} />}
+          <Fonte nome="SICONFI" referencia={execucao?.referencia} coletadoEm={d.siconfi?.coletadoEm} />
         </BlocoRecolhivel>
 
         <BlocoRecolhivel

@@ -11,6 +11,8 @@ import {
   Landmark,
   ListTodo,
   MessageSquareReply,
+  GraduationCap,
+  HeartPulse,
   Network,
   Scale,
   TrendingUp,
@@ -22,7 +24,7 @@ import type { DadosExternos } from "@/lib/dados/integracoes";
 import { formatarPercentual } from "@/lib/dados/conformidade";
 import { faixaDcl, LIMITE_DCL, LIMITES_PESSOAL, poderDaEntidade, ROTULO_FAIXA } from "@/lib/integracoes/lrf";
 import { moeda, percentual } from "@/lib/integracoes/formatos";
-import type { FaixaLimite } from "@/lib/integracoes/tipos";
+import type { AplicacaoMinima, FaixaLimite } from "@/lib/integracoes/tipos";
 import { NIVEIS_RISCO, NIVEL_RISCO } from "@/lib/risco";
 import { TIPO_CLIENTE } from "@/lib/rotulos";
 import { VISUAL_GRAVIDADE } from "@/components/alertas/selos";
@@ -53,6 +55,30 @@ const TOM_FAIXA: Record<FaixaLimite, Tom> = {
   PRUDENCIAL: "perigo",
   EXCEDIDO: "perigo",
 };
+
+/** Percentual aplicado em um mínimo constitucional (RREO Anexo 14). */
+function IndicadorMinimo({
+  rotulo,
+  a,
+  icone,
+  referencia,
+}: {
+  rotulo: string;
+  a: AplicacaoMinima | null | undefined;
+  icone: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  referencia?: string;
+}) {
+  return (
+    <Indicador
+      rotulo={rotulo}
+      valor={a ? percentual(a.aplicado) : "—"}
+      icone={icone}
+      tom={a ? (a.aplicado >= a.minimo ? "sucesso" : "perigo") : "neutro"}
+      href="/dados-externos"
+      detalhe={a ? `${a.aplicado >= a.minimo ? "Acima" : "Abaixo"} do mínimo · ${referencia ?? "RREO"}` : "RREO (Anexo 14)"}
+    />
+  );
+}
 
 /** Média simples dos índices de aderência das normas já avaliadas. */
 function aderenciaMedia(r: Resumo) {
@@ -131,6 +157,9 @@ export function ConteudoIndices({ r, d }: { r: Resumo; d: DadosExternos }) {
         href="/autoavaliacao"
         detalhe={media.normas ? `${media.normas} norma(s) com ciclo avaliado` : "Nenhum ciclo avaliado"}
       />
+      <IndicadorMinimo rotulo="Saúde (mínimo 15%)" a={sic?.execucao?.saude} icone={HeartPulse} referencia={sic?.execucao?.referencia} />
+      <IndicadorMinimo rotulo="Educação — MDE (mínimo 25%)" a={sic?.execucao?.educacao} icone={GraduationCap} referencia={sic?.execucao?.referencia} />
+      <IndicadorMinimo rotulo="FUNDEB — remuneração (mínimo 70%)" a={sic?.execucao?.fundeb} icone={GraduationCap} referencia={sic?.execucao?.referencia} />
     </GradeIndicadores>
   );
 }

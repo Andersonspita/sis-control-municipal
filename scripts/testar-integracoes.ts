@@ -11,6 +11,7 @@ import {
   interpretarRgfAnexo01,
   interpretarRgfAnexo02,
   interpretarRreoAnexo06,
+  interpretarRreoAnexo14,
   type EntregaBruta,
 } from "../src/lib/integracoes/siconfi";
 import {
@@ -23,6 +24,7 @@ import {
 } from "../src/lib/integracoes/portal-transparencia";
 import { linksTcmBa } from "../src/lib/integracoes/tcmba";
 import { calcularAlertasFiscais } from "../src/lib/integracoes/alertas-fiscais";
+import { alertasParaAutomatizar } from "../src/lib/integracoes/alertas-automaticos";
 import type { DadosSiconfi } from "../src/lib/integracoes/tipos";
 
 // Testes das integrações com APIs públicas.
@@ -271,11 +273,10 @@ async function simulados() {
     const agora = new Date("2026-10-05T12:00:00Z");
     const coleta = { dados: base, erro: null, travada: false, coletadoEm: agora };
     const a = calcularAlertasFiscais({ entidade: "Prefeitura", codigoIbge: "2900108", siconfi: coleta, agora });
+    // ENTREGUES tem o RGF do 2º quadrimestre pendente em 05/10/2026 (um demonstrativo → nível ALERTA).
     assert.deepEqual(
       a.map((x) => `${x.id}:${x.nivel}`),
-      ["pessoal:PRUDENCIAL", "divida:ALERTA", ...(base.entregas.some((e) => e.situacao === "PENDENTE") ? ["entregas:" + a.find((x) => x.id === "entregas")!.nivel] : [])].sort(
-        (x, y) => ["EXCEDIDO", "PRUDENCIAL", "ALERTA", "INFO"].indexOf(x.split(":")[1]) - ["EXCEDIDO", "PRUDENCIAL", "ALERTA", "INFO"].indexOf(y.split(":")[1]),
-      ),
+      ["pessoal:PRUDENCIAL", "divida:ALERTA", "entregas:ALERTA"],
     );
     assert.ok(a.find((x) => x.id === "pessoal")!.registrar!.startsWith("/alertas/nova?origem=ALERTA"));
     const regular = { ...base, pessoal: { ...base.pessoal!, percentual: 40, faixa: "REGULAR" as const }, divida: { ...base.divida!, percentualDcl: 30 }, entregas: [] };
@@ -283,6 +284,58 @@ async function simulados() {
     const antiga = new Date("2026-08-01T00:00:00Z");
     assert.equal(calcularAlertasFiscais({ entidade: "P", codigoIbge: "1", siconfi: { ...coleta, dados: regular, coletadoEm: antiga }, agora })[0]?.id, "coleta");
     assert.equal(calcularAlertasFiscais({ entidade: "P", codigoIbge: null, siconfi: null, agora })[0]?.titulo, "Código IBGE não cadastrado");
+  });
+
+  await caso("SICONFI: RREO Anexo 14 traz mínimos de educação, FUNDEB e saúde, orçamento e restos a pagar", () => {
+    const l = (cod: string, coluna: string, valor: number) => linha(cod, coluna, valor);
+    const a14 = interpretarRreoAnexo14([
+      l("MinimoAnualDasReceitasDeImpostosNaManutencaoEDesenvolvimentoDoEnsinoDemonstrativoSimplificado", "Valor Apurado Até o Bimestre", 4118786.42),
+      l("MinimoAnualDasReceitasDeImpostosNaManutencaoEDesenvolvimentoDoEnsinoDemonstrativoSimplificado", "% Mínimo a Aplicar no Exercício", 25),
+      l("MinimoAnualDasReceitasDeImpostosNaManutencaoEDesenvolvimentoDoEnsinoDemonstrativoSimplificado", "% Aplicado Até o Bimestre", 31.06),
+      l("MinimoAnualDoFUNDEBNaRemuneracaoDoMagisterioComEducacaoInfantilEnsinoFundamentalEMedioDemonstrativoSimplificado", "% Mínimo a Aplicar no Exercício", 70),
+      l("MinimoAnualDoFUNDEBNaRemuneracaoDoMagisterioComEducacaoInfantilEnsinoFundamentalEMedioDemonstrativoSimplificado", "% Aplicado Até o Bimestre", 103.76),
+      l("AplicacaoTotalDasDespesasComAcoesEServicosPublicosDeSaude", "% Mínimo a Aplicar no Exercício", 15),
+      l("AplicacaoTotalDasDespesasComAcoesEServicosPublicosDeSaude", "% Aplicado Até o Bimestre", 16.58),
+      l("ReceitasRealizadasDemonstrativoSimplificadoBalancoOrcamentario", "Até o Bimestre", 17046801.21),
+      l("PrevisaoAtualizadaDemonstrativoSimplificadoBalancoOrcamentario", "Até o Bimestre", 38250000),
+      l("TotalRestosAPagarDemonstrativoSimplificado", "Saldo a Pagar", 6711.66),
+    ]);
+    assert.deepEqual(a14?.educacao, { aplicado: 31.06, minimo: 25, valor: 4118786.42 });
+    assert.equal(a14?.fundeb?.aplicado, 103.76);
+    assert.equal(a14?.saude?.minimo, 15);
+    assert.equal(a14?.orcamento.receitaRealizada, 17046801.21);
+    assert.equal(a14?.restosAPagar.saldo, 6711.66);
+    assert.equal(interpretarRreoAnexo14([]), null);
+  });
+
+  await caso("Alertas fiscais: mínimos de saúde/educação e meta primária; a Câmara não automatiza indicadores do ente", () => {
+    const execucao = (final: boolean) => ({
+      educacao: { aplicado: 20, minimo: 25, valor: null },
+      fundeb: { aplicado: 75, minimo: 70, valor: null },
+      saude: { aplicado: 14, minimo: 15, valor: null },
+      orcamento: { receitaPrevista: null, receitaRealizada: null, despesaAutorizada: null, despesaEmpenhada: null, despesaLiquidada: null, despesaPaga: null, superavit: null },
+      restosAPagar: { inscritos: null, pagos: null, saldo: null },
+      referencia: final ? "RREO 6º bimestre/2025" : "RREO 3º bimestre/2026",
+      final,
+    });
+    const base: DadosSiconfi = {
+      exercicio: 2026, poder: "E", instituicao: PREF, rcl: null, pessoal: null, divida: null, entregas: [], avisos: [],
+      resultadoPrimario: { valor: 100, meta: 500, criterio: "SEM_RPPS", referencia: "RREO 6º bimestre/2025", final: true },
+      execucao: execucao(false),
+    };
+    const agora = new Date("2026-10-05T12:00:00Z");
+    const calc = (dados: DadosSiconfi) => calcularAlertasFiscais({ entidade: "P", codigoIbge: "1", siconfi: { dados, erro: null, travada: false, coletadoEm: agora }, agora });
+    const parcial = calc(base);
+    assert.deepEqual(parcial.map((x) => `${x.id}:${x.nivel}`).sort(), ["educacao:ALERTA", "resultado-primario:ALERTA", "saude:ALERTA"]);
+    assert.equal(parcial.find((x) => x.id === "saude")!.rotuloNivel, "Abaixo do mínimo até o bimestre");
+    const final = calc({ ...base, execucao: execucao(true) });
+    assert.equal(final[0].nivel, "EXCEDIDO");
+    assert.equal(final.find((x) => x.id === "educacao")!.registro!.probabilidade, 5);
+    // Meta primária só é cobrada no último bimestre.
+    assert.ok(!calc({ ...base, resultadoPrimario: { ...base.resultadoPrimario!, final: false } }).some((x) => x.id === "resultado-primario"));
+    const camara = { ...base, poder: "L" as const, pessoal: { valor: 1, percentual: 5.8, faixa: "PRUDENCIAL" as const, referencia: "RGF 2º quadrimestre/2026" } };
+    assert.deepEqual(alertasParaAutomatizar(camara, "Câmara", "L", agora).map((x) => x.id), ["pessoal"]);
+    assert.equal(alertasParaAutomatizar(base, "Prefeitura", "E", agora).length, 3);
   });
 
   await caso("SICONFI: tenta o RGF Simplificado quando o completo vem vazio", async () => {

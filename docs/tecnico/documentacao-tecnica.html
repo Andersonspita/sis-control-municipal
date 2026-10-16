@@ -8,7 +8,7 @@
     size: A4;
     margin: 22mm 16mm 18mm 16mm;
     @top-left { content: "Documentação Técnica · Sistema de Controladoria Municipal"; font: 600 7.5pt "Segoe UI", Arial, sans-serif; color: #2f4f7a; vertical-align: bottom; padding-bottom: 1.5mm; margin-bottom: 5mm; border-bottom: .8pt solid #2f4f7a; }
-    @top-right { content: "HorizonAJ · v1.1"; font: 700 7.5pt "Segoe UI", Arial, sans-serif; color: #2f4f7a; vertical-align: bottom; padding-bottom: 1.5mm; margin-bottom: 5mm; border-bottom: .8pt solid #2f4f7a; }
+    @top-right { content: "HorizonAJ · v1.2"; font: 700 7.5pt "Segoe UI", Arial, sans-serif; color: #2f4f7a; vertical-align: bottom; padding-bottom: 1.5mm; margin-bottom: 5mm; border-bottom: .8pt solid #2f4f7a; }
     @bottom-left { content: "Uso interno — equipe de desenvolvimento"; font: 7.5pt "Segoe UI", Arial, sans-serif; color: #6b6f75; }
     @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 7.5pt "Segoe UI", Arial, sans-serif; color: #6b6f75; }
   }
@@ -78,12 +78,12 @@
       <li>Testes</li>
       <li>Manual, documentação e implantação</li>
       <li>Convenções de código</li>
-      <li>Histórico da versão 1.1</li>
+      <li>Histórico das versões 1.1 e 1.2</li>
     </ol>
   </div>
   <div class="rodape">
     <div><strong style="color:var(--azul)">HorizonAJ</strong><br>Sistema de Controladoria Municipal</div>
-    <div style="text-align:right">Versão 1.1<br>Outubro de 2026</div>
+    <div style="text-align:right">Versão 1.2<br>Outubro de 2026</div>
   </div>
 </section>
 
@@ -265,12 +265,12 @@ npm run dev                     # http://localhost:3000</code></pre>
     <thead><tr><th style="width:22%">Fonte</th><th>O que coleta</th><th style="width:26%">Arquivo</th></tr></thead>
     <tbody>
       <tr><td>IBGE</td><td>Município e população (censo/estimativa).</td><td><code>integracoes/ibge.ts</code></td></tr>
-      <tr><td>SICONFI</td><td>Extrato de entregas; RGF Anexo 1 (pessoal, RCL); RGF Anexo 2 (dívida); RREO Anexos 3 e 6 (RCL, resultado primário).</td><td><code>integracoes/siconfi.ts</code></td></tr>
+      <tr><td>SICONFI</td><td>Extrato de entregas; RGF Anexo 1 (pessoal, RCL); RGF Anexo 2 (dívida); RREO Anexos 3 e 6 (RCL, resultado primário); RREO Anexo 14 (mínimos de educação, FUNDEB e saúde, orçamento e restos a pagar — os Anexos 8 e 12 não são publicados na API de dados).</td><td><code>integracoes/siconfi.ts</code></td></tr>
       <tr><td>Portal da Transparência</td><td>Recursos federais por CNPJ, convênios, consulta CEIS/CNEP.</td><td><code>integracoes/portal-transparencia.ts</code></td></tr>
       <tr><td>TCM-BA</td><td>Apenas links (sem API pública).</td><td><code>integracoes/tcmba.ts</code></td></tr>
     </tbody>
   </table>
-  <p>A coleta roda por cliente (<code>sincronizar.ts</code>), grava em <code>coletas_integracao</code> e é disparada pelo botão “Atualizar dados” (via <code>after()</code>) ou pelo cron <code>npm run integracoes:sincronizar</code>.</p>
+  <p>A coleta roda por cliente (<code>sincronizar.ts</code>), grava em <code>coletas_integracao</code> e é disparada (1) pelo cron <code>npm run integracoes:sincronizar</code>, (2) pelo botão “Atualizar dados” e (3) automaticamente por <code>carregarDadosExternos()</code> quando o Painel, Alertas ou Dados externos abrem com dados de mais de 24 h (<code>VALIDADE_COLETA_MS</code>; após falha, nova tentativa só depois de 3 h). Os casos 2 e 3 usam <code>after()</code>; a trava <code>pg_advisory_xact_lock</code> + status <code>PROCESSANDO</code> evitam coletas simultâneas.</p>
   <h3>Dívida e resultado primário para a Câmara (v1.1)</h3>
   <p>Dívida consolidada e resultado primário são indicadores do ente, publicados pelo Executivo. Para clientes do Legislativo, <code>coletarSiconfi</code> agora lê o RGF Anexo 2 (com <code>co_poder=E</code>) e o RREO Anexo 6 a partir das entregas da Prefeitura, com o sufixo “— Executivo municipal” na referência. A despesa com pessoal continua sendo a do próprio Poder.</p>
   <h3>Alertas fiscais (<code>lib/integracoes/alertas-fiscais.ts</code>)</h3>
@@ -281,7 +281,19 @@ npm run dev                     # http://localhost:3000</code></pre>
     <li><strong>entregas</strong>: demonstrativos pendentes (prudencial se mais de dois);</li>
     <li><strong>coleta</strong>: sem código IBGE, coleta falha ou dados com mais de 40 dias.</li>
   </ul>
-  <p>Cada alerta traz <code>registrar</code>, um link para <code>/alertas/nova</code> com título, descrição (com base legal) e probabilidade/impacto sugeridos. A lista é exibida pelo componente <code>components/alertas/alertas-fiscais.tsx</code> no Painel, em Alertas e em Dados externos.</p>
+  <p>Também: <strong>educacao</strong>, <strong>fundeb</strong> e <strong>saude</strong> (aplicado &lt; mínimo; <code>ALERTA</code> até o 5º bimestre, <code>EXCEDIDO</code> no 6º) e <strong>resultado-primario</strong> (abaixo da meta no último bimestre). Cada alerta traz <code>registro</code> (título, descrição com base legal, probabilidade e impacto), <code>referenciaAutomatica</code> (período do demonstrativo) e <code>doEnte</code> (indicador do município). A lista é exibida por <code>components/alertas/alertas-fiscais.tsx</code>, que mostra o atalho para o alerta automático aberto ou, na falta dele, o registro manual.</p>
+  <h3>Alertas automáticos (v1.2 — <code>lib/integracoes/alertas-automaticos.ts</code>)</h3>
+  <p><code>executarSincronizacao</code> chama <code>aplicarAlertasAutomaticos(tx, …)</code> logo após gravar uma coleta do SICONFI com sucesso, numa transação própria (falha nos alertas não desfaz a coleta):</p>
+  <ul>
+    <li><strong>Criação</strong>: para cada alerta sem situação aberta com a mesma <code>chave_automatica</code>, cria uma <code>Situacao</code> com origem <code>ALERTA</code>, <code>criado_por_id</code> nulo e número de <code>proximoNumeroSituacao()</code> (<code>lib/numeracao-situacao.ts</code>, compartilhado com a tela).</li>
+    <li><strong>Atualização</strong>: mudou a referência ou a gravidade → atualiza título, descrição, probabilidade e impacto.</li>
+    <li><strong>Encerramento</strong>: situação automática aberta cuja chave não está mais vigente → <code>RESOLVIDA</code>, <code>encerrado_por_id</code> nulo, justificativa automática.</li>
+    <li><strong>Encerramento manual respeitado</strong>: se existe situação encerrada pelo controlador com a mesma chave e a mesma <code>referencia_automatica</code>, não recria.</li>
+    <li><strong>Câmara</strong>: <code>alertasParaAutomatizar()</code> descarta alertas <code>doEnte</code> quando o Poder é o Legislativo.</li>
+    <li>Trilha: <code>situacao.criada_automaticamente</code>, <code>…atualizada_automaticamente</code>, <code>…encerrada_automaticamente</code> (via <code>createMany</code>, como o log da coleta).</li>
+    <li>E-mail: <code>lib/email/alertas.ts</code> monta a mensagem (modelo <code>modeloAlertasAutomaticos</code>) para controladores e equipe quando há alertas criados ou encerrados; <code>notificar: false</code> desliga (testes).</li>
+    <li>Garantias no banco: índice único parcial <code>situacoes_automatica_aberta_key</code> (um aberto por chave) e CHECKs <code>situacoes_autor_ou_automatica</code> e <code>situacoes_chave_automatica_origem</code>. A tela impede trocar a origem de um alerta automático e reabrir um quando já há outro aberto para o mesmo indicador.</li>
+  </ul>
 </section>
 
 <section class="capitulo">
@@ -357,6 +369,7 @@ npm run dev                     # http://localhost:3000</code></pre>
       <tr><td><code>test:autoavaliacao</code>, <code>test:risco</code>, <code>test:auditorias</code></td><td>Regras de conformidade, matriz de risco, ciclo da auditoria.</td></tr>
       <tr><td><code>test:relatorios</code></td><td>Todos os PDFs, regras do texto padrão do relatório anual e RLS dos textos.</td></tr>
       <tr><td><code>test:preferencias</code></td><td>Leitura tolerante, merge atômico e CHECK das preferências.</td></tr>
+      <tr><td><code>test:alertas-automaticos</code></td><td>Criação, idempotência, atualização, encerramento automático e manual, índice único, regra da Câmara, RLS, e-mail e coleta completa simulada com verificação no Mailpit.</td></tr>
       <tr><td><code>test:integracoes</code> (<code>-- --real</code>)</td><td>Parsing das APIs, prazos do SICONFI, limites da LRF, dívida para a Câmara, alertas fiscais; opcionalmente as APIs reais.</td></tr>
       <tr><td><code>test:ia</code>, <code>test:config-ia</code>, <code>test:emails</code></td><td>IA com provedor falso, configuração e modelos de e-mail.</td></tr>
       <tr><td><code>test:e2e</code>, <code>test:e2e:demandas</code></td><td>Fluxos principais no navegador (seed de exemplo).</td></tr>
@@ -402,7 +415,20 @@ docker compose -f docker-compose.prod.yml up -d app</code></pre>
 
 <section class="capitulo">
   <div class="olho">15</div>
-  <h1>Histórico da versão 1.1 (08/10/2026)</h1>
+  <h1>Histórico das versões</h1>
+  <h3>1.2 (16/10/2026) — alertas automáticos</h3>
+  <table>
+    <thead><tr><th style="width:28%">Mudança</th><th>Arquivos principais</th></tr></thead>
+    <tbody>
+      <tr><td>Criação, atualização e encerramento automáticos dos alertas</td><td><code>lib/integracoes/alertas-automaticos.ts</code>, <code>lib/integracoes/sincronizar.ts</code>, <code>lib/numeracao-situacao.ts</code>, migração <code>20261016120000_alertas_automaticos</code></td></tr>
+      <tr><td>Aviso por e-mail</td><td><code>lib/email/alertas.ts</code>, <code>lib/email/modelos.ts</code></td></tr>
+      <tr><td>Coleta automática ao abrir as telas</td><td><code>lib/dados/integracoes.ts</code></td></tr>
+      <tr><td>Saúde, educação, FUNDEB, orçamento e restos a pagar (RREO Anexo 14)</td><td><code>lib/integracoes/siconfi.ts</code>, <code>tipos.ts</code>, <code>alertas-fiscais.ts</code>, <code>dados-externos/execucao.tsx</code>, <code>painel/blocos.tsx</code></td></tr>
+      <tr><td>Telas ligadas ao alerta automático</td><td><code>components/alertas/alertas-fiscais.tsx</code>, <code>lib/dados/alertas.ts</code>, <code>alertas/page.tsx</code>, <code>alertas/[id]/page.tsx</code>, <code>alertas/actions.ts</code></td></tr>
+      <tr><td>Testes</td><td><code>testar-alertas-automaticos.ts</code>, casos novos em <code>testar-integracoes.ts</code></td></tr>
+    </tbody>
+  </table>
+  <h3>1.1 (08/10/2026)</h3>
   <table>
     <thead><tr><th style="width:28%">Mudança</th><th>Arquivos principais</th></tr></thead>
     <tbody>
